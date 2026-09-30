@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Hero from "@/components/Hero";
-import EventsGrid from "@/components/EventsGrid";
+import EventTicket from "@/components/EventTicket";
+import HorizontalScroll from "@/components/HorizontalScroll";
 import SplitFlapBoard from "@/components/SplitFlapBoard";
 import PosterReveal from "@/components/PosterReveal";
 import SlideProjector from "@/components/SlideProjector";
@@ -13,6 +14,8 @@ import { artists, slides, sponsors, team } from "@/data/content";
 import { site } from "@/data/site";
 
 const featured = ["hackathon", "nukkad-natak", "robo-dangal", "retro-walk"];
+// Featured shows lead the horizontal reel, topped up with the rest to a fixed length.
+const reel = [...events.filter((e) => featured.includes(e.slug)), ...events.filter((e) => !featured.includes(e.slug))].slice(0, 8);
 const stats = [
   ["3", "days"],
   [String(events.length), "events"],
@@ -67,19 +70,33 @@ export default function Home() {
         </Container>
       </section>
 
-      <section className="pb-28 pt-16">
-        <Container>
+      <HorizontalScroll
+        label="Featured events"
+        heading={
           <SectionHeading hindi="कार्यक्रम" title="Now showing">
-            Every event is a show and you’re in the front row. Here are four; there are {events.length - featured.length} more.
+            Every event is a show and you’re in the front row. Keep scrolling; there are {events.length - reel.length} more after these.
           </SectionHeading>
-          <EventsGrid events={events.filter((e) => featured.includes(e.slug))} filter={false} zigzag />
-          <div className="mt-20" data-reveal>
-            <Link href="/events" className="btn bg-marigold">
+        }
+      >
+        {reel.map((e) => (
+          <li key={e.slug} className="w-[min(82vw,26rem)] shrink-0">
+            <EventTicket event={e} serial={events.indexOf(e)} />
+          </li>
+        ))}
+        <li className="w-[min(70vw,18rem)] shrink-0">
+          <Link
+            href="/events"
+            className="group relative flex h-full flex-col justify-between gap-6 overflow-hidden border-[3px] border-ink bg-marigold p-6 shadow-[6px_6px_0_var(--color-ink)] transition-transform hover:-translate-y-1"
+          >
+            <div className="halftone pointer-events-none absolute inset-0 text-ink/15" aria-hidden="true" />
+            <p className="relative font-mono text-xs font-bold tracking-[.3em]">INTERVAL · मध्यांतर</p>
+            <p className="relative font-display text-5xl leading-none">+{events.length - reel.length} more shows</p>
+            <span className="relative inline-flex items-center gap-2 font-display text-lg group-hover:underline">
               All events <ArrowRight weight="bold" aria-hidden="true" />
-            </Link>
-          </div>
-        </Container>
-      </section>
+            </span>
+          </Link>
+        </li>
+      </HorizontalScroll>
 
       <section className="pb-28 pt-16">
         <Container className="grid gap-10 lg:grid-cols-[1fr_2.4fr] lg:items-start [&>*]:min-w-0">
