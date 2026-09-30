@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import EventTicket from "@/components/EventTicket";
 import { Container, PageHeader } from "@/components/ui";
 import { categoryStyle, events, getEvent } from "@/data/events";
+import { ArrowLeft, ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/data/site";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -45,11 +46,11 @@ export default async function EventPage({ params }: Props) {
             ))}
           </ol>
           <div className="mt-10 flex flex-wrap gap-4">
-            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani text-cream">
-              Register for this ↗
+            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani-deep text-cream">
+              Register <ArrowUpRight weight="bold" aria-hidden="true" />
             </a>
             <Link href="/events" className="btn bg-cream">
-              ← All events
+              <ArrowLeft weight="bold" aria-hidden="true" /> All events
             </Link>
           </div>
         </div>

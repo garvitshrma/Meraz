@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site, stations } from "@/data/site";
+import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import HornSign from "./HornSign";
 
 export default function Footer() {
@@ -17,14 +18,14 @@ export default function Footer() {
             <ul className="mt-3 grid grid-cols-2 gap-1 font-mono text-sm">
               {stations.map((s) => (
                 <li key={s.href}>
-                  <Link href={s.href} className="hover:text-marigold">
+                  <Link href={s.href} className="inline-block py-1.5 hover:text-marigold">
                     {s.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="text-marigold hover:underline">
-                  Register ↗
+                <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 py-1.5 text-marigold hover:underline">
+                  Register <ArrowUpRight aria-hidden="true" />
                 </a>
               </li>
             </ul>
@@ -48,7 +49,7 @@ export default function Footer() {
             <ul className="mt-3 flex flex-wrap gap-2">
               {site.socials.map((s) => (
                 <li key={s.label}>
-                  <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-block border-2 border-cream px-3 py-1 font-mono text-xs hover:bg-cream hover:text-ink">
+                  <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center border-2 border-cream px-3 font-mono text-xs hover:bg-cream hover:text-ink">
                     {s.label}
                   </a>
                 </li>
@@ -67,7 +68,7 @@ export default function Footer() {
         </div>
 
         <p className="mt-14 text-center font-mono text-xs text-cream/60">
-          © {new Date().getFullYear()} {site.name} · {site.college} · Made with chai in Bhilai · Try ↑↑↓↓←→←→BA
+          © {new Date().getFullYear()} {site.name}, {site.college}. Made with chai in Bhilai.
         </p>
       </div>
       {/* room for the cassette on mobile */}

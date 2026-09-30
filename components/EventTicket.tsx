@@ -21,7 +21,7 @@ export default function EventTicket({ event, serial }: { event: FestEvent; seria
             <span className="font-mono text-xs">ADMIT ONE</span>
           </div>
           <div className="flex flex-1 flex-col p-4">
-            {event.hindi && <p className="font-deva text-lg text-rani">{event.hindi}</p>}
+            {event.hindi && <p className="font-deva text-lg text-rani-deep">{event.hindi}</p>}
             <h3 className="font-poster text-2xl leading-tight group-hover:underline">{event.title}</h3>
             <p className="mt-1 text-sm">{event.tagline}</p>
             <dl className="mt-auto grid grid-cols-3 gap-2 border-t-2 border-dashed border-ink/40 pt-3 font-mono text-[11px] uppercase">

@@ -1,29 +1,30 @@
 import type { Sponsor } from "@/data/content";
 
 const looks = [
-  { bg: "bg-vermillion", fg: "text-cream", accent: "#F2C14E" },
+  { bg: "bg-vermillion-deep", fg: "text-cream", accent: "#F2C14E" },
   { bg: "bg-teal-deep", fg: "text-cream", accent: "#F4A300" },
   { bg: "bg-marigold", fg: "text-ink", accent: "#E0218A" },
-  { bg: "bg-rani", fg: "text-cream", accent: "#F2C14E" },
+  { bg: "bg-rani-deep", fg: "text-cream", accent: "#F2C14E" },
 ];
 
 // Vintage matchbox-label sponsor tile. Pure CSS, no JS.
-export function Matchbox({ sponsor, index }: { sponsor: Sponsor; index: number }) {
+// featured: the title sponsor gets a double-size label. Sponsors without a link render as plain labels.
+export function Matchbox({ sponsor, index, featured = false }: { sponsor: Sponsor; index: number; featured?: boolean }) {
   const l = looks[index % looks.length];
+  const Tag = sponsor.href ? "a" : "div";
+  const link = sponsor.href ? { href: sponsor.href, target: "_blank", rel: "noopener noreferrer" } : {};
   return (
-    <a
-      href={sponsor.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group block aspect-[5/3.3] rounded-sm border-[3px] border-ink p-2 shadow-[5px_5px_0_var(--color-ink)] transition-transform duration-200 hover:-rotate-2 hover:scale-[1.03] ${l.bg} ${l.fg}`}
+    <Tag
+      {...link}
+      className={`group block ${featured ? "col-span-2 row-span-2 [&_.name]:text-3xl sm:[&_.name]:text-5xl [&_svg]:size-20 sm:[&_svg]:size-28" : "min-h-36 sm:aspect-[5/3.3] sm:min-h-0"} rounded-sm border-[3px] border-ink p-2 shadow-[5px_5px_0_var(--color-ink)] transition-transform duration-200 hover:-rotate-2 hover:scale-[1.03] ${l.bg} ${l.fg}`}
     >
       <div className="flex h-full flex-col items-center justify-between border-2 border-current p-2 text-center outline-2 outline-offset-2 outline-current [outline-style:dashed]">
         <p className="font-mono text-[9px] font-bold tracking-[.25em] sm:text-[10px]">{sponsor.tier.toUpperCase()}</p>
         <Emblem variant={index} accent={l.accent} />
-        <p className="font-display text-sm leading-tight sm:text-lg">{sponsor.name}</p>
-        <p className="font-mono text-[8px] tracking-widest opacity-80 sm:text-[9px]">MADE IN BHARAT · 50 SPARKS</p>
+        <p className="name font-display text-sm leading-tight sm:text-lg">{sponsor.name}</p>
+        <p className="font-mono text-[8px] tracking-widest sm:text-[9px]">MADE IN BHARAT · 50 SPARKS</p>
       </div>
-    </a>
+    </Tag>
   );
 }
 

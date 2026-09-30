@@ -20,7 +20,7 @@ export function Cassette() {
       aria-pressed={on}
       aria-label={on ? "Pause ambient music" : "Play ambient music"}
       data-on={on}
-      className="fixed bottom-3 right-3 z-50 w-24 rotate-[-4deg] transition-transform hover:rotate-0 sm:bottom-5 sm:right-5 sm:w-32"
+      className="fixed bottom-3 right-3 z-50 w-[4.5rem] rotate-[-4deg] transition-transform hover:rotate-0 sm:bottom-5 sm:right-5 sm:w-32"
     >
       <svg viewBox="0 0 120 78" className="drop-shadow-[4px_4px_0_#1a1a1a]" aria-hidden="true">
         <rect x="2" y="2" width="116" height="74" rx="6" fill="#1a1a1a" />

@@ -25,13 +25,13 @@ export default function FlipCountdown({ target }: { target: string }) {
   const vals = now === null ? null : split(new Date(target).getTime() - now);
 
   return (
-    <div className="flex flex-wrap gap-3 sm:gap-5">
+    <div className="flex gap-2.5 sm:gap-5">
       <p className="sr-only">{vals ? `${vals[0]} days to go` : "Countdown to the fest"}</p>
       {units.map(([en, hi], i) => {
         const digits = vals ? String(vals[i]).padStart(2, "0") : "--";
         return (
           <div key={en} className="text-center" aria-hidden="true">
-            <div className="flex gap-1 font-display text-[clamp(1.8rem,7vw,3rem)]">
+            <div className="flex gap-1 font-display text-[clamp(1.3rem,6.2vw,3rem)]">
               {digits.split("").map((d, j) => (
                 <span key={j} className="flip-digit">
                   <span key={d} className="flip-card">
@@ -40,7 +40,7 @@ export default function FlipCountdown({ target }: { target: string }) {
                 </span>
               ))}
             </div>
-            <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-widest">
+            <p className="mt-1 font-mono text-[10px] font-bold uppercase tracking-wider sm:text-[11px] sm:tracking-widest">
               {en} · <span className="font-deva normal-case tracking-normal">{hi}</span>
             </p>
           </div>

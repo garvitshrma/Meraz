@@ -3,21 +3,21 @@
 
 export type Artist = { name: string; genre: string; night: string; hindi: string; revealed: boolean };
 export const artists: Artist[] = [
-  { name: "The Midnight Qawwals", genre: "Sufi Rock", night: "Night 1 · 19 Feb", hindi: "सूफ़ी रॉक", revealed: true },
-  { name: "DJ Transistor", genre: "Retro EDM", night: "Night 2 · 20 Feb", hindi: "ईडीएम", revealed: true },
-  { name: "Superstar TBA", genre: "Bollywood Live", night: "Night 3 · 21 Feb", hindi: "बॉलीवुड", revealed: false },
+  { name: "The Midnight Qawwals", genre: "Sufi Rock", night: "Night 1, 19 Feb", hindi: "सूफ़ी रॉक", revealed: true },
+  { name: "DJ Transistor", genre: "Retro EDM", night: "Night 2, 20 Feb", hindi: "ईडीएम", revealed: true },
+  { name: "Superstar TBA", genre: "Bollywood Live", night: "Night 3, 21 Feb", hindi: "बॉलीवुड", revealed: false },
 ];
 
-export type Sponsor = { name: string; tier: string; href: string };
+export type Sponsor = { name: string; tier: string; href?: string }; // href optional: add the sponsor website when known
 export const sponsors: Sponsor[] = [
-  { name: "Sitara Softworks", tier: "Title Sponsor", href: "#" },
-  { name: "Kite & Co.", tier: "Co-Sponsor", href: "#" },
-  { name: "Transistor Labs", tier: "Tech Partner", href: "#" },
-  { name: "Neon Dhaba", tier: "Food Partner", href: "#" },
-  { name: "Monsoon Media", tier: "Media Partner", href: "#" },
-  { name: "Chakra Motors", tier: "Travel Partner", href: "#" },
-  { name: "Rangoli Paints", tier: "Art Partner", href: "#" },
-  { name: "Paanwala Ventures", tier: "Refreshment Partner", href: "#" },
+  { name: "Sitara Softworks", tier: "Title Sponsor" },
+  { name: "Kite & Co.", tier: "Co-Sponsor" },
+  { name: "Transistor Labs", tier: "Tech Partner" },
+  { name: "Neon Dhaba", tier: "Food Partner" },
+  { name: "Monsoon Media", tier: "Media Partner" },
+  { name: "Chakra Motors", tier: "Travel Partner" },
+  { name: "Rangoli Paints", tier: "Art Partner" },
+  { name: "Paanwala Ventures", tier: "Refreshment Partner" },
 ];
 
 // photo: put images in /public/team and set e.g. photo: "/team/aditi.jpg"

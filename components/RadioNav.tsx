@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { site, stations } from "@/data/site";
+import { ArrowUpRight, Radio, X } from "@phosphor-icons/react";
 import { useSound } from "@/lib/sound";
 
 const SWEEP = 270; // degrees of knob travel
@@ -68,7 +69,7 @@ export default function RadioNav() {
             aria-haspopup="dialog"
             className="btn bg-ink !py-2 !text-sm text-turmeric !shadow-[4px_4px_0_var(--color-rani)]"
           >
-            <RadioIcon /> Tune In
+            <Radio weight="bold" size={18} aria-hidden="true" /> Tune in
           </button>
         </div>
       </header>
@@ -78,7 +79,7 @@ export default function RadioNav() {
         data-lenis-prevent
         aria-label="Site navigation radio"
         onClick={(e) => e.target === e.currentTarget && dialog.current?.close()}
-        className="m-auto w-[min(94vw,760px)] max-h-[92svh] overflow-y-auto bg-transparent p-0 text-ink"
+        className="m-auto w-[min(94vw,760px)] max-h-[92svh] overflow-y-auto overscroll-contain bg-transparent p-0 text-ink"
       >
         <div className="rounded-[28px] border-4 border-ink bg-[#6b3f1f] p-3 shadow-[10px_10px_0_var(--color-ink)] sm:p-5">
           <div className="rounded-[18px] border-4 border-ink bg-cream p-4 sm:p-6">
@@ -87,8 +88,8 @@ export default function RadioNav() {
                 <p className="font-mono text-xs tracking-widest">MERAZ BROADCASTING · AM/FM</p>
                 <p className="font-deva text-lg text-rani">रेडियो मेराज़</p>
               </div>
-              <button type="button" onClick={() => dialog.current?.close()} className="btn bg-cream !px-3 !py-1 !text-sm" aria-label="Close navigation">
-                ✕
+              <button type="button" onClick={() => dialog.current?.close()} className="btn size-11 justify-center bg-cream !p-0" aria-label="Close navigation">
+                <X weight="bold" aria-hidden="true" />
               </button>
             </div>
 
@@ -101,8 +102,7 @@ export default function RadioNav() {
                 {stations.map((s, i) => (
                   <span
                     key={s.href}
-                    onClick={() => tune(i)}
-                    className={`absolute top-0 -translate-x-1/2 cursor-pointer text-center text-[9px] leading-tight sm:text-[11px] ${i === tuned ? "text-cream" : "text-turmeric/60"}`}
+                    className={`absolute top-0 -translate-x-1/2 text-center text-[9px] leading-tight sm:text-[11px] ${i === tuned ? "text-cream" : "text-turmeric/60"}`}
                     style={{ left: `${(i / last) * 100}%` }}
                   >
                     |<br />
@@ -110,7 +110,7 @@ export default function RadioNav() {
                   </span>
                 ))}
                 <span
-                  className="absolute -top-3 h-12 w-[3px] bg-vermillion shadow-[0_0_8px_var(--color-vermillion)] transition-[left] duration-150"
+                  className="absolute -top-3 h-12 w-[3px] bg-vermillion transition-[left] duration-150"
                   style={{ left: `${((angle + SWEEP / 2) / SWEEP) * 100}%` }}
                 />
               </div>
@@ -157,7 +157,7 @@ export default function RadioNav() {
                         href={s.href}
                         onClick={() => dialog.current?.close()}
                         aria-current={i === current ? "page" : undefined}
-                        className="group flex items-baseline gap-2 py-1 font-display text-base hover:text-rani aria-[current=page]:text-rani"
+                        className="group flex min-h-11 items-center gap-2 font-display text-base hover:text-rani aria-[current=page]:text-rani"
                       >
                         <span className="font-mono text-xs text-teal-deep">{s.freq}</span>
                         {s.label}
@@ -166,7 +166,7 @@ export default function RadioNav() {
                   ))}
                   <li className="col-span-2 mt-2">
                     <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn w-full justify-center bg-marigold">
-                      Register Now ↗
+                      Register <ArrowUpRight weight="bold" aria-hidden="true" />
                     </a>
                   </li>
                 </ul>
@@ -180,16 +180,5 @@ export default function RadioNav() {
 
       {staticKey > 0 && <div key={staticKey} className="tv-static pointer-events-none fixed inset-0 z-[250]" aria-hidden="true" />}
     </>
-  );
-}
-
-function RadioIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <rect x="2" y="8" width="20" height="13" rx="2" />
-      <path d="M6 8 17 3" />
-      <circle cx="16" cy="14.5" r="3" />
-      <path d="M5 12h5M5 15h5M5 18h5" />
-    </svg>
   );
 }

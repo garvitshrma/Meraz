@@ -22,9 +22,9 @@ export type FestEvent = {
 
 // Ticket colours per category (background stripe + text on it).
 export const categoryStyle: Record<Category, string> = {
-  Technical: "bg-teal text-cream",
-  Cultural: "bg-rani text-cream",
-  "Pro-Nites": "bg-vermillion text-cream",
+  Technical: "bg-teal-deep text-cream",
+  Cultural: "bg-rani-deep text-cream",
+  "Pro-Nites": "bg-vermillion-deep text-cream",
   Workshops: "bg-marigold text-ink",
   Gaming: "bg-ink text-turmeric",
 };
@@ -253,3 +253,9 @@ export const events: FestEvent[] = [
 export const getEvent = (slug: string) => events.find((e) => e.slug === slug);
 export const eventsByDay = (day: 1 | 2 | 3) =>
   events.filter((e) => e.day === day).sort((a, b) => a.time.localeCompare(b.time));
+
+// Sum of all cash prizes, e.g. "₹3.2 Lakh". Updates itself when prizes change.
+export const prizePool = () => {
+  const total = events.reduce((sum, e) => sum + (Number(e.prize?.replace(/\D/g, "")) || 0), 0);
+  return `₹${(total / 100000).toFixed(1).replace(/\.0$/, "")} Lakh`;
+};

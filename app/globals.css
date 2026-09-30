@@ -6,6 +6,8 @@
   --color-rani: #e0218a;
   --color-teal: #0f7c7c;
   --color-teal-deep: #0a5f5f;
+  --color-rani-deep: #b8166f;
+  --color-vermillion-deep: #b01e30;
   --color-vermillion: #d7263d;
   --color-turmeric: #f2c14e;
   --color-ink: #1a1a1a;
@@ -27,6 +29,8 @@
 }
 
 html {
+  color-scheme: light; /* print-emulating retro palette is intentionally light-only */
+  scroll-padding-top: 5rem; /* keep focused/anchored content clear of the fixed header */
   background: var(--color-cream);
   color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
@@ -57,10 +61,27 @@ body::before {
   z-index: 89;
 }
 
+a,
+button,
+summary,
+[role="slider"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; /* focus-visible ring below replaces it */
+}
+
 ::selection {
   background: var(--color-rani);
   color: var(--color-cream);
 }
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
 :focus-visible {
   outline: 3px solid var(--color-rani);
   outline-offset: 3px;
@@ -273,8 +294,9 @@ html[data-seen] .crt-loader {
   height: 1.45em;
   background: linear-gradient(#262626 50%, #1a1a1a 50%);
   color: var(--color-turmeric);
+  font-variant-numeric: tabular-nums;
   border-radius: 0.14em;
-  box-shadow: 0 3px 0 #000, inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  box-shadow: 0 3px 0 #0b0b0b, inset 0 0 0 1px rgb(255 255 255 / 0.06);
   perspective: 300px;
   overflow: hidden;
 }
@@ -285,7 +307,7 @@ html[data-seen] .crt-loader {
   right: 0;
   top: 50%;
   height: 2px;
-  background: #000;
+  background: #0b0b0b;
 }
 .flip-card {
   display: block;
@@ -315,7 +337,7 @@ html[data-seen] .crt-loader {
   position: absolute;
   inset: 50% 0 auto;
   height: 1px;
-  background: #000;
+  background: #0b0b0b;
 }
 
 /* ---------- Cassette ---------- */

@@ -35,7 +35,7 @@ export default function PosterReveal({ artist, index }: { artist: Artist; index:
         <p className="mt-2 font-deva text-2xl text-turmeric">{artist.hindi}</p>
         <h3 className="painted font-display text-3xl leading-none sm:text-4xl">{artist.revealed ? artist.name : "???"}</h3>
         <p className="mt-2 bg-ink px-3 py-1 font-mono text-xs font-bold tracking-widest">
-          {artist.genre.toUpperCase()} · {artist.night.toUpperCase()}
+          {artist.genre.toUpperCase()} / {artist.night.toUpperCase()}
         </p>
       </div>
 

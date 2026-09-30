@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Container, PageHeader } from "@/components/ui";
+import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "Register", description: "Get your MERAZ 7.0 fest pass and register for events." };
@@ -16,7 +17,7 @@ export default function RegisterPage() {
         <div className="mx-auto max-w-3xl border-4 border-ink bg-cream shadow-[10px_10px_0_var(--color-ink)]">
           <div className="flex items-center justify-between bg-ink px-5 py-3 font-mono text-turmeric">
             <span>WINDOW NO. 7</span>
-            <span className="animate-pulse">● BOOKING OPEN</span>
+            <span>BOOKING OPEN</span>
           </div>
           <ol className="divide-y-2 divide-dashed divide-ink/30">
             {steps.map((s, i) => (
@@ -27,8 +28,8 @@ export default function RegisterPage() {
             ))}
           </ol>
           <div className="border-t-4 border-ink p-6 text-center">
-            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani text-xl text-cream">
-              Go to registration portal ↗
+            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani-deep text-xl text-cream">
+              Register <ArrowUpRight weight="bold" aria-hidden="true" />
             </a>
             <p className="mt-3 font-mono text-xs">Opens in a new tab</p>
           </div>

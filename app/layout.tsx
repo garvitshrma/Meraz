@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: `${site.name} · Retro India`, description },
 };
 
-export const viewport: Viewport = { themeColor: "#F4A300" };
+export const viewport: Viewport = { themeColor: "#F3E6C8" };
 
 // Runs before paint: marks JS as available and skips the CRT loader on repeat visits in a session.
 const boot = `try{var d=document.documentElement;d.classList.add('js');if(sessionStorage.getItem('meraz-seen'))d.dataset.seen='1';sessionStorage.setItem('meraz-seen','1')}catch(e){}`;

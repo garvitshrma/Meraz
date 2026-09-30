@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/data/site";
+import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import FlipCountdown from "./FlipCountdown";
 
 // Hand-painted cinema-poster hero. Layers with data-depth move at different speeds (see ScrollFx).
@@ -24,44 +25,33 @@ export default function Hero() {
       {/* bunting */}
       <Bunting />
 
-      <div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl flex-col justify-center px-4 pb-40 pt-10 sm:px-6 sm:pb-48">
-        <p className="w-fit bg-ink px-3 py-1 font-mono text-[11px] font-bold tracking-[.25em] text-turmeric sm:text-xs">
-          {site.college.toUpperCase()} PRESENTS · TECHNO-CULTURAL FEST
-        </p>
-        <p className="mt-4 font-deva text-4xl text-rani sm:text-6xl [text-shadow:2px_2px_0_#1a1a1a]">मेराज़ ७.०</p>
-        <h1 id="hero-title" className="painted -rotate-2 font-display text-[clamp(4.2rem,19vw,13rem)] leading-[.82] text-cream misprint">
-          MERAZ
-          <span className="ml-2 inline-block rotate-3 text-turmeric sm:ml-4">7.0</span>
+      <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center gap-6 px-4 pb-44 pt-12 sm:px-6 sm:pb-48">
+        <h1 id="hero-title" className="relative w-fit">
+          <span className="absolute -top-8 left-1 -rotate-3 font-deva text-4xl text-cream painted sm:-top-12 sm:text-6xl" aria-hidden="true">
+            मेराज़
+          </span>
+          <span className="painted block -rotate-2 font-display text-[clamp(4.2rem,17vw,12rem)] leading-[.82] text-cream misprint">
+            MERAZ
+            <span className="ml-2 inline-block rotate-3 text-turmeric sm:ml-4">7.0</span>
+          </span>
         </h1>
-        <p className="mt-4 max-w-xl font-poster text-3xl leading-tight sm:text-5xl">{site.tagline}</p>
-        <p className="mt-1 font-deva text-xl text-teal-deep sm:text-2xl">{site.hindiTagline}</p>
-
-        {/* poster credits */}
-        <p className="mt-5 max-w-lg border-y-2 border-ink py-2 font-mono text-[11px] font-bold uppercase leading-relaxed tracking-wider">
-          Story · Screenplay · Direction: The Students of {site.college} · Music: You · Dance: Everyone · In Full Colour, 70mm Dreams
+        <p className="max-w-xl font-poster text-3xl leading-tight sm:text-5xl">{site.tagline}</p>
+        <p className="w-fit -rotate-1 bg-ink px-3 py-1.5 font-mono text-sm font-bold tracking-wider text-turmeric sm:text-base">
+          {site.dateLabel.toUpperCase()} · {site.venueShort.toUpperCase()}
         </p>
-
-        <div className="mt-6 flex flex-wrap items-end gap-6">
-          <div>
-            <p className="mb-2 inline-block -rotate-2 bg-rani px-3 py-1 font-display text-lg text-cream shadow-[4px_4px_0_var(--color-ink)]">
-              {site.dateLabel}
-            </p>
-            <FlipCountdown target={site.startDate} />
-          </div>
-        </div>
-
-        <div className="mt-8 flex flex-wrap gap-4">
-          <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani text-cream">
-            Book Your Ticket ↗
+        <FlipCountdown target={site.startDate} />
+        <div className="flex flex-wrap gap-4">
+          <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani-deep text-cream">
+            Register <ArrowUpRight weight="bold" aria-hidden="true" />
           </a>
           <Link href="/events" className="btn bg-cream">
-            Now Showing: Events
+            All events
           </Link>
         </div>
 
-        <div className="absolute bottom-40 right-4 hidden size-28 rotate-12 place-content-center rounded-full border-4 border-double border-ink bg-cream text-center font-display text-sm leading-tight shadow-[5px_5px_0_var(--color-ink)] md:grid" aria-hidden="true">
+        <div className="absolute bottom-44 right-4 hidden size-28 rotate-12 place-content-center rounded-full border-4 border-double border-ink bg-cream text-center font-display text-sm leading-tight shadow-[5px_5px_0_var(--color-ink)] lg:grid" aria-hidden="true">
           CERTIFIED
-          <span className="text-2xl text-vermillion">U/F</span>
+          <span className="text-2xl text-vermillion-deep">U/F</span>
           <span className="font-mono text-[9px]">UNLIMITED FUN</span>
         </div>
       </div>

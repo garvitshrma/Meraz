@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import type { Slide } from "@/data/content";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { useSound } from "@/lib/sound";
 
 const patterns: Record<Slide["pattern"], (a: string, b: string) => string> = {
@@ -50,15 +51,15 @@ export default function SlideProjector({ slides }: { slides: Slide[] }) {
                 <div className="absolute inset-0" style={{ background: patterns[s.pattern](s.a, s.b) }} aria-hidden="true" />
               )}
               <div className="halftone absolute inset-0 text-ink/20" aria-hidden="true" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-4 text-cream sm:p-6">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse,transparent_55%,rgb(14_14_14/.55))]" aria-hidden="true" />
+              <figcaption className="absolute bottom-0 left-0 max-w-[85%] bg-ink/90 p-4 text-cream sm:p-6">
                 <span className="font-mono text-xs tracking-widest text-turmeric">MERAZ {s.year}</span>
                 <span className="block font-display text-2xl leading-tight sm:text-4xl">{s.title}</span>
                 <span className="block font-poster text-lg sm:text-xl">{s.caption}</span>
               </figcaption>
             </motion.figure>
           </AnimatePresence>
-          {/* lamp flicker + vignette */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse,transparent_55%,rgb(0_0_0/.55))]" aria-hidden="true" />
+          {/* lamp flicker */}
           <motion.div
             key={`flash-${i}`}
             initial={{ opacity: 0.9 }}
@@ -73,7 +74,7 @@ export default function SlideProjector({ slides }: { slides: Slide[] }) {
       {/* projector body */}
       <div className="relative mx-auto mt-6 flex max-w-xl items-center justify-between gap-3 rounded-2xl border-4 border-ink bg-teal-deep px-4 py-3 text-cream shadow-[6px_6px_0_var(--color-ink)]">
         <button type="button" onClick={() => go(-1)} className="btn bg-marigold !px-4 !py-2 text-ink" aria-label="Previous slide">
-          ◀
+          <CaretLeft weight="fill" aria-hidden="true" />
         </button>
         <div className="flex items-center gap-3">
           <span className="grid size-12 place-items-center rounded-full border-4 border-ink bg-[radial-gradient(circle,#fff7e0,#F2C14E_45%,#1a1a1a_70%)]" aria-hidden="true" />
@@ -82,7 +83,7 @@ export default function SlideProjector({ slides }: { slides: Slide[] }) {
           </p>
         </div>
         <button type="button" onClick={() => go(1)} className="btn bg-marigold !px-4 !py-2 text-ink" aria-label="Next slide">
-          ▶
+          <CaretRight weight="fill" aria-hidden="true" />
         </button>
       </div>
     </div>

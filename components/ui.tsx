@@ -1,14 +1,15 @@
 // Shared server-safe building blocks.
 import type { ReactNode } from "react";
+import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/data/site";
 
-export function SectionHeading({ kicker, hindi, title, children }: { kicker: string; hindi?: string; title: string; children?: ReactNode }) {
+export function SectionHeading({ kicker, hindi, title, children }: { kicker?: string; hindi?: string; title: string; children?: ReactNode }) {
   return (
     <div className="mb-10" data-reveal>
-      <p className="font-mono text-xs font-bold tracking-[.3em] text-teal-deep">{kicker}</p>
+      {kicker && <p className="font-mono text-xs font-bold tracking-[.3em] text-teal-deep">{kicker}</p>}
       {hindi && <p className="font-deva text-2xl text-rani sm:text-3xl">{hindi}</p>}
       <h2 className="font-display text-[clamp(2.2rem,7vw,4.5rem)] leading-[.95] misprint">{title}</h2>
-      {children && <div className="mt-4 max-w-2xl text-lg">{children}</div>}
+      {children && <div className="mt-4 max-w-2xl text-lg text-pretty">{children}</div>}
     </div>
   );
 }
@@ -18,12 +19,12 @@ export function PageHeader({ kicker, hindi, title, children, tone = "marigold" }
   const rays = { marigold: "[--ray-a:#F4A300] [--ray-b:#F2C14E]", teal: "[--ray-a:#0F7C7C] [--ray-b:#0a5f5f]", rani: "[--ray-a:#E0218A] [--ray-b:#D7263D]" }[tone];
   const text = tone === "marigold" ? "text-ink" : "text-cream";
   return (
-    <section className={`relative overflow-hidden border-b-4 border-ink pb-14 pt-32 ${text}`}>
+    <section className={`relative overflow-hidden border-b-4 border-ink pb-14 pt-28 ${text}`}>
       <div className={`sunburst absolute left-1/2 top-full size-[220vmax] -translate-x-1/2 -translate-y-1/2 animate-spin-slow ${rays}`} aria-hidden="true" />
       <div className="halftone absolute inset-0 text-ink/15" aria-hidden="true" />
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <p className="font-mono text-xs font-bold tracking-[.3em]">{kicker}</p>
-        <p className="font-deva text-3xl sm:text-4xl">{hindi}</p>
+        <p className="w-fit bg-ink px-2 py-1 font-mono text-xs font-bold tracking-[.3em] text-turmeric">{kicker}</p>
+        {hindi && <p className="painted mt-2 font-deva text-3xl text-cream sm:text-4xl">{hindi}</p>}
         <h1 className="painted font-display text-[clamp(3rem,11vw,7.5rem)] leading-[.9] text-cream misprint">{title}</h1>
         {children && <div className="mt-5 max-w-2xl bg-cream/90 p-4 text-lg text-ink shadow-[5px_5px_0_var(--color-ink)]">{children}</div>}
       </div>
@@ -59,8 +60,8 @@ export function RegisterStrip() {
               <p className="font-display text-[clamp(2rem,6vw,3.8rem)] leading-none">Booking khula hai!</p>
               <p className="mt-2 text-lg">Passes, event entries and accommodation, all at one window.</p>
             </div>
-            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn shrink-0 bg-rani text-xl text-cream">
-              Register Now ↗
+            <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn shrink-0 bg-rani-deep text-xl text-cream">
+              Register <ArrowUpRight weight="bold" aria-hidden="true" />
             </a>
           </div>
         </div>
