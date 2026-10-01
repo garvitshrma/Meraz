@@ -24,7 +24,7 @@ export default function EventsPanels() {
   }
 
   return (
-    <div className="flex flex-col pt-20 md:h-[100dvh] md:flex-row md:pt-0">
+    <div id="categories" className="flex flex-col pt-20 md:h-[100dvh] md:flex-row md:pt-0">
       {panels.map((p, i) => {
         const on = i === active;
         return (
@@ -134,7 +134,7 @@ function Carousel({ items, category }: { items: SubEvent[]; category: string }) 
   );
 }
 
-function Ticket({ ev, category, serial }: { ev: SubEvent; category: string; serial: number }) {
+export function Ticket({ ev, category, serial }: { ev: SubEvent; category: string; serial: number }) {
   return (
     <div className="flex h-full overflow-hidden rounded-md border-[3px] border-ink bg-cream text-ink shadow-[6px_6px_0_var(--color-ink)]">
       <div className="flex min-w-0 flex-1 flex-col">

@@ -109,7 +109,8 @@ function Bunting() {
       <path d="M0 4 Q600 30 1200 4" stroke="#1a1a1a" strokeWidth="2" fill="none" />
       {Array.from({ length: 30 }, (_, i) => {
         const x = i * 40 + 6;
-        const y = 4 + Math.sin((x / 1200) * Math.PI) * 13;
+        // rounded: Node and the browser disagree in the last float digit, which breaks hydration
+        const y = (4 + Math.sin((x / 1200) * Math.PI) * 13).toFixed(2);
         return <path key={i} d={`M${x} ${y} l28 0 l-14 22z`} fill={colours[i % colours.length]} stroke="#1a1a1a" strokeWidth="1.5" />;
       })}
     </svg>
