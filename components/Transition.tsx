@@ -5,7 +5,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { ArrowLeft } from "@phosphor-icons/react";
 
 const GoCtx = createContext<(href: string) => void>(() => {});
 export const useGo = () => useContext(GoCtx);
@@ -63,16 +62,5 @@ export function TLink({ href, onClick, ...rest }: ComponentProps<typeof Link> & 
         go(href);
       }}
     />
-  );
-}
-
-// Shown on every page except home, like the reference site.
-export function BackToHome() {
-  const pathname = usePathname();
-  if (pathname === "/") return null;
-  return (
-    <TLink href="/" className="btn fixed left-3 top-3 z-50 bg-marigold !px-4 !py-2 !text-sm sm:left-5 sm:top-5">
-      <ArrowLeft weight="bold" aria-hidden="true" /> Back to Home
-    </TLink>
   );
 }

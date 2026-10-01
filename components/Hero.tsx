@@ -29,64 +29,67 @@ export default function Hero() {
     return () => ctx.revert();
   }, []);
 
+  // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
   return (
-    <section ref={root} aria-labelledby="hero-title" className="relative h-[100dvh] overflow-hidden bg-marigold">
-      {/* painted scene */}
-      <div className="hero-scene absolute inset-0" aria-hidden="true">
-        <div className="sunburst absolute left-1/2 top-[45%] size-[250vmax] -translate-x-1/2 -translate-y-1/2 animate-spin-slow" />
-        <div className="absolute right-[6vw] top-[14%] size-[38vmin] rounded-full border-[6px] border-ink bg-vermillion">
-          <div className="halftone absolute inset-0 rounded-full text-ink/30" />
+    <div>
+      <section ref={root} aria-labelledby="hero-title" className="relative h-[100dvh] overflow-hidden bg-marigold">
+        {/* painted scene */}
+        <div className="hero-scene absolute inset-0" aria-hidden="true">
+          <div className="sunburst absolute left-1/2 top-[45%] size-[250vmax] -translate-x-1/2 -translate-y-1/2 animate-spin-slow" />
+          <div className="absolute right-[6vw] top-[14%] size-[38vmin] rounded-full border-[6px] border-ink bg-vermillion">
+            <div className="halftone absolute inset-0 rounded-full text-ink/30" />
+          </div>
+          <Bunting />
+          <div className="hero-kite absolute right-[34vw] top-[30%] w-[12vmin] min-w-14">
+            <Kite />
+          </div>
+          <div className="absolute inset-x-0 bottom-0">
+            <Skyline />
+          </div>
         </div>
-        <Bunting />
-        <div className="hero-kite absolute right-[34vw] top-[30%] w-[12vmin] min-w-14">
-          <Kite />
-        </div>
-        <div className="absolute inset-x-0 bottom-0">
-          <Skyline />
-        </div>
-      </div>
 
-      {/* logo, revealed after the zoom */}
-      <div className="hero-logo absolute inset-0 z-[2] grid place-content-center px-4 text-center motion-safe:opacity-0">
-        <p className="painted font-deva text-[clamp(2.5rem,8vw,5rem)] leading-none text-cream" aria-hidden="true">
-          मेराज़ ७.०
-        </p>
-        <h1 id="hero-title" className="painted -rotate-2 font-display text-[clamp(4rem,16vw,12rem)] leading-[.85] text-cream misprint">
-          MERAZ <span className="text-turmeric">7.0</span>
-        </h1>
-        <p className="mx-auto mt-3 w-fit bg-ink px-3 py-1 font-mono text-xs font-bold tracking-[.3em] text-turmeric sm:text-sm">
-          {site.theme.toUpperCase()} · {site.college.toUpperCase()}
-        </p>
-      </div>
+        {/* logo, revealed after the zoom */}
+        <div className="hero-logo absolute inset-0 z-[2] grid place-content-center px-4 text-center motion-safe:opacity-0">
+          <p className="painted font-deva text-[clamp(2.5rem,8vw,5rem)] leading-none text-cream" aria-hidden="true">
+            मेराज़ ७.०
+          </p>
+          <h1 id="hero-title" className="painted -rotate-2 font-display text-[clamp(4rem,16vw,12rem)] leading-[.85] text-cream misprint">
+            MERAZ <span className="text-turmeric">7.0</span>
+          </h1>
+          <p className="mx-auto mt-3 w-fit bg-ink px-3 py-1 font-mono text-xs font-bold tracking-[.3em] text-turmeric sm:text-sm">
+            {site.theme.toUpperCase()} · {site.college.toUpperCase()}
+          </p>
+        </div>
 
-      {/* cinema facade with the screen cut out; scaled up to zoom "through" the screen */}
-      <div className="hero-frame absolute inset-0 z-[3] motion-reduce:hidden" aria-hidden="true">
-        <div className="facade absolute inset-0" />
-        <div className="absolute left-1/2 top-1/2 h-[var(--hole-h)] w-[var(--hole-w)] -translate-x-1/2 -translate-y-1/2">
-          {/* marquee sign */}
-          <div className="absolute bottom-full left-1/2 mb-[4vmin] w-max -translate-x-1/2 border-4 border-ink bg-turmeric px-5 py-2 text-center shadow-[6px_6px_0_var(--color-ink)]">
-            <p className="font-deva text-[clamp(1rem,2.6vw,1.8rem)] leading-none text-rani-deep">मेराज़ टॉकीज़</p>
-            <p className="font-display text-[clamp(1.2rem,3.4vw,2.6rem)] leading-none">MERAZ TALKIES</p>
-          </div>
-          {/* bulb ring round the screen */}
-          <div className="bulbs absolute -inset-[18px]" />
-          <div className="absolute -inset-[4px] border-4 border-ink" />
-          {/* curtains + pelmet inside the screen */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="hero-curtain-l curtain-panel absolute inset-y-0 left-0 w-[30%]" />
-            <div className="hero-curtain-r curtain-panel absolute inset-y-0 right-0 w-[30%]" />
-            <div className="pelmet absolute inset-x-0 top-0 h-[12%]" />
-          </div>
-          {/* now-showing posters either side (desktop) */}
-          <Poster className="right-full mr-[5vw] rotate-[-4deg]" top="MERAZ" mid="7.0" bottom="HOUSEFULL" tone="bg-rani-deep" />
-          <Poster className="left-full ml-[5vw] rotate-[3deg]" top="3 DIN" mid="फ़ुल" bottom="MASTI" tone="bg-teal-deep" />
-          {/* ticket window */}
-          <div className="absolute left-1/2 top-full mt-[5vmin] -translate-x-1/2 whitespace-nowrap border-4 border-ink bg-cream px-4 py-1 font-mono text-xs font-bold tracking-[.25em] shadow-[5px_5px_0_var(--color-ink)] sm:text-sm">
-            BOOKING OPEN · टिकट खिड़की
+        {/* cinema facade with the screen cut out; scaled up to zoom "through" the screen */}
+        <div className="hero-frame absolute inset-x-0 bottom-0 top-[4.6rem] z-[3] motion-reduce:hidden" aria-hidden="true">
+          <div className="facade absolute inset-0" />
+          <div className="absolute left-1/2 top-1/2 h-[var(--hole-h)] w-[var(--hole-w)] -translate-x-1/2 -translate-y-1/2">
+            {/* marquee sign */}
+            <div className="absolute bottom-full left-1/2 mb-[4vmin] w-max -translate-x-1/2 border-4 border-ink bg-turmeric px-5 py-2 text-center shadow-[6px_6px_0_var(--color-ink)]">
+              <p className="font-deva text-[clamp(1rem,2.6vw,1.8rem)] leading-none text-rani-deep">मेराज़ टॉकीज़</p>
+              <p className="font-display text-[clamp(1.2rem,3.4vw,2.6rem)] leading-none">MERAZ TALKIES</p>
+            </div>
+            {/* bulb ring round the screen */}
+            <div className="bulbs absolute -inset-[18px]" />
+            <div className="absolute -inset-[4px] border-4 border-ink" />
+            {/* curtains + pelmet inside the screen */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="hero-curtain-l curtain-panel absolute inset-y-0 left-0 w-[30%]" />
+              <div className="hero-curtain-r curtain-panel absolute inset-y-0 right-0 w-[30%]" />
+              <div className="pelmet absolute inset-x-0 top-0 h-[12%]" />
+            </div>
+            {/* now-showing posters either side (desktop) */}
+            <Poster className="right-full mr-[5vw] rotate-[-4deg]" top="MERAZ" mid="7.0" bottom="HOUSEFULL" tone="bg-rani-deep" />
+            <Poster className="left-full ml-[5vw] rotate-[3deg]" top="3 DIN" mid="फ़ुल" bottom="MASTI" tone="bg-teal-deep" />
+            {/* ticket window */}
+            <div className="absolute left-1/2 top-full mt-[5vmin] -translate-x-1/2 whitespace-nowrap border-4 border-ink bg-cream px-4 py-1 font-mono text-xs font-bold tracking-[.25em] shadow-[5px_5px_0_var(--color-ink)] sm:text-sm">
+              BOOKING OPEN · टिकट खिड़की
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 

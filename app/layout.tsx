@@ -3,7 +3,8 @@ import { Bungee, Courier_Prime, Rozha_One, Space_Grotesk, Yatra_One } from "next
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import { site } from "@/data/site";
-import { BackToHome, TransitionProvider } from "@/components/Transition";
+import { TransitionProvider } from "@/components/Transition";
+import NavBar from "@/components/NavBar";
 import ScrollFx from "@/components/ScrollFx";
 
 const bungee = Bungee({ weight: "400", subsets: ["latin"], variable: "--font-bungee", display: "swap" });
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <TransitionProvider>
-          <BackToHome />
+          <NavBar />
           <main id="main">{children}</main>
           <ScrollFx />
         </TransitionProvider>

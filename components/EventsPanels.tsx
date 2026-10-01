@@ -24,7 +24,7 @@ export default function EventsPanels() {
   }
 
   return (
-    <div id="categories" className="flex flex-col pt-20 md:h-[100dvh] md:flex-row md:pt-0">
+    <div id="categories" className="flex flex-col pt-[4.6rem] md:h-[100dvh] md:flex-row">
       {panels.map((p, i) => {
         const on = i === active;
         return (

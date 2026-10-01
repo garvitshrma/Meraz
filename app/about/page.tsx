@@ -12,7 +12,7 @@ const icons = { calendar: CalendarStar, users: UsersThree, globe: GlobeHemispher
 export default function AboutPage() {
   return (
     <div className="pb-24">
-      <header className="border-b-4 border-ink bg-ink py-4 pt-20 text-center sm:pt-6">
+      <header className="border-b-4 border-ink bg-ink pb-4 pt-[5.6rem] text-center">
         <p className="font-display text-2xl tracking-[.2em] text-turmeric">{site.name}</p>
       </header>
 

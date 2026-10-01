@@ -6,12 +6,12 @@ export const site = {
   theme: "Retro India",
   tagline: "Rewind. Replay. Rejoice.", // PLACEHOLDER
   hindiTagline: "फिर से वही दौर", // "that era, once again"
-  url: "https://meraz.iitbhilai.ac.in", // used for SEO / Open Graph
+  url: "https://meraz7.vercel.app", // used for SEO / Open Graph link previews; change if the domain moves
   aftermovie: "/aftermovie.mp4", // Meraz'24 aftermovie, same file as the current site
   passQueryPhone: "+91 94079 00542",
 };
 
-// Same five links, same order, as the menu on meraz.iitbhilai.ac.in
+// Top nav links: same five, same order, as the menu on meraz.iitbhilai.ac.in
 export const navLinks = [
   { href: "/about", label: "About", hindi: "परिचय", freq: "91.2" },
   { href: "/events", label: "Events", hindi: "कार्यक्रम", freq: "93.5" },

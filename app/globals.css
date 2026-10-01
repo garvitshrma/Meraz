@@ -295,7 +295,7 @@ html[data-seen] .crt-loader {
   mask: radial-gradient(circle at 50% 0, #000 72%, transparent 73%) 0 0 / 48px 100%;
 }
 
-/* ---------- Spinning record (menu + about decoration) ---------- */
+/* ---------- Spinning record (about page decoration) ---------- */
 .record {
   border-radius: 50%;
   background:
@@ -303,34 +303,6 @@ html[data-seen] .crt-loader {
     repeating-radial-gradient(circle, #111 0 2px, #2a2a2a 3px 5px);
   box-shadow: 0 0 0 6px var(--color-ink), 10px 10px 0 6px rgb(0 0 0 / 0.35);
   animation: spin 6s linear infinite;
-}
-
-/* ---------- Home menu flip button ---------- */
-.flip-btn {
-  perspective: 400px;
-}
-.flip-inner {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
-}
-.flip-btn[data-open="true"] .flip-inner {
-  transform: rotateY(180deg);
-}
-.flip-face {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  border: 3px solid var(--color-ink);
-  box-shadow: 4px 4px 0 var(--color-ink);
-  backface-visibility: hidden;
-}
-.flip-back {
-  transform: rotateY(180deg);
 }
 
 /* ---------- TV room wallpaper ---------- */
