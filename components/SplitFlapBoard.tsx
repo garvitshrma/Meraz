@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "motion/react";
-import { eventsByDay } from "@/data/events";
+import type { TimelineDay } from "@/data/content";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:-";
-const STATUS = ["ON TIME", "BOARDING", "ON TIME", "ON TIME", "DELAYED", "ON TIME"];
 const fit = (s: string, n: number) => s.toUpperCase().replace(/[^A-Z0-9: -]/g, "").slice(0, n).padEnd(n, " ");
 
 // Each cell scrambles through random characters, then settles left-to-right.
@@ -46,15 +45,16 @@ function Flaps({ text, delay, run }: { text: string; delay: number; run: number 
   );
 }
 
-export default function SplitFlapBoard({ limit }: { limit?: number }) {
-  const [day, setDay] = useState<1 | 2 | 3>(1);
+// Timeline as a railway split-flap departure board. Day tabs switch the board; rows re-flap on change.
+export default function SplitFlapBoard({ days }: { days: TimelineDay[] }) {
+  const [day, setDay] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.3 });
   const [run, setRun] = useState(0);
   useEffect(() => {
     if (inView) setRun((r) => r + 1);
   }, [inView, day]);
-  const rows = eventsByDay(day).slice(0, limit);
+  const d = days[day];
 
   return (
     <div ref={ref} className="rounded-xl border-4 border-ink bg-[#0e0e0e] p-3 text-turmeric shadow-[8px_8px_0_var(--color-ink)] sm:p-6">
@@ -62,53 +62,52 @@ export default function SplitFlapBoard({ limit }: { limit?: number }) {
         <div>
           <p className="font-deva text-2xl text-cream">प्रस्थान</p>
           <p className="font-display text-2xl sm:text-3xl">DEPARTURES</p>
+          <p className="mt-1 font-mono text-xs tracking-widest text-cream/70">
+            {d.date.toUpperCase()} / {d.time}
+          </p>
         </div>
         <div className="flex gap-2" role="group" aria-label="Choose day">
-          {([1, 2, 3] as const).map((d) => (
+          {days.map((x, i) => (
             <button
-              key={d}
+              key={x.date}
               type="button"
-              aria-pressed={day === d}
-              onClick={() => setDay(d)}
+              aria-pressed={day === i}
+              onClick={() => setDay(i)}
               className="min-h-11 border-2 border-turmeric px-3 py-1 font-mono text-sm font-bold aria-pressed:bg-turmeric aria-pressed:text-ink"
             >
-              DAY {d}
+              DAY {i + 1}
             </button>
           ))}
         </div>
       </div>
       <div className="relative overflow-x-auto" data-lenis-prevent-wheel>
-        <table className={`mt-4 w-full border-separate border-spacing-y-2 font-mono text-[11px] sm:text-sm ${limit ? "" : "xl:text-lg"}`}>
-          <caption className="sr-only">Day {day} schedule</caption>
+        <table className="mt-4 w-full border-separate border-spacing-y-2 font-mono text-[10px] sm:text-sm xl:text-base">
+          <caption className="sr-only">{d.date} schedule</caption>
           <thead>
             <tr className="text-left text-[10px] tracking-widest text-cream/60 sm:text-xs">
               <th scope="col" className="pr-2 font-normal">TIME</th>
               <th scope="col" className="pr-2 font-normal">EVENT</th>
-              <th scope="col" className="hidden pr-2 font-normal md:table-cell">PLATFORM</th>
-              <th scope="col" className="hidden font-normal sm:table-cell">STATUS</th>
+              <th scope="col" className="hidden font-normal md:table-cell">PLATFORM</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((e, r) => (
-              <tr key={e.slug}>
+            {d.events.map((e, r) => (
+              <tr key={e.title}>
                 <td className="pr-2">
-                  <Flaps text={e.time} delay={r * 90} run={run} />
+                  <Flaps text={fit(e.time, 8)} delay={r * 90} run={run} />
                 </td>
                 <td className="pr-2">
-                  <Flaps text={fit(e.title, 16)} delay={r * 90 + 100} run={run} />
+                  <Flaps text={fit(e.title, 20)} delay={r * 90 + 100} run={run} />
                 </td>
-                <td className="hidden pr-2 md:table-cell">
-                  <Flaps text={fit(e.venue, 14)} delay={r * 90 + 200} run={run} />
-                </td>
-                <td className={"hidden sm:table-cell " + (STATUS[r % STATUS.length] === "BOARDING" ? "text-marigold" : STATUS[r % STATUS.length] === "DELAYED" ? "text-rani" : "")}>
-                  <Flaps text={fit(STATUS[r % STATUS.length], 8)} delay={r * 90 + 300} run={run} />
+                <td className="hidden md:table-cell">
+                  <Flaps text={fit(e.location, 17)} delay={r * 90 + 200} run={run} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="mt-3 font-mono text-[10px] tracking-widest text-cream/50">YATRIGAN KRIPYA DHYAN DEIN · PASSENGERS PLEASE NOTE: TIMINGS MAY CHANGE</p>
+      <p className="mt-3 font-mono text-[10px] tracking-widest text-cream/60">YATRIGAN KRIPYA DHYAN DEIN · PASSENGERS PLEASE NOTE: TIMINGS MAY CHANGE</p>
     </div>
   );
 }

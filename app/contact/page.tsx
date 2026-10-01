@@ -1,55 +1,53 @@
 import type { Metadata } from "next";
+import { EnvelopeSimple, Phone } from "@phosphor-icons/react/dist/ssr";
 import { Container, PageHeader } from "@/components/ui";
-import { site } from "@/data/site";
+import { contacts } from "@/data/content";
 
-export const metadata: Metadata = { title: "Contact", description: "Get in touch with the MERAZ 7.0 team." };
+export const metadata: Metadata = { title: "Contact", description: "Contact the Meraz team at IIT Bhilai." };
 
+const tilts = ["-rotate-1", "rotate-1", "-rotate-[.5deg]", "rotate-[.6deg]"];
+
+// Same nine contact cards as the reference, as old postcards. Phone numbers and email are tappable.
 export default function ContactPage() {
-  const rows = [
-    ["EMAIL", <a key="e" href={`mailto:${site.email}`} className="underline">{site.email}</a>],
-    ["PHONE", <a key="p" href={`tel:${site.phone.replace(/\s/g, "")}`} className="underline">{site.phone}</a>],
-    ["ADDRESS", site.venue],
-  ] as const;
   return (
     <>
-      <PageHeader kicker="TRUNK CALL · 107.9 FM" hindi="संपर्क" title="Contact" tone="teal">
-        Send a telegram. Or an email, that works too.
-      </PageHeader>
-      <Container className="grid gap-10 py-16 md:grid-cols-2">
-        {/* telegram card */}
-        <div className="-rotate-1 border-4 border-ink bg-[#cfe3f0] p-6 font-mono shadow-[8px_8px_0_var(--color-ink)]">
-          <p className="border-b-2 border-ink pb-2 text-center text-lg font-bold tracking-[.3em]">TELEGRAM · तार</p>
-          <dl className="mt-4 space-y-4">
-            <div>
-              <dt className="text-xs text-ink/70">TO</dt>
-              <dd className="text-lg font-bold">TEAM {site.name} STOP</dd>
-            </div>
-            {rows.map(([k, v]) => (
-              <div key={k}>
-                <dt className="text-xs text-ink/70">{k}</dt>
-                <dd className="text-lg font-bold">{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {site.socials.map((s) => (
-              <li key={s.label}>
-                <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center border-2 border-ink bg-cream px-3 text-sm hover:bg-ink hover:text-cream">
-                  {s.label}
-                </a>
+      <PageHeader hindi="संपर्क" title="Contact Us" tone="rani" />
+      <Container className="py-16">
+        <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {contacts.map((c, i) => {
+            const Icon = c.kind === "mail" ? EnvelopeSimple : Phone;
+            return (
+              <li
+                key={c.title}
+                data-reveal
+                className={`relative border-4 border-ink bg-[#fbf3df] p-5 shadow-[6px_6px_0_var(--color-ink)] transition-transform duration-200 hover:-translate-y-1 hover:rotate-0 ${tilts[i % tilts.length]}`}
+              >
+                {/* stamp + postmark */}
+                <div className="absolute right-3 top-3 grid size-14 place-items-center border-2 border-dashed border-ink bg-marigold" aria-hidden="true">
+                  <Icon size={26} weight="bold" />
+                </div>
+                <div className="absolute right-12 top-8 grid size-14 -rotate-12 place-items-center rounded-full border-2 border-rani-deep/70 font-mono text-[8px] font-bold leading-tight text-rani-deep/80" aria-hidden="true">
+                  MERAZ
+                  <br />
+                  BHILAI
+                </div>
+                <h2 className="pr-24 font-display text-xl">{c.title}</h2>
+                <div className="mt-4 space-y-3 border-t-2 border-dashed border-ink/40 pt-3">
+                  {c.details.map((d) => (
+                    <p key={d.label} className="font-mono text-sm">
+                      <span className="block font-bold">{d.label}</span>
+                      {d.value && (
+                        <a href={c.kind === "mail" ? `mailto:${d.value}` : `tel:${d.value.replace(/\s/g, "")}`} className="mt-0.5 inline-block py-1 text-base underline decoration-2 underline-offset-4 hover:text-rani-deep">
+                          {d.value}
+                        </a>
+                      )}
+                    </p>
+                  ))}
+                </div>
               </li>
-            ))}
-          </ul>
-        </div>
-        <div className="overflow-hidden border-4 border-ink shadow-[8px_8px_0_var(--color-ink)]">
-          <iframe
-            title={`Map of ${site.venueShort}`}
-            src={`https://www.google.com/maps?q=${encodeURIComponent(site.mapQuery)}&output=embed`}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="block h-full min-h-80 w-full sepia-[.3]"
-          />
-        </div>
+            );
+          })}
+        </ul>
       </Container>
     </>
   );

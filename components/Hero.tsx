@@ -1,68 +1,111 @@
-import Link from "next/link";
+"use client";
+
+// Home hero. Same mechanic as the reference (scroll zooms through an ornate frame into a painted scene,
+// then the logo appears), re-skinned: the frame is a single-screen cinema, the scene a Retro India street,
+// and a kite drifts across instead of the blimp.
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { site } from "@/data/site";
-import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
-import FlipCountdown from "./FlipCountdown";
 
-// Hand-painted cinema-poster hero. Layers with data-depth move at different speeds (see ScrollFx).
+gsap.registerPlugin(ScrollTrigger);
+
 export default function Hero() {
+  const root = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = gsap.context(() => {
+      gsap
+        .timeline({ scrollTrigger: { trigger: root.current, start: "top top", end: "+=170%", scrub: true, pin: true } })
+        .to(".hero-curtain-l", { xPercent: -100, ease: "none", duration: 0.3 }, 0)
+        .to(".hero-curtain-r", { xPercent: 100, ease: "none", duration: 0.3 }, 0)
+        .to(".hero-frame", { scale: 9, ease: "power2.in", duration: 1 }, 0.15)
+        .to(".hero-frame", { autoAlpha: 0, duration: 0.12 }, 1.03)
+        .fromTo(".hero-scene", { scale: 1.3 }, { scale: 1, ease: "none", duration: 1.15 }, 0)
+        .to(".hero-kite", { x: "-45vw", y: "-8vh", rotate: -14, ease: "none", duration: 1.4 }, 0)
+        .fromTo(".hero-logo", { autoAlpha: 0, scale: 0.8, y: 40 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.35 }, 0.95);
+    }, root);
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section data-parallax aria-labelledby="hero-title" className="relative min-h-[100svh] overflow-hidden border-b-4 border-ink bg-marigold pt-16">
-      {/* rays */}
-      <div data-depth="0.5" className="absolute inset-0" aria-hidden="true">
+    <section ref={root} aria-labelledby="hero-title" className="relative h-[100dvh] overflow-hidden bg-marigold">
+      {/* painted scene */}
+      <div className="hero-scene absolute inset-0" aria-hidden="true">
         <div className="sunburst absolute left-1/2 top-[45%] size-[250vmax] -translate-x-1/2 -translate-y-1/2 animate-spin-slow" />
-      </div>
-      {/* sun */}
-      <div data-depth="0.3" className="absolute right-[-18vw] top-[10%] sm:right-[4vw]" aria-hidden="true">
-        <div className="relative size-[70vw] max-h-[520px] max-w-[520px] rounded-full border-[6px] border-ink bg-vermillion">
+        <div className="absolute right-[6vw] top-[14%] size-[38vmin] rounded-full border-[6px] border-ink bg-vermillion">
           <div className="halftone absolute inset-0 rounded-full text-ink/30" />
-          <div className="absolute inset-[12%] rounded-full border-4 border-dashed border-turmeric/70" />
+        </div>
+        <Bunting />
+        <div className="hero-kite absolute right-[34vw] top-[30%] w-[12vmin] min-w-14">
+          <Kite />
+        </div>
+        <div className="absolute inset-x-0 bottom-0">
+          <Skyline />
         </div>
       </div>
-      {/* skyline */}
-      <div data-depth="0.12" className="absolute inset-x-0 bottom-0" aria-hidden="true">
-        <Skyline />
-      </div>
-      {/* bunting */}
-      <Bunting />
 
-      <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center gap-6 px-4 pb-44 pt-12 sm:px-6 sm:pb-48">
-        <h1 id="hero-title" className="relative w-fit">
-          <span className="absolute -top-8 left-1 -rotate-3 font-deva text-4xl text-cream painted sm:-top-12 sm:text-6xl" aria-hidden="true">
-            मेराज़
-          </span>
-          <span className="painted block -rotate-2 font-display text-[clamp(4.2rem,17vw,12rem)] leading-[.82] text-cream misprint">
-            MERAZ
-            <span className="ml-2 inline-block rotate-3 text-turmeric sm:ml-4">7.0</span>
-          </span>
-        </h1>
-        <p className="max-w-xl font-poster text-3xl leading-tight sm:text-5xl">{site.tagline}</p>
-        <p className="w-fit -rotate-1 bg-ink px-3 py-1.5 font-mono text-sm font-bold tracking-wider text-turmeric sm:text-base">
-          {site.dateLabel.toUpperCase()} · {site.venueShort.toUpperCase()}
+      {/* logo, revealed after the zoom */}
+      <div className="hero-logo absolute inset-0 z-[2] grid place-content-center px-4 text-center motion-safe:opacity-0">
+        <p className="painted font-deva text-[clamp(2.5rem,8vw,5rem)] leading-none text-cream" aria-hidden="true">
+          मेराज़ ७.०
         </p>
-        <FlipCountdown target={site.startDate} />
-        <div className="flex flex-wrap gap-4">
-          <a href={site.registerUrl} target="_blank" rel="noopener noreferrer" className="btn bg-rani-deep text-cream">
-            Register <ArrowUpRight weight="bold" aria-hidden="true" />
-          </a>
-          <Link href="/events" className="btn bg-cream">
-            All events
-          </Link>
-        </div>
+        <h1 id="hero-title" className="painted -rotate-2 font-display text-[clamp(4rem,16vw,12rem)] leading-[.85] text-cream misprint">
+          MERAZ <span className="text-turmeric">7.0</span>
+        </h1>
+        <p className="mx-auto mt-3 w-fit bg-ink px-3 py-1 font-mono text-xs font-bold tracking-[.3em] text-turmeric sm:text-sm">
+          {site.theme.toUpperCase()} · {site.college.toUpperCase()}
+        </p>
+      </div>
 
-        <div className="absolute bottom-44 right-4 hidden size-28 rotate-12 place-content-center rounded-full border-4 border-double border-ink bg-cream text-center font-display text-sm leading-tight shadow-[5px_5px_0_var(--color-ink)] lg:grid" aria-hidden="true">
-          CERTIFIED
-          <span className="text-2xl text-vermillion-deep">U/F</span>
-          <span className="font-mono text-[9px]">UNLIMITED FUN</span>
+      {/* cinema facade with the screen cut out; scaled up to zoom "through" the screen */}
+      <div className="hero-frame absolute inset-0 z-[3] motion-reduce:hidden" aria-hidden="true">
+        <div className="facade absolute inset-0" />
+        <div className="absolute left-1/2 top-1/2 h-[var(--hole-h)] w-[var(--hole-w)] -translate-x-1/2 -translate-y-1/2">
+          {/* marquee sign */}
+          <div className="absolute bottom-full left-1/2 mb-[4vmin] w-max -translate-x-1/2 border-4 border-ink bg-turmeric px-5 py-2 text-center shadow-[6px_6px_0_var(--color-ink)]">
+            <p className="font-deva text-[clamp(1rem,2.6vw,1.8rem)] leading-none text-rani-deep">मेराज़ टॉकीज़</p>
+            <p className="font-display text-[clamp(1.2rem,3.4vw,2.6rem)] leading-none">MERAZ TALKIES</p>
+          </div>
+          {/* bulb ring round the screen */}
+          <div className="bulbs absolute -inset-[18px]" />
+          <div className="absolute -inset-[4px] border-4 border-ink" />
+          {/* curtains + pelmet inside the screen */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="hero-curtain-l curtain-panel absolute inset-y-0 left-0 w-[30%]" />
+            <div className="hero-curtain-r curtain-panel absolute inset-y-0 right-0 w-[30%]" />
+            <div className="pelmet absolute inset-x-0 top-0 h-[12%]" />
+          </div>
+          {/* now-showing posters either side (desktop) */}
+          <Poster className="right-full mr-[5vw] rotate-[-4deg]" top="MERAZ" mid="7.0" bottom="HOUSEFULL" tone="bg-rani-deep" />
+          <Poster className="left-full ml-[5vw] rotate-[3deg]" top="3 DIN" mid="फ़ुल" bottom="MASTI" tone="bg-teal-deep" />
+          {/* ticket window */}
+          <div className="absolute left-1/2 top-full mt-[5vmin] -translate-x-1/2 whitespace-nowrap border-4 border-ink bg-cream px-4 py-1 font-mono text-xs font-bold tracking-[.25em] shadow-[5px_5px_0_var(--color-ink)] sm:text-sm">
+            BOOKING OPEN · टिकट खिड़की
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+function Poster({ className, top, mid, bottom, tone }: { className: string; top: string; mid: string; bottom: string; tone: string }) {
+  return (
+    <div className={`absolute top-1/2 hidden w-[12vw] -translate-y-1/2 border-4 border-ink p-2 text-center text-cream shadow-[6px_6px_0_var(--color-ink)] lg:block ${tone} ${className}`}>
+      <div className="halftone absolute inset-0 text-ink/20" />
+      <p className="relative font-mono text-[0.8vw] font-bold tracking-widest">NOW SHOWING</p>
+      <p className="painted relative font-display text-[2.4vw] leading-none">{top}</p>
+      <p className="relative font-deva text-[3vw] leading-none text-turmeric">{mid}</p>
+      <p className="relative mt-1 bg-ink font-display text-[1vw]">{bottom}</p>
+    </div>
+  );
+}
+
 function Bunting() {
   const colours = ["#E0218A", "#0F7C7C", "#F3E6C8", "#D7263D", "#F2C14E"];
   return (
-    <svg className="absolute inset-x-0 top-14 h-10 w-full" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true">
+    <svg className="absolute inset-x-0 top-0 h-12 w-full" viewBox="0 0 1200 40" preserveAspectRatio="none">
       <path d="M0 4 Q600 30 1200 4" stroke="#1a1a1a" strokeWidth="2" fill="none" />
       {Array.from({ length: 30 }, (_, i) => {
         const x = i * 40 + 6;
@@ -73,10 +116,22 @@ function Bunting() {
   );
 }
 
+function Kite() {
+  return (
+    <svg viewBox="0 0 60 110" className="drop-shadow-[3px_3px_0_#1a1a1a]">
+      <path d="M30 2 56 34 30 70 4 34z" fill="#E0218A" stroke="#1a1a1a" strokeWidth="2.5" />
+      <path d="M30 2v68M4 34h52" stroke="#1a1a1a" strokeWidth="2" />
+      <path d="M30 2 56 34H30z" fill="#F2C14E" stroke="#1a1a1a" strokeWidth="2" />
+      <path d="M30 70q-8 10 2 18t-4 20" fill="none" stroke="#1a1a1a" strokeWidth="2" />
+      <path d="M26 82l6-3-1 6zM24 96l7-2-2 6z" fill="#0F7C7C" stroke="#1a1a1a" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 // Original skyline: domes, a clock tower, a water tank, a radio mast and palms.
 function Skyline() {
   return (
-    <svg viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" className="block h-[28vh] min-h-40 w-full">
+    <svg viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" className="block h-[30vh] min-h-40 w-full">
       <g fill="#0a5f5f" stroke="#1a1a1a" strokeWidth="3">
         <rect x="-5" y="170" width="1210" height="60" />
         <rect x="40" y="110" width="120" height="70" />

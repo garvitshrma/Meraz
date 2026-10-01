@@ -36,17 +36,17 @@ Rule: bright rani, teal and vermillion never carry small text. Use the `-deep` t
 
 ## Layout
 
-- One signature per section, never repeated: poster hero, magazine split, ticket zig-zag, sticky heading + departure board, broken-grid posters, projector, matchbox grid with a double-size title sponsor, corkboard.
-- Max 3 eyebrows on the home page. One marquee per page.
-- One CTA label per intent: "Register" (registration), "All events" (event list).
+- Information architecture, buttons and behaviours mirror meraz.iitbhilai.ac.in (see README feature map). Do not add pages or features the reference does not have without asking.
+- Home: loader, cinema-screen zoom hero, aftermovie TV, flip menu, fixed REGISTER. Inner pages: Back to Home + poster header.
+- Accordions (events, passes) only use flex-basis on md+; on mobile they stack and grow to content.
 
 ## Motion
 
-- GSAP ScrollTrigger: hero parallax, `[data-reveal]` batch reveals. Motion (motion/react): tickets, filter, poster stamp/peel, projector, corkboard drag. Lenis smooth scroll.
+- GSAP ScrollTrigger: pinned hero zoom, pinned TV scale, `[data-reveal]` batch reveals. CSS transitions: curtains, flip button, menu slide, carousel, accordions. Lenis smooth scroll.
 - Everything collapses under `prefers-reduced-motion`.
 
 ## Deliberate exceptions to the taste ban list
 
-- Vinyl custom cursor and CRT glow: explicitly requested in the brief.
+- CRT glow on the loader: part of the CRT TV metaphor.
 - Light-only theme: print-emulating palette; `color-scheme: light`.
 - Hand-drawn SVG art (skyline, silhouettes, emblems, dancers): requested original artwork. UI icons come from Phosphor only.

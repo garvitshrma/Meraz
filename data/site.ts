@@ -1,37 +1,21 @@
-// Edit this file to change fest-wide details. Everything marked PLACEHOLDER needs real info.
+// Fest-wide details. Anything marked PLACEHOLDER needs the real Meraz 7.0 value.
 
 export const site = {
   name: "MERAZ 7.0",
   college: "IIT Bhilai",
+  theme: "Retro India",
   tagline: "Rewind. Replay. Rejoice.", // PLACEHOLDER
   hindiTagline: "फिर से वही दौर", // "that era, once again"
-  startDate: "2027-02-19T10:00:00+05:30", // PLACEHOLDER: countdown target
-  dateLabel: "19-21 Feb 2027", // PLACEHOLDER
-  venue: "IIT Bhilai Campus, Kutelabhata, Durg, Chhattisgarh", // PLACEHOLDER
-  venueShort: "IIT Bhilai",
-  mapQuery: "IIT Bhilai",
-  registerUrl: "https://example.com/meraz-register", // PLACEHOLDER
-  email: "meraz@example.com", // PLACEHOLDER
-  phone: "+91 00000 00000", // PLACEHOLDER
-  url: "https://meraz.vercel.app", // PLACEHOLDER: production URL, used for SEO/OG
-  socials: [
-    { label: "Instagram", href: "https://instagram.com/" }, // PLACEHOLDER
-    { label: "YouTube", href: "https://youtube.com/" }, // PLACEHOLDER
-    { label: "LinkedIn", href: "https://linkedin.com/" }, // PLACEHOLDER
-    { label: "X / Twitter", href: "https://x.com/" }, // PLACEHOLDER
-  ],
+  url: "https://meraz.iitbhilai.ac.in", // used for SEO / Open Graph
+  aftermovie: "/aftermovie.mp4", // Meraz'24 aftermovie, same file as the current site
+  passQueryPhone: "+91 94079 00542",
 };
 
-// Radio-dial stations = site sections. Order = order on the dial.
-export const stations = [
-  { href: "/", label: "Home", hindi: "घर", freq: "88.0" },
-  { href: "/events", label: "Events", hindi: "कार्यक्रम", freq: "91.2" },
-  { href: "/schedule", label: "Schedule", hindi: "समय-सारणी", freq: "93.5" },
-  { href: "/pro-nites", label: "Pro-Nites", hindi: "रातें", freq: "95.0" },
-  { href: "/workshops", label: "Workshops", hindi: "कार्यशाला", freq: "97.3" },
-  { href: "/sponsors", label: "Sponsors", hindi: "प्रायोजक", freq: "99.1" },
-  { href: "/team", label: "Team", hindi: "टोली", freq: "101.4" },
-  { href: "/gallery", label: "Gallery", hindi: "झलकियाँ", freq: "103.7" },
-  { href: "/faq", label: "FAQ", hindi: "सवाल", freq: "105.2" },
-  { href: "/contact", label: "Contact", hindi: "संपर्क", freq: "107.9" },
+// Same five links, same order, as the menu on meraz.iitbhilai.ac.in
+export const navLinks = [
+  { href: "/about", label: "About", hindi: "परिचय", freq: "91.2" },
+  { href: "/events", label: "Events", hindi: "कार्यक्रम", freq: "93.5" },
+  { href: "/sponsors", label: "Sponsors", hindi: "प्रायोजक", freq: "97.3" },
+  { href: "/passes", label: "Passes", hindi: "पास", freq: "101.4" },
+  { href: "/contact", label: "Contact", hindi: "संपर्क", freq: "105.2" },
 ];

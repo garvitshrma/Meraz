@@ -21,7 +21,6 @@
   --font-mono: var(--font-courier), ui-monospace, monospace;
 
   --animate-spin-slow: spin 120s linear infinite;
-  --animate-marquee: marquee 30s linear infinite;
 }
 
 :root {
@@ -119,26 +118,6 @@ p {
 @utility sunburst {
   background: repeating-conic-gradient(from 0deg, var(--ray-a, #f4a300) 0deg 9deg, var(--ray-b, #f2c14e) 9deg 18deg);
 }
-@utility paper {
-  background-color: var(--color-cream);
-  background-image: var(--noise);
-  background-blend-mode: multiply;
-}
-@utility cork {
-  background-color: #b8834f;
-  background-image: radial-gradient(rgb(90 50 20 / 0.5) 1px, transparent 1.6px), radial-gradient(rgb(255 220 170 / 0.35) 1px, transparent 1.4px), var(--noise);
-  background-size: 9px 9px, 13px 13px, 180px;
-  background-blend-mode: normal, normal, multiply;
-}
-@utility truck-border {
-  background: repeating-linear-gradient(90deg, var(--color-vermillion) 0 24px, var(--color-marigold) 24px 48px, var(--color-teal) 48px 72px, var(--color-rani) 72px 96px);
-}
-@utility zigzag {
-  background:
-    linear-gradient(135deg, var(--zz, #1a1a1a) 25%, transparent 25%) -12px 0,
-    linear-gradient(225deg, var(--zz, #1a1a1a) 25%, transparent 25%) -12px 0;
-  background-size: 24px 24px;
-}
 
 /* Chunky print-style button */
 @utility btn {
@@ -161,11 +140,6 @@ p {
   }
 }
 
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
 
 /* ---------- Scroll reveal (GSAP sets final state) ---------- */
 @media (prefers-reduced-motion: no-preference) {
@@ -175,30 +149,36 @@ p {
   }
 }
 
-/* ---------- CRT loader (pure CSS, runs before JS) ---------- */
+/* ---------- Home loader (CRT) ---------- */
 .crt-loader {
   position: fixed;
   inset: 0;
   z-index: 300;
   display: grid;
   place-items: center;
-  background: #060606;
-  animation: loader-out 3.7s forwards;
-  cursor: pointer;
+  background: #0b0b0b;
+  /* safety net: fades out on its own if JS never runs */
+  animation: loader-out 0.6s 12s forwards;
 }
 html[data-seen] .crt-loader {
   display: none;
+}
+.crt-done {
+  animation: loader-out 0.5s 0.4s forwards;
 }
 .crt-screen {
   position: relative;
   width: min(92vw, 820px);
   aspect-ratio: 4 / 3;
-  max-height: 78svh;
+  max-height: 80svh;
   border-radius: 28px / 36px;
   overflow: hidden;
   background: #111;
   box-shadow: 0 0 80px rgb(242 193 78 / 0.25), inset 0 0 60px rgb(0 0 0 / 0.9);
-  animation: crt-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both, crt-off 0.45s ease-in 3.1s forwards;
+  animation: crt-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.crt-done .crt-screen {
+  animation: crt-off 0.45s ease-in forwards;
 }
 .crt-screen::after {
   content: "";
@@ -207,34 +187,11 @@ html[data-seen] .crt-loader {
   background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.35) 0 1px, transparent 1px 3px), radial-gradient(ellipse, transparent 60%, rgb(0 0 0 / 0.6));
   pointer-events: none;
 }
-.crt-layer {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-}
 .crt-static {
   background: var(--noise), #888;
   background-size: 140px;
   filter: contrast(3) grayscale(1);
-  animation: phase-static 3.4s both, noise-shift 0.18s steps(3) infinite;
-}
-.crt-testcard {
-  animation: phase-testcard 3.4s both;
-}
-.crt-title {
-  display: grid;
-  place-content: center;
-  text-align: center;
-  background: radial-gradient(circle, #1f1405, #050505);
-  animation: phase-title 3.4s both;
-}
-.crt-title strong {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(3rem, 12vw, 7rem);
-  color: var(--color-turmeric);
-  text-shadow: 0 0 10px var(--color-marigold), 0 0 40px var(--color-rani), 3px 0 0 var(--color-teal);
-  animation: flicker 0.9s steps(2) 2.1s 2;
+  animation: noise-shift 0.18s steps(3) infinite;
 }
 @keyframes crt-on {
   0% { transform: scale(0, 0.004); filter: brightness(5); }
@@ -246,78 +203,13 @@ html[data-seen] .crt-loader {
   60% { transform: scale(1, 0.004); filter: brightness(4); }
   100% { transform: scale(0, 0); }
 }
-@keyframes phase-static {
-  0%, 36% { opacity: 1; }
-  38%, 100% { opacity: 0; }
-}
-@keyframes phase-testcard {
-  0%, 37% { opacity: 0; }
-  38%, 61% { opacity: 1; }
-  63%, 100% { opacity: 0; }
-}
-@keyframes phase-title {
-  0%, 62% { opacity: 0; }
-  68%, 100% { opacity: 1; }
-}
 @keyframes loader-out {
-  0%, 93% { opacity: 1; visibility: visible; }
-  100% { opacity: 0; visibility: hidden; }
+  to { opacity: 0; visibility: hidden; }
 }
 @keyframes noise-shift {
   33% { background-position: 37px 11px; }
   66% { background-position: -23px 51px; }
   100% { background-position: 11px -29px; }
-}
-@keyframes flicker {
-  50% { opacity: 0.55; }
-}
-
-/* ---------- Radio static (tuning crackle) ---------- */
-.tv-static {
-  background: var(--noise), #777;
-  background-size: 120px;
-  filter: contrast(2.6) grayscale(1);
-  animation: noise-shift 0.12s steps(3) infinite, static-flash 0.65s ease-out forwards;
-}
-@keyframes static-flash {
-  0% { opacity: 0; }
-  15%, 55% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* ---------- Flip clock ---------- */
-.flip-digit {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  width: 1.15em;
-  height: 1.45em;
-  background: linear-gradient(#262626 50%, #1a1a1a 50%);
-  color: var(--color-turmeric);
-  font-variant-numeric: tabular-nums;
-  border-radius: 0.14em;
-  box-shadow: 0 3px 0 #0b0b0b, inset 0 0 0 1px rgb(255 255 255 / 0.06);
-  perspective: 300px;
-  overflow: hidden;
-}
-.flip-digit::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: #0b0b0b;
-}
-.flip-card {
-  display: block;
-  animation: flip 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
-  transform-origin: 50% 50%;
-  backface-visibility: hidden;
-}
-@keyframes flip {
-  from { transform: rotateX(-90deg); opacity: 0.3; }
-  to { transform: rotateX(0); opacity: 1; }
 }
 
 /* ---------- Split-flap tile ---------- */
@@ -340,102 +232,151 @@ html[data-seen] .crt-loader {
   background: #0b0b0b;
 }
 
-/* ---------- Cassette ---------- */
-.reel {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-[data-on="true"] .reel {
-  animation: spin 1.8s linear infinite;
-}
-
-/* ---------- Vinyl cursor ---------- */
-.vinyl-cursor,
-.vinyl-cursor * {
-  cursor: none !important;
-}
-.vinyl-cursor input,
-.vinyl-cursor textarea {
-  cursor: text !important;
-}
-.cursor {
-  position: fixed;
-  left: 0;
+/* ---------- Page-transition curtains ---------- */
+.curtain {
+  position: absolute;
   top: 0;
-  z-index: 500;
-  pointer-events: none;
-  transform: translate(-100px, -100px);
-}
-.vinyl {
-  display: block;
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #1a1a1a 0 2px, var(--color-rani) 2.5px 7px, #111 7.5px), repeating-radial-gradient(circle, #111 0 1px, #2a2a2a 1.5px 2.5px);
-  box-shadow: 0 0 0 2px var(--color-cream), 2px 3px 0 3px rgb(0 0 0 / 0.3);
-  animation: spin 1.2s linear infinite;
-  transition: width 0.2s, height 0.2s, margin 0.2s;
-}
-.cursor[data-hover="1"] .vinyl {
-  width: 48px;
-  height: 48px;
-  margin: -24px 0 0 -24px;
-  animation-duration: 0.5s;
+  height: 100%;
+  width: 50.5%;
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 18%, transparent 80%, rgb(0 0 0 / 0.4)),
+    repeating-linear-gradient(90deg, #6d0b18 0 10px, #b01e30 22px, #d7263d 30px, #8e1020 44px, #6d0b18 56px);
+  border-bottom: 14px solid var(--color-turmeric);
+  box-shadow: inset 0 -6px 0 #a87a14;
+  transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
 }
 
-/* ---------- Konami dance glitch ---------- */
-.disco {
-  background: repeating-conic-gradient(from 0deg, #e0218a 0 15deg, #f4a300 15deg 30deg, #0f7c7c 30deg 45deg, #d7263d 45deg 60deg);
+/* ---------- Hero cinema facade (screen cut out with a mask) ---------- */
+.hero-frame {
+  --hole-w: min(58vw, 92vh);
+  --hole-h: calc(var(--hole-w) * 0.6);
+  transform-origin: 50% 50%;
+}
+@media (orientation: portrait) {
+  .hero-frame {
+    --hole-w: 80vw;
+    --hole-h: min(calc(80vw * 1.2), 52vh);
+  }
+}
+.facade {
+  background:
+    radial-gradient(circle at 50% 120%, rgb(242 193 78 / 0.25), transparent 60%),
+    repeating-conic-gradient(from 0deg at 50% 100%, #3a1a10 0 6deg, #2b120b 6deg 12deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) center / var(--hole-w) var(--hole-h) no-repeat,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) center / var(--hole-w) var(--hole-h) no-repeat exclude,
+    linear-gradient(#000 0 0);
+}
+.bulbs {
+  /* ring of marquee bulbs */
+  background:
+    radial-gradient(circle, #fff4c2 0 3px, #f2c14e 4px, transparent 5.5px) 0 0 / 22px 22px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) center / calc(100% - 28px) calc(100% - 28px) no-repeat,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) center / calc(100% - 28px) calc(100% - 28px) no-repeat exclude,
+    linear-gradient(#000 0 0);
+  background-color: #2b120b;
+  outline: 4px solid var(--color-ink);
+}
+.curtain-panel {
+  background: repeating-linear-gradient(90deg, #6d0b18 0 8px, #b01e30 18px, #d7263d 24px, #8e1020 34px, #6d0b18 42px);
+  box-shadow: inset 0 0 30px rgb(0 0 0 / 0.5);
+}
+.pelmet {
+  background: var(--color-vermillion-deep);
+  border-bottom: 6px solid var(--color-turmeric);
+  -webkit-mask: radial-gradient(circle at 50% 0, #000 72%, transparent 73%) 0 0 / 48px 100%;
+  mask: radial-gradient(circle at 50% 0, #000 72%, transparent 73%) 0 0 / 48px 100%;
+}
+
+/* ---------- Spinning record (menu + about decoration) ---------- */
+.record {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #1a1a1a 0 3%, var(--color-rani-deep) 3.5% 16%, #f2c14e 16.5% 18%, #111 18.5%),
+    repeating-radial-gradient(circle, #111 0 2px, #2a2a2a 3px 5px);
+  box-shadow: 0 0 0 6px var(--color-ink), 10px 10px 0 6px rgb(0 0 0 / 0.35);
   animation: spin 6s linear infinite;
 }
-.glitch {
-  position: relative;
-  animation: glitch 0.35s steps(2) infinite;
+
+/* ---------- Home menu flip button ---------- */
+.flip-btn {
+  perspective: 400px;
 }
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
+.flip-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.flip-btn[data-open="true"] .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-face {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  backface-visibility: hidden;
 }
-.glitch::before {
-  color: var(--color-teal);
-  transform: translate(-6px, 2px);
-  clip-path: inset(10% 0 55% 0);
-  mix-blend-mode: screen;
-}
-.glitch::after {
-  color: var(--color-rani);
-  transform: translate(6px, -2px);
-  clip-path: inset(60% 0 5% 0);
-  mix-blend-mode: screen;
-}
-@keyframes glitch {
-  0% { transform: translate(0) skewX(0); }
-  50% { transform: translate(-4px, 2px) skewX(-6deg); }
-  100% { transform: translate(3px, -1px) skewX(4deg); }
-}
-.dancer {
-  animation: dance 0.5s ease-in-out infinite alternate;
-  transform-origin: 50% 100%;
-}
-.dancer:nth-child(even) {
-  animation-direction: alternate-reverse;
-}
-@keyframes dance {
-  from { transform: rotate(-12deg) translateY(0); }
-  to { transform: rotate(12deg) translateY(-18px); }
+.flip-back {
+  transform: rotateY(180deg);
 }
 
-/* ---------- Dialog ---------- */
-dialog::backdrop {
-  background: rgb(26 26 26 / 0.75);
+/* ---------- TV room wallpaper ---------- */
+.wallpaper {
+  background-color: #1f1712;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgb(242 193 78 / 0.12) 0 6px, transparent 7px),
+    radial-gradient(circle at 75% 75%, rgb(15 124 124 / 0.18) 0 10px, transparent 11px);
+  background-size: 48px 48px;
+}
+
+/* ---------- Event carousel ---------- */
+.carousel-card {
+  /* every card sits in the same grid cell, so the track is as tall as the tallest ticket */
+  grid-area: 1 / 1;
+  margin: 0 auto;
+  width: min(100%, 26rem);
+  transition: transform 0.5s cubic-bezier(0.3, 1.2, 0.5, 1), opacity 0.4s;
+}
+.carousel-card[data-pos="active"] {
+  z-index: 3;
+  transform: none;
+}
+.carousel-card[data-pos="right"] {
+  z-index: 2;
+  opacity: 0.55;
+  transform: translateX(62%) rotateY(-28deg) scale(0.8);
+}
+.carousel-card[data-pos="left"] {
+  z-index: 2;
+  opacity: 0.55;
+  transform: translateX(-62%) rotateY(28deg) scale(0.8);
+}
+.carousel-card[data-pos="hide"] {
+  z-index: 1;
+  opacity: 0;
+  transform: scale(0.6);
+  pointer-events: none;
 }
 
 /* ---------- Reduced motion: clean static version ---------- */
 @media (prefers-reduced-motion: reduce) {
   .crt-loader {
+    display: none;
+  }
+  .curtain {
     display: none;
   }
   *,
@@ -454,12 +395,12 @@ dialog::backdrop {
   }
 }
 
-/* Postage-stamp perforated edge */
-.stamp-edge {
-  -webkit-mask:
-    linear-gradient(#000 0 0) center / calc(100% - 12px) calc(100% - 12px) no-repeat,
-    radial-gradient(circle, transparent 4px, #000 4.5px) -6px -6px / 12px 12px round;
-  mask:
-    linear-gradient(#000 0 0) center / calc(100% - 12px) calc(100% - 12px) no-repeat,
-    radial-gradient(circle, transparent 4px, #000 4.5px) -6px -6px / 12px 12px round;
+@media print {
+  body::before,
+  body::after {
+    display: none;
+  }
+  .btn {
+    display: none !important;
+  }
 }

@@ -25,7 +25,7 @@ export default function OgImage() {
           <div style={{ display: "flex", fontSize: 44, color: "#1A1A1A", marginTop: 10 }}>{site.tagline}</div>
           <div style={{ display: "flex", marginTop: 30, gap: 20 }}>
             <div style={{ display: "flex", background: "#1A1A1A", color: "#F2C14E", fontSize: 34, padding: "10px 24px" }}>RETRO INDIA</div>
-            <div style={{ display: "flex", background: "#E0218A", color: "#F3E6C8", fontSize: 34, padding: "10px 24px" }}>{site.dateLabel}</div>
+            <div style={{ display: "flex", background: "#E0218A", color: "#F3E6C8", fontSize: 34, padding: "10px 24px" }}>{site.college.toUpperCase()}</div>
           </div>
         </div>
       </div>

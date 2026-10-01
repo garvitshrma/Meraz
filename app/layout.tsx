@@ -3,11 +3,8 @@ import { Bungee, Courier_Prime, Rozha_One, Space_Grotesk, Yatra_One } from "next
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import { site } from "@/data/site";
-import { SoundProvider } from "@/lib/sound";
-import Loader from "@/components/Loader";
-import RadioNav from "@/components/RadioNav";
-import Footer from "@/components/Footer";
-import { Cassette, Cursor, Konami, ScrollFx } from "@/components/Extras";
+import { BackToHome, TransitionProvider } from "@/components/Transition";
+import ScrollFx from "@/components/ScrollFx";
 
 const bungee = Bungee({ weight: "400", subsets: ["latin"], variable: "--font-bungee", display: "swap" });
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
@@ -15,7 +12,7 @@ const rozha = Rozha_One({ weight: "400", subsets: ["latin", "devanagari"], varia
 const yatra = Yatra_One({ weight: "400", subsets: ["latin", "devanagari"], variable: "--font-yatra", display: "swap", preload: false });
 const courier = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-courier", display: "swap", preload: false });
 
-const description = `${site.name}, the annual techno-cultural fest of ${site.college}. Retro India edition: ${site.dateLabel}. ${site.tagline}`;
+const description = `${site.name}, the annual techno-cultural fest of ${site.college}. ${site.theme} edition. ${site.tagline}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -28,8 +25,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#F3E6C8" };
 
-// Runs before paint: marks JS as available and skips the CRT loader on repeat visits in a session.
-const boot = `try{var d=document.documentElement;d.classList.add('js');if(sessionStorage.getItem('meraz-seen'))d.dataset.seen='1';sessionStorage.setItem('meraz-seen','1')}catch(e){}`;
+// Runs before paint: marks JS as available and skips the home loader if it already played this session.
+const boot = `try{var d=document.documentElement;d.classList.add('js');if(sessionStorage.getItem('meraz-seen'))d.dataset.seen='1'}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -41,16 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <SoundProvider>
-          <Loader />
-          <RadioNav />
+        <TransitionProvider>
+          <BackToHome />
           <main id="main">{children}</main>
-          <Footer />
-          <Cassette />
-          <Konami />
-          <Cursor />
           <ScrollFx />
-        </SoundProvider>
+        </TransitionProvider>
       </body>
     </html>
   );

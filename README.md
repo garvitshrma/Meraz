@@ -2,7 +2,9 @@
 
 Official website for MERAZ 7.0, the annual techno-cultural fest of IIT Bhilai.
 
-Next.js (App Router) · TypeScript · Tailwind CSS v4 · GSAP ScrollTrigger · Motion (Framer Motion) · Lenis
+Features, pages and buttons match the current site at [meraz.iitbhilai.ac.in](https://meraz.iitbhilai.ac.in); only the theme changes from Steampunk to Retro India.
+
+Next.js (App Router) · TypeScript · Tailwind CSS v4 · GSAP ScrollTrigger · Lenis
 
 ## Run locally
 
@@ -16,30 +18,37 @@ npm run build   # production build
 
 Import the repo on Vercel. `vercel.json` sets the framework to Next.js; no env vars needed.
 
-## Editing content (no coding needed)
+## Feature map (reference → Retro India)
+
+| Reference site | This site |
+|---|---|
+| Gear loader with % progress, then smoke intro | CRT TV loader with real % progress (fonts, page, aftermovie), CRT switch-off reveal |
+| Scroll zoom through an ornate frame into a city, blimp, logo | Scroll zoom through a single-screen cinema ("Meraz Talkies") into a painted street, kite, logo |
+| Aftermovie in a pinned TV, scales 1.72 → 1, plays when visible | Same, inside an old wooden TV set |
+| Flip button: page slides away, full-screen menu with 3D gear | Same flip button and slide, menu with a spinning record |
+| Fixed REGISTER button → /passes | Same |
+| Shutter transition between pages | Cinema curtains ("Interval") |
+| Back to Home on inner pages | Same |
+| About: text, theme, 3 stats | Same sections, Retro India copy |
+| Events: category tabs, 3D carousel, IIT / non-IIT register rules | Same, tickets as carousel cards |
+| Sponsors by tier | Same sponsors and logos, as matchbox labels |
+| Passes carousel with Buy Now forms | Same passes and forms, as railway tickets |
+| Contact: 9 cards | Same cards as postcards; phone numbers and email are tappable |
+| /timeline (unlinked) with Download Full Schedule | Split-flap departure board; the button opens print / Save as PDF |
+
+## Editing content
 
 | What | File |
-|------|------|
-| Fest name, dates, venue, tagline, register link, email, phone, socials | `data/site.ts` |
-| Events (also drives the schedule board, workshops page, event pages) | `data/events.ts` |
-| Pro-Nite artists, sponsors, team, gallery slides, FAQs | `data/content.ts` |
-| Team photos | put in `public/team/`, set `photo: "/team/name.jpg"` |
-| Gallery photos | put in `public/gallery/`, set `src: "/gallery/file.jpg"` |
+|---|---|
+| Name, tagline, aftermovie path, pass query phone, menu links | `data/site.ts` |
+| Event categories, sub-events and registration links | `data/events.ts` |
+| About text, stats, sponsors, passes, contacts, timeline | `data/content.ts` |
+| Sponsor logos | `public/sponsors/` |
+| Aftermovie | `public/aftermovie.mp4` |
 
-## Placeholders to replace
+## To update for Meraz 7.0
 
-- `data/site.ts`: tagline, `startDate` (countdown), `dateLabel`, venue, `registerUrl`, email, phone, `url` (production domain), all social links
-- `components/EventTicket.tsx`: `dayDate` array (the date printed on tickets for Day 1/2/3)
-- `data/events.ts`: every event's title, time, venue, prize, rules, coordinator name and phone
-- `data/content.ts`: artist names (Night 3 is set to `revealed: false`), sponsor names/links/tiers, team names/roles/photos, gallery slides/photos, FAQ answers (travel info especially)
-- Home page stats (`3 / 50+ / 20K+ / 7th`) and marquee text in `app/page.tsx`
-
-## Signature bits
-
-- CRT TV loader (pure CSS, once per session, off for reduced motion)
-- Radio-dial navigation: drag/click/arrow keys, with a plain link list in the same dialog
-- Cinema-ticket events with category filter, railway split-flap schedule board
-- Pro-Nite poster: "Coming Soon" stamp, then poster peels off
-- Matchbox sponsors, draggable corkboard team, slide-projector gallery
-- Cassette music toggle: synthesised tanpura drone (Web Audio, no files), muted by default
-- Easter eggs: Konami code (↑↑↓↓←→←→BA), or tap the footer "Horn OK Please" sign 7 times on mobile. Vinyl cursor on desktop.
+- Event registration links in `data/events.ts` are last year's (Meraz 6.0) Google Forms / Unstop links.
+- Pass prices and Buy Now forms in `data/content.ts` are Meraz 6.0's.
+- Sponsors, contacts and the timeline (placeholder dates March 15-17) are carried over from the current site.
+- Tagline in `data/site.ts` is a placeholder.
