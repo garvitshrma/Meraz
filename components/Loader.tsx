@@ -2,7 +2,8 @@
 
 // Home-page preloader, like the gear + percentage loader on the reference site.
 // Progress is real: fonts, the page load, and the aftermovie download (warms the cache for the TV section).
-// Server-rendered so it covers the page before JS runs; hidden by CSS on repeat visits and for reduced motion.
+// Server-rendered so it covers the page before JS runs. Plays on every refresh; skipped when navigating
+// back to home within the same page load, and for reduced motion.
 import { useEffect, useState } from "react";
 import { getLenis } from "./ScrollFx";
 
@@ -37,10 +38,7 @@ export default function Loader({ video }: { video: string }) {
       setPct(Math.floor(shown));
       if (shown >= 100) {
         setDone(true);
-        try {
-          sessionStorage.setItem("meraz-seen", "1");
-        } catch {}
-        root.dataset.seen = "1"; // CSS then hides the loader instantly on later visits to home
+        root.dataset.seen = "4"; // lives until the next refresh, so in-app trips back to home skip it
         setTimeout(() => {
           setGone(true);
           root.style.overflow = "";

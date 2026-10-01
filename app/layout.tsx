@@ -26,8 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#F3E6C8" };
 
-// Runs before paint: marks JS as available and skips the home loader if it already played this session.
-const boot = `try{var d=document.documentElement;d.classList.add('js');if(sessionStorage.getItem('meraz-seen'))d.dataset.seen='1'}catch(e){}`;
+// Runs before paint: marks JS as available. The home loader plays on every full page load.
+const boot = `try{document.documentElement.classList.add('js')}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
