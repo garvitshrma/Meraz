@@ -1,0 +1,777 @@
+"use client";
+
+// Road scene: the section pins; scrolling walks the runner toward the camera while it swings from his face
+// round to his back, then scrubs him flip-jumping over a Delhi Police barricade, then walking on down the road.
+// The "Flip jump" clip carries root motion (it travels a few metres forward), so the barricade sits where his
+// hand lands mid-vault. Pedestrians walk the footpaths in real time while the section is on screen.
+// Loading: three.js ships with the page (the scene is the page), the opening shot's few assets are preloaded from the
+// HTML (app/page.tsx) and drawn as soon as they land, and the rest of the street streams in behind them.
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import * as THREE from "three";
+import type { Object3D, SkinnedMesh } from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const ROAD_SCALE = 0.01; // road.glb is in centimetres
+// Where the left hand rests mid-vault (t ≈ 0.5–0.7 s), measured from the clip: the barricade top goes here.
+const HAND_PLANT = { y: 0.9, z: 1.95 };
+const HAZE = 0x9ca1b1; // the sky panorama's colour at the horizon, so the far road fades into it
+// The "MERAZ 7.0" sign: metres wide, centre height, behind his start. The opening shot tilts up by tilt (rise per
+// metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
+const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
+// Scroll beats: [0, ORBIT] walk while the camera swings round, [ORBIT, LAND] the jump, [LAND, STOP] two steps on,
+// [STOP, 1] he stands, with the auto (which set off when he jumped) pulled up beside him.
+const ORBIT = 0.3;
+const LAND = 0.65;
+const STOP = 0.8;
+const WALK_CYCLES = 3; // walk cycles (two steps each) during the swing
+const WALK_ON_CYCLES = 1; // and after landing
+const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stretches the dhoti (and the saree)
+const BLEND = 0.03; // share of the scroll spent blending walk into jump, jump into walk, and walk into standing
+// Auto rickshaw: comes up from behind on his left (as seen from the chase camera, i.e. +x) once he jumps, and slows
+// to a stop beside him as he stops. It slides; the model's wheels are part of one mesh and cannot turn.
+const AUTO = { height: 1.75, x: 1.8, behind: 4 }; // metres: height, line, start behind his jump spot (in frame at once)
+// Roadside props, scattered along both kerbs. front: yaw that turns the model's front to face +z.
+// size: target height in metres (models come at mixed scales). weight: how often it is picked.
+const PROPS = [
+  { name: "house-1", front: 0, size: 4.3, weight: 3 },
+  { name: "house-2", front: Math.PI, size: 5, weight: 3 }, // porch faces -z
+  { name: "hut", front: 0, size: 2.2, weight: 2 },
+  { name: "wall-1", front: -Math.PI / 2, size: 2.2, weight: 2 }, // long side along z, posters face +x
+  { name: "wall-2", front: Math.PI / 2, size: 3, weight: 1 }, // posters face -x
+];
+const STREET = { from: -45, to: 75 }; // z range lined with props, past the fog both ways
+const TREES = [
+  { name: "tree-1", size: 5.5 },
+  { name: "tree-2", size: 5.3 },
+  { name: "tree-3", size: 7 },
+];
+// Footpath: the road model's kerb strip (about 1 m) plus a concrete strip of PAVE metres beyond it. Walking lanes
+// sit at these offsets from the kerb's outer edge, 1.15 m apart; trees and standing people go along the outer edge.
+const PAVE = 3.2;
+const LANE_X = [-0.45, 0.7, 1.85]; // inner, middle, slow
+const EDGE_X = PAVE - 0.5;
+// Pedestrians (height in metres). Within a lane everyone walks at the lane's one speed in one direction (their steps
+// sped up or slowed to match), so gaps never close and nobody collides; neighbouring lanes walk opposite ways.
+// Old men keep their own slow lane: their walk is a third of the pace of the others.
+const PEOPLE = { man: 1.75, oldman: 1.65, woman: 1.6 };
+const LANES = [
+  { side: 1, lane: 0, dir: -1, mix: ["man", "woman"], gap: [18, 30] },
+  { side: 1, lane: 1, dir: 1, mix: ["man", "woman"], gap: [18, 30] },
+  { side: 1, lane: 2, dir: -1, mix: ["oldman"], gap: [35, 50] },
+  { side: -1, lane: 0, dir: 1, mix: ["man", "woman"], gap: [18, 30] },
+  { side: -1, lane: 1, dir: -1, mix: ["man", "woman"], gap: [18, 30] },
+  // no slow lane on the -x footpath: the stall stands on that part of it
+] as const;
+const WALKWAY = { from: -45, len: 110 }; // pedestrians loop over this z range; the ends are lost in the haze
+// People with no skeleton (they cannot be animated) stand about on the footpath's outer edge, facing the road.
+const STANDING = { "stand-1": 1.75, "stand-2": 1.58, "stand-3": 1.62 };
+const STANDING_PER_SIDE = 4;
+// Stall on the right-hand footpath (right as seen from the chase camera, i.e. -x) level with the barricade, on the
+// footpath's outer part, clear of the two walking lanes. The keeper is a bust, standing behind the counter.
+const STALL = { height: 2.6, keeper: 0.95, keeperBase: 0.75 };
+const CREDITS = [
+  ["Road", "ahmagh2e", "https://sketchfab.com/3d-models/road--avenue--street-7f657c3eceb343ceaf5e542c50dab27a"],
+  ["Barricade", "InnoFrame", "https://sketchfab.com/3d-models/delhi-police-security-barricade-3d-model-f17ecc171f3441ceb0e9effd90f31c1f"],
+  ["Runner", "As7 3d models", "https://sketchfab.com/3d-models/spiderman-india-pavitr-prabhakar-ed5f6c5ba8a94c98aee68b5b6ed1f29b"],
+  ["House", "bhagathartworks", "https://sketchfab.com/3d-models/indian-house-old-3beb064c1ae841c5beb556b5aa267036"],
+  ["House", "nayan pachori", "https://sketchfab.com/3d-models/indian-house-gameasset-3f2b22855bd14cbf877b1ab5f6689582"],
+  ["Hut", "magann", "https://sketchfab.com/3d-models/old-hut-1b9c7573ea7b4661814296b20a83a6ae"],
+  ["Wall", "saksham12x", "https://sketchfab.com/3d-models/indian-wall-for-hindi-kahaniya-465b9e3c9d2d4a4cbf24fd4fe447eb60"],
+  ["Dhaba wall", "saksham12x", "https://sketchfab.com/3d-models/indian-dhaba-wall-02eeca6d50404e769aa9298ce80ca450"],
+  ["Man", "pankhkhan", "https://sketchfab.com/3d-models/indian-man-with-red-clothes-23b1805e473d4e5cb3e439b576ca39a9"],
+  ["Old man", "anandmohan662", "https://sketchfab.com/3d-models/indian-old-man-walking-e70a140ad4334c2e8648ac78d61545b3"],
+  [
+    "Woman",
+    "Pixel_Monster (Sketchfab Standard licence)",
+    "https://sketchfab.com/3d-models/indian-woman-in-saree-b5965a93b03440dea65160f7cbac1fc7",
+  ],
+  [
+    "Man",
+    "Gameyan Animations Studio",
+    "https://sketchfab.com/3d-models/semi-cartoon-indian-human-3d-character-5720e7e45d21456db1b8d6bb430ccb8d",
+  ],
+  ["Woman", "dk8026854", "https://sketchfab.com/3d-models/saree-woman-3d-model-bf88ccd60916495b9e81588bf5e00d44"],
+  ["Woman", "sam-30", "https://sketchfab.com/3d-models/traditional-indian-saree-model-528f28ebdf214c7d9278b7bdd16292ca"],
+  ["Stall", "Cyril43", "https://sketchfab.com/3d-models/medieval-stall-4a5a40e78e4b481bafbb576303f992cd"],
+  ["Stall keeper", "chitreshyadav", "https://sketchfab.com/3d-models/modi-ji-e14d0a18080b434c9c28e87c9db485ee"],
+  ["Auto", "rSquare", "https://sketchfab.com/3d-models/auto-rickshaw-44776bcb34e04c1a8b9c18a70376304e"],
+  ["Tree", "farhad.Guli", "https://sketchfab.com/3d-models/tree-7016d1d32fe748f0a8b3f5eb39374bc4"],
+  ["Pine", "evolveduk", "https://sketchfab.com/3d-models/pine-tree-d45218a3fab349e5b1de040f29e7b6f9"],
+  ["Birch", "evolveduk", "https://sketchfab.com/3d-models/birch-tree-aa842dffd9654d33b8b91170ce83c172"],
+];
+
+export default function RoadJump() {
+  const pin = useRef<HTMLElement>(null);
+  const host = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = host.current!;
+    let cleanup = () => {};
+    let dead = false;
+
+    (async () => {
+      const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+      const load = (n: string) => loader.loadAsync(`/models/${n}.glb`);
+      const font = getComputedStyle(document.documentElement).getPropertyValue("--font-bungee").trim() || "Impact";
+      // The opening shot needs only these (preloaded by app/page.tsx). Sky: "Kloofendal 48d Partly Cloudy (Pure Sky)"
+      // from Poly Haven (CC0), tonemapped and cut to 2048x1024.
+      const [road, barricade, man, walker, sky] = await Promise.all([
+        load("road"),
+        load("barricade"),
+        load("jump"),
+        load("walk"),
+        new THREE.TextureLoader().loadAsync("/sky.jpg"),
+        document.fonts.load(`300px ${font}`).catch(() => {}), // the title sign is drawn in it
+      ]);
+      // The street downloads while the first frame is built, without competing with it for bandwidth.
+      const streetNames = [
+        ...PROPS.map((p) => p.name),
+        ...TREES.map((t) => t.name),
+        ...Object.keys(PEOPLE),
+        ...Object.keys(STANDING),
+        "stall",
+        "stall-keeper",
+        "auto",
+      ];
+      const deva = getComputedStyle(document.documentElement).getPropertyValue("--font-yatra").trim() || "serif";
+      const streetLoad = Promise.all([
+        Promise.all(streetNames.map(load)),
+        document.fonts.load(`100px ${deva}`, "चाय").catch(() => {}), // the stall banner's Hindi line
+      ]);
+      streetLoad.catch(() => {}); // reported where it is awaited
+      if (dead) return;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      el.appendChild(renderer.domElement);
+      const scene = new THREE.Scene();
+      sky.mapping = THREE.EquirectangularReflectionMapping;
+      sky.colorSpace = THREE.SRGBColorSpace;
+      scene.background = sky;
+      scene.fog = new THREE.Fog(HAZE, 18, 60);
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+      scene.add(new THREE.HemisphereLight(0xfff4dc, 0x6b4a2a, 2));
+      const sun = new THREE.DirectionalLight(0xffe2a8, 2.5);
+      sun.position.set(6, 10, 4);
+      scene.add(sun);
+      const q = () => new THREE.Quaternion();
+      const v3 = () => new THREE.Vector3();
+      let seed = 7;
+      const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // seeded: the same street every visit
+
+      // Road: one tile, cloned along z to run past the fog.
+      road.scene.scale.setScalar(ROAD_SCALE);
+      const roadBox = new THREE.Box3().setFromObject(road.scene);
+      const tileLen = roadBox.getSize(v3()).z;
+      for (let i = -6; i < 6; i++) scene.add(road.scene.clone().translateZ(i * tileLen));
+      const kerb = roadBox.max.x; // outer edge of the kerb strip
+      const kerbTop = roadBox.max.y; // footpath height
+      // Bare earth under everything, so gaps beside the road show ground instead of the sky panorama's lower half.
+      const earth = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshLambertMaterial({ color: 0x9a8466 }));
+      earth.rotation.x = -Math.PI / 2;
+      earth.position.y = roadBox.min.y - 0.02; // just under the road
+      scene.add(earth);
+      // Concrete footpath beyond each kerb, level with its top.
+      const concrete = new THREE.MeshLambertMaterial({ color: 0x8f8b84 });
+      for (const side of [-1, 1]) {
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(PAVE, kerbTop - earth.position.y, 400), concrete);
+        slab.position.set(side * (kerb + PAVE / 2), (kerbTop + earth.position.y) / 2, 0);
+        scene.add(slab);
+      }
+
+      // Title: "MERAZ 7.0" painted in the site's display font (Bungee) with a retro block shadow, on a sign standing
+      // over the road behind his start. It fills the opening face-on shot; once the camera swings round it is behind it.
+      const sign = document.createElement("canvas");
+      sign.width = 2048;
+      sign.height = 512;
+      const ctx = sign.getContext("2d")!;
+      ctx.font = `300px ${font}`;
+      ctx.textBaseline = "middle";
+      ctx.lineJoin = "round";
+      const runs = [
+        ["MERAZ ", "#d7263d"], // vermillion
+        ["7.0", "#0f7c7c"], // teal
+      ] as const;
+      const widths = runs.map(([t]) => ctx.measureText(t).width);
+      const fit = Math.min(1, (sign.width * 0.9) / widths.reduce((a, b) => a + b));
+      ctx.font = `${300 * fit}px ${font}`;
+      const paint = (dx: number, dy: number, fill?: string) => {
+        let x = (sign.width - widths.reduce((a, b) => a + b) * fit) / 2;
+        runs.forEach(([t, colour], i) => {
+          ctx.fillStyle = fill ?? colour;
+          ctx.fillText(t, x + dx, sign.height / 2 + dy);
+          if (!fill) ctx.strokeText(t, x, sign.height / 2);
+          x += widths[i] * fit;
+        });
+      };
+      for (let d = 18; d > 0; d -= 2) paint(d, d, "#1a1a1a"); // block shadow, down-right
+      ctx.strokeStyle = "#1a1a1a";
+      ctx.lineWidth = 10;
+      paint(0, 0);
+      const signTex = new THREE.CanvasTexture(sign);
+      signTex.colorSpace = THREE.SRGBColorSpace;
+      signTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      const title = new THREE.Mesh(
+        new THREE.PlaneGeometry(TITLE.width, (TITLE.width * sign.height) / sign.width),
+        new THREE.MeshBasicMaterial({ map: signTex, transparent: true, fog: false }),
+      );
+      title.position.set(0, TITLE.y, TITLE.z);
+      scene.add(title);
+
+      // Scale a model to a height, centre it on x/z with its base on y=0, and wrap it so it turns about that centre.
+      const ground = (o: Object3D, height: number) => {
+        o.scale.multiplyScalar(height / new THREE.Box3().setFromObject(o).getSize(v3()).y);
+        const b = new THREE.Box3().setFromObject(o);
+        const m = b.getCenter(v3());
+        o.position.sub(v3().set(m.x, b.min.y, m.z));
+        return new THREE.Group().add(o);
+      };
+
+      // Barricade: already spans the road (x); scaled so its top meets the hand, centred on x/z, feet on y=0.
+      const box = new THREE.Box3().setFromObject(barricade.scene);
+      barricade.scene.scale.setScalar(HAND_PLANT.y / box.getSize(v3()).y);
+      box.setFromObject(barricade.scene);
+      const c = box.getCenter(v3());
+      barricade.scene.position.set(-c.x, -box.min.y, -c.z);
+      const gate = new THREE.Group().add(barricade.scene);
+      scene.add(gate);
+
+      // Bones are matched across rigs by name: "mixamorig:Hips_64", "mixamorigHips" and "Hips_01" all key as "Hips".
+      const key = (n: string) => n.replace(/_\d+$/, "").replace(/^mixamorig:?/, "");
+      const bone = (root: Object3D, n: string) => {
+        let found: Object3D | undefined;
+        root.traverse((o) => {
+          if (!found && (o as THREE.Bone).isBone && key(o.name) === n) found = o;
+        });
+        return found!;
+      };
+
+      // Walk: the Walk clip from three.js's "Soldier" sample (same Mixamo bone names, walks in place), retargeted in
+      // world space. The rigs' bones rest at different angles (thighs differ by 180 deg), so copying local rotations
+      // twists the legs and drags the cloth. Instead, at every keyframe each soldier bone's turn away from its T-pose
+      // is applied to the matching bone's bind pose on the target, then turned back into a local rotation. The target
+      // rig must stand at the origin; it keeps its own facing.
+      const sol = new Map<string, Object3D>();
+      walker.scene.traverse((o) => sol.set(key(o.name), o));
+      const sMixer = new THREE.AnimationMixer(walker.scene);
+      const sClip = (n: string) => walker.animations.find((a) => a.name === n)!;
+      const tpose = sMixer.clipAction(sClip("TPose")).play();
+      sMixer.update(0);
+      walker.scene.updateMatrixWorld(true);
+      const sRestInv = new Map([...sol].map(([n, o]) => [n, o.getWorldQuaternion(q()).invert()]));
+      const sRestPos = new Map([...sol].map(([n, o]) => [n, o.getWorldPosition(v3())]));
+      tpose.stop();
+      const sHips = sol.get("Hips")!;
+      const legLen = (pos: (n: string) => THREE.Vector3) => {
+        const [a, b, c] = ["LeftUpLeg", "LeftLeg", "LeftFoot"].map(pos);
+        return a.distanceTo(b) + b.distanceTo(c);
+      };
+      const facesPlusZ = (pos: (n: string) => THREE.Vector3) => pos("LeftUpLeg").x > pos("RightUpLeg").x;
+      const retarget = (rig: Object3D, clipName = "Walk") => {
+        const src = sClip(clipName);
+        sMixer.stopAllAction();
+        const sAct = sMixer.clipAction(src).play();
+        const times = src.tracks.find((t) => t.name.startsWith(sHips.name + "."))!.times;
+        rig.updateMatrixWorld(true);
+        const ours: Object3D[] = []; // mapped bones, parents before children
+        rig.traverse((o) => (o as THREE.Bone).isBone && sol.has(key(o.name)) && ours.push(o));
+        // Bind-pose rotation of each bone. Mesh compression folds a scale and offset into the inverse-bind
+        // matrices, so only their rotation is trusted; lengths come from the live bones.
+        const bind = new Map<Object3D, THREE.Quaternion>();
+        rig.traverse((o) => {
+          const skel = (o as SkinnedMesh).isSkinnedMesh ? (o as SkinnedMesh).skeleton : undefined;
+          skel?.bones.forEach((b, i) => {
+            if (bind.has(b)) return;
+            const r = q();
+            skel.boneInverses[i].clone().invert().decompose(v3(), r, v3());
+            bind.set(b, r);
+          });
+        });
+        const livePos = (n: string) => bone(rig, n).getWorldPosition(v3());
+        const sPos = (n: string) => sRestPos.get(n)!.clone();
+        const k = legLen(livePos) / legLen(sPos);
+        // turn the soldier's motion to the target's facing
+        const turn = q().setFromAxisAngle(v3().set(0, 1, 0), facesPlusZ(livePos) === facesPlusZ(sPos) ? 0 : Math.PI);
+        const turnInv = turn.clone().invert();
+        const hips = bone(rig, "Hips");
+        const rotations = new Map(ours.map((b) => [b, new Float32Array(times.length * 4)]));
+        const hipsPos = new Float32Array(times.length * 3);
+        const hipsParentInv = hips.parent!.matrixWorld.clone().invert();
+        const world = new Map<Object3D, THREE.Quaternion>();
+        times.forEach((t, i) => {
+          sAct.time = t;
+          sMixer.update(0);
+          walker.scene.updateMatrixWorld(true);
+          for (const b of ours) {
+            const n = key(b.name);
+            const d = turn.clone().multiply(sol.get(n)!.getWorldQuaternion(q())).multiply(sRestInv.get(n)!).multiply(turnInv);
+            if (/(UpLeg|Leg|Foot|ToeBase)$/.test(n)) d.slerp(q(), 1 - STRIDE); // shorter stride, less pull on the cloth
+            const w = d.multiply(bind.get(b) ?? b.getWorldQuaternion(q()));
+            world.set(b, w);
+            const parent = world.get(b.parent!)?.clone() ?? b.parent!.getWorldQuaternion(q());
+            parent
+              .invert()
+              .multiply(w)
+              .toArray(rotations.get(b)!, i * 4);
+          }
+          sHips
+            .getWorldPosition(v3())
+            .applyQuaternion(turn)
+            .multiplyScalar(k)
+            .applyMatrix4(hipsParentInv)
+            .toArray(hipsPos, i * 3);
+        });
+        return new THREE.AnimationClip(clipName, -1, [
+          ...ours.map((b) => new THREE.QuaternionKeyframeTrack(`${b.name}.quaternion`, times, rotations.get(b)!)),
+          new THREE.VectorKeyframeTrack(`${hips.name}.position`, times, hipsPos),
+        ]);
+      };
+      // Walking speed of an in-place walk, from the stride: the planted foot slides back over its range during
+      // stance (~60% of a cycle). setTime poses the rig at a clip time.
+      const strideSpeed = (rig: Object3D, setTime: (t: number) => void, duration: number) => {
+        const foot = bone(rig, "LeftFoot");
+        let lo = Infinity;
+        let hi = -Infinity;
+        for (let i = 0; i < 24; i++) {
+          setTime((i / 24) * duration);
+          const fz = foot.getWorldPosition(v3()).z;
+          [lo, hi] = [Math.min(lo, fz), Math.max(hi, fz)];
+        }
+        return (hi - lo) / (0.6 * duration);
+      };
+
+      // Runner.
+      const rig = man.scene;
+      scene.add(rig);
+      const hips = bone(rig, "Hips");
+      const head = bone(rig, "Head");
+      rig.traverse((o) => (o.frustumCulled = false)); // skinned bounds stay at the start pose; root motion carries him out
+      const mixer = new THREE.AnimationMixer(rig);
+      const clip = man.animations.find((a) => a.name === "Flip jump") ?? man.animations[0];
+      const action = mixer.clipAction(clip).play(); // the flip jump
+
+      // Find where the hips peak (apex): framing and the reduced-motion still use it.
+      const p = v3();
+      const hipsAt = (t: number) => (mixer.setTime(t), rig.updateMatrixWorld(true), hips.getWorldPosition(p).clone());
+      let apex = hipsAt(0);
+      let apexT = 0;
+      for (let t = 0; t < clip.duration; t += clip.duration / 40) {
+        const at = hipsAt(t);
+        if (at.y > apex.y) [apex, apexT] = [at, t];
+      }
+      mixer.setTime(0);
+
+      const walkClip = retarget(rig);
+      const walk = mixer.clipAction(walkClip).play();
+      const idleClip = retarget(rig, "Idle"); // standing, once he stops
+      const idle = mixer.clipAction(idleClip).play();
+
+      // Pose the clips by hand: each action gets its own time and weight, then the mixer applies them.
+      const pose = (walkT: number, jumpT: number, jumpW: number, idleW = 0, idleT = 0) => {
+        walk.time = walkT % walkClip.duration;
+        action.time = Math.min(jumpT, clip.duration - 1e-3); // at exactly duration it wraps to 0
+        idle.time = idleT % idleClip.duration;
+        walk.setEffectiveWeight((1 - jumpW) * (1 - idleW));
+        action.setEffectiveWeight(jumpW * (1 - idleW));
+        idle.setEffectiveWeight(idleW);
+        mixer.update(0);
+      };
+
+      const speed = strideSpeed(rig, (t) => pose(t, 0, 0), walkClip.duration);
+      const walkTime = WALK_CYCLES * walkClip.duration;
+      const walkDist = speed * walkTime;
+      const walkOnTime = WALK_ON_CYCLES * walkClip.duration;
+      // How far the jump carries the hips past the walk's hips, so walking on picks up where he lands.
+      pose(0, clip.duration, 1);
+      const landOffset = hips.getWorldPosition(p).z;
+      pose(0, 0, 0);
+      const landGap = landOffset - hips.getWorldPosition(p).z;
+      // Where he stops: the auto pulls up level with this.
+      rig.position.z = walkDist + landGap + speed * walkOnTime;
+      pose(walkOnTime, clip.duration, 0);
+      const stopZ = hips.getWorldPosition(p).z;
+      rig.position.z = 0;
+      pose(0, 0, 0);
+
+      gate.position.set(apex.x, 0, walkDist + HAND_PLANT.z);
+
+      // Re-letter the barricade: it ships with "DELHI POLICE" modelled as text on both faces of its sloped front panel
+      // (the compressor merged the two into one mesh). The text is hidden and a painted "BHILAI POLICE" sign laid on
+      // each face. The text spans the barricade's width (x), so its plane holds the x axis; its slope comes from a
+      // line fit through the vertices seen side-on (y-z).
+      gate.updateMatrixWorld(true);
+      const letters: THREE.Mesh[] = [];
+      barricade.scene.traverse((o) => /^Text/.test(o.name) && (o as THREE.Mesh).isMesh && letters.push(o as THREE.Mesh));
+      for (const t of letters) {
+        const pos = t.geometry.getAttribute("position");
+        const pts = Array.from({ length: pos.count }, (_, i) => v3().fromBufferAttribute(pos, i).applyMatrix4(t.matrixWorld));
+        const mid = pts.reduce((s, x) => s.add(x), v3()).divideScalar(pts.length);
+        let [yy, zz, yz] = [0, 0, 0];
+        for (const x of pts) [yy, zz, yz] = [yy + (x.y - mid.y) ** 2, zz + (x.z - mid.z) ** 2, yz + (x.y - mid.y) * (x.z - mid.z)];
+        const slope = 0.5 * Math.atan2(2 * yz, yy - zz); // direction of the text's "up" in the y-z plane
+        const up = v3().set(0, Math.cos(slope), Math.sin(slope));
+        if (up.y < 0) up.negate();
+        const [x0, x1] = [Math.min(...pts.map((x) => x.x)), Math.max(...pts.map((x) => x.x))];
+        const along = pts.map((x) => x.clone().sub(mid).dot(up));
+        const [v0, v1] = [Math.min(...along), Math.max(...along)];
+        const [w, h] = [x1 - x0, v1 - v0];
+        const centre = mid
+          .clone()
+          .setX((x0 + x1) / 2)
+          .addScaledVector(up, (v0 + v1) / 2);
+        const art = document.createElement("canvas");
+        art.width = 1024;
+        art.height = Math.round((1024 * h) / w);
+        const g2 = art.getContext("2d")!;
+        g2.fillStyle = "#" + (t.material as THREE.MeshStandardMaterial).color.getHexString();
+        g2.textAlign = "center";
+        g2.textBaseline = "middle";
+        g2.font = `bold ${art.height}px "Arial Black", Impact, sans-serif`;
+        g2.font = `bold ${art.height * Math.min(1, (art.width * 0.98) / g2.measureText("BHILAI POLICE").width)}px "Arial Black", Impact, sans-serif`;
+        g2.fillText("BHILAI POLICE", art.width / 2, art.height / 2);
+        const tex = new THREE.CanvasTexture(art);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const material = new THREE.MeshLambertMaterial({ map: tex, transparent: true });
+        for (const normal of [v3().set(1, 0, 0).cross(up), v3().set(-1, 0, 0).cross(up)]) {
+          const decal = new THREE.Mesh(new THREE.PlaneGeometry(w, h), material);
+          decal.matrix.makeBasis(up.clone().cross(normal), up, normal); // plane x right, y up, z out of the face
+          decal.matrix.setPosition(centre.clone().addScaledVector(normal, 0.01)); // just proud of the panel
+          decal.matrix.decompose(decal.position, decal.quaternion, decal.scale);
+          gate.attach(decal);
+        }
+        t.visible = false;
+      }
+
+      const walkers: { g: Object3D; mixer: THREE.AnimationMixer; z0: number; v: number }[] = [];
+      let auto: Object3D | undefined;
+      let clock = 0;
+      const stroll = (dt: number) => {
+        clock += dt;
+        for (const w of walkers) {
+          w.g.position.z = WALKWAY.from + ((((w.z0 + w.v * clock) % WALKWAY.len) + WALKWAY.len) % WALKWAY.len);
+          w.mixer.update(dt);
+        }
+      };
+      stroll(0);
+
+      // First he walks toward the camera while it swings from a close-up of his face, round his side, out to a
+      // chase position behind him. Then the jump clip plays (blending in from the walk), then he blends back into
+      // the walk for two steps and stands. The camera rides behind the hips; x and height stay fixed so the flip does not
+      // sway it. Narrow screens pull it back (zoom).
+      const lerp = THREE.MathUtils.lerp;
+      const f = v3();
+      let zoom = 1;
+      const draw = (at: number) => {
+        const w = at / ORBIT; // walk progress, keeps running through the blend
+        const clamp01 = (x: number) => THREE.MathUtils.clamp(x, 0, 1);
+        const jump = clamp01((at - ORBIT) / (LAND - ORBIT));
+        const on = clamp01((at - LAND) / (STOP - LAND)); // the two steps after landing
+        const back = clamp01((at - LAND) / BLEND); // jump -> walk
+        const still = clamp01((at - STOP) / BLEND); // walk -> standing
+        rig.position.z = Math.min(w, 1) * walkDist + back * landGap + speed * on * walkOnTime;
+        pose(
+          on > 0 ? on * walkOnTime : w * walkTime,
+          jump * clip.duration,
+          clamp01((at - ORBIT) / BLEND) * (1 - back),
+          still,
+          Math.max(0, at - STOP) * 20, // idle sways on as you keep scrolling
+        );
+        // The auto sets off from behind when he jumps and slows into its stop beside him as he stops.
+        const drive = clamp01((at - ORBIT) / (STOP - ORBIT));
+        if (auto) {
+          auto.visible = at > ORBIT;
+          auto.position.z = lerp(walkDist - AUTO.behind, stopZ, 1 - (1 - drive) ** 2);
+        }
+        const o = Math.min(w, 1);
+        const u = o * o * (3 - 2 * o); // ease in and out of the swing
+        const z = hips.getWorldPosition(p).z;
+        head.getWorldPosition(f);
+        // Swing round a pivot that slides from his face to the chase line along the road.
+        const x = lerp(f.x, apex.x, u);
+        const pz = lerp(f.z, z, u);
+        const r = lerp(1.4 * zoom, 7 * zoom, u);
+        const a = Math.PI * u; // 0 = in front of him (he faces +z), PI = behind
+        // sideways reach stays inside the kerb so the swing never passes through a house
+        camera.position.set(x + Math.min(r * Math.sin(a), kerb - 0.5), lerp(f.y, 1 + 1.2 * zoom, u), pz + r * Math.cos(a));
+        camera.lookAt(x, lerp(f.y + 1.4 * zoom * TITLE.tilt, 0.8, u), pz + 1.5 * u);
+        renderer.render(scene, camera);
+      };
+
+      let progress = 0;
+      const resize = () => {
+        renderer.setSize(el.clientWidth, el.clientHeight);
+        camera.aspect = el.clientWidth / el.clientHeight;
+        camera.updateProjectionMatrix();
+        zoom = Math.max(1, 0.8 / camera.aspect);
+        // shrink the title sign if the opening shot is too narrow to show all of it
+        const seen = 2 * (1.4 * zoom - TITLE.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+        title.scale.setScalar(Math.min(1, (0.9 * seen) / TITLE.width));
+        draw(progress);
+      };
+      const ro = new ResizeObserver(resize);
+      ro.observe(el);
+
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) progress = ORBIT + (LAND - ORBIT) * (apexT / clip.duration); // still frame mid-flip over the barricade
+      resize();
+      // Pin the section and scrub all three beats across 4.5 screens of scrolling; the frame loop draws them.
+      const st = reduce
+        ? null
+        : ScrollTrigger.create({
+            trigger: pin.current,
+            start: "top top",
+            end: "+=450%",
+            pin: true,
+            scrub: true,
+            onUpdate: (self) => (progress = self.progress),
+          });
+      // Pedestrians need a frame loop; run it only while the section is on screen (and never for reduced motion).
+      let last = 0;
+      const io = new IntersectionObserver(([e]) => {
+        last = performance.now();
+        renderer.setAnimationLoop(
+          e.isIntersecting && !reduce
+            ? (now) => {
+                stroll(Math.min((now - last) / 1000, 0.1));
+                last = now;
+                draw(progress);
+              }
+            : null,
+        );
+      });
+      io.observe(el);
+
+      cleanup = () => {
+        io.disconnect();
+        renderer.setAnimationLoop(null);
+        st?.kill(true);
+        ro.disconnect();
+        mixer.stopAllAction();
+        walkers.forEach((w) => w.mixer.stopAllAction());
+        sMixer.stopAllAction();
+        scene.traverse((o) => {
+          if (o instanceof THREE.Mesh) {
+            o.geometry.dispose();
+            [o.material].flat().forEach((m) => m.dispose());
+          }
+        });
+        signTex.dispose();
+        sky.dispose();
+        renderer.dispose();
+        renderer.domElement.remove();
+      };
+
+      // The street: everything else, added in one go once it has landed (shaders compiled off the main path first).
+      const [streetModels] = await streetLoad;
+      if (dead) return;
+      const model = (n: string) => streetModels[streetNames.indexOf(n)];
+      const street = new THREE.Group();
+      // Roadside: props laid along both footpaths in a seeded random order, end to end with fronts on one line.
+      const kinds = PROPS.map((p) => ({ ...p, model: ground(model(p.name).scene, p.size) }));
+      const total = PROPS.reduce((s, p) => s + p.weight, 0);
+      const pick = () => {
+        let r = rand() * total;
+        return kinds.find((k) => (r -= k.weight) < 0) ?? kinds[0];
+      };
+      for (const side of [-1, 1]) {
+        for (let z = STREET.from; z < STREET.to;) {
+          const k = pick();
+          const g = k.model.clone();
+          g.rotation.y = k.front - (side * Math.PI) / 2; // front toward the road
+          const size = new THREE.Box3().setFromObject(g).getSize(v3());
+          g.position.set(side * (kerb + PAVE + size.x / 2), 0, z + size.z / 2);
+          street.add(g);
+          z += size.z;
+        }
+      }
+
+      // Trees: at random spots along the footpath's outer edge, random turn and size.
+      const trees = TREES.map((t) => ground(model(t.name).scene, t.size));
+      const edgeTaken: number[][] = [[], []]; // z of everything on each outer edge, so standing people keep clear
+      const edgeTrees: { t: Object3D; side: number; z: number }[] = [];
+      for (const side of [-1, 1]) {
+        for (let z = STREET.from + rand() * 10; z < STREET.to; z += 9 + rand() * 14) {
+          const t = trees[Math.floor(rand() * trees.length)].clone();
+          edgeTaken[(side + 1) / 2].push(z);
+          edgeTrees.push({ t, side, z });
+          t.position.set(side * (kerb + EDGE_X), kerbTop, z);
+          t.rotation.y = rand() * Math.PI * 2;
+          t.scale.setScalar(0.85 + rand() * 0.3);
+          street.add(t);
+        }
+      }
+
+      // Stall: counter facing the road (it faces +x as modelled), back against the house line, level with the barricade.
+      const stall = ground(model("stall").scene, STALL.height);
+      const stallSize = new THREE.Box3().setFromObject(stall).getSize(v3());
+      const depth = stallSize.x;
+      stall.position.set(-(kerb + PAVE - depth / 2), kerbTop, gate.position.z);
+      street.add(stall);
+      // clear the trees from its spot, and keep standing people off it
+      const stallZ = stall.position.z;
+      for (const { t, side, z } of edgeTrees) if (side < 0 && Math.abs(z - stallZ) < stallSize.z / 2 + 1.5) street.remove(t);
+      edgeTaken[0].push(stallZ - stallSize.z / 2, stallZ, stallZ + stallSize.z / 2);
+      // Banner on the front of the counter, below the keeper, facing the road: a painted board in the site's retro style.
+      const board = document.createElement("canvas");
+      board.width = 1024;
+      board.height = 300;
+      const bc = board.getContext("2d")!;
+      bc.fillStyle = "#f2c14e"; // turmeric
+      bc.fillRect(0, 0, board.width, board.height);
+      bc.strokeStyle = "#1a1a1a";
+      bc.lineWidth = 16;
+      bc.strokeRect(8, 8, board.width - 16, board.height - 16);
+      bc.textAlign = "center";
+      bc.textBaseline = "middle";
+      bc.font = `120px ${font}`;
+      bc.font = `${120 * Math.min(1, 900 / bc.measureText("CHAI KI TAPRI").width)}px ${font}`;
+      bc.fillStyle = "#1a1a1a";
+      bc.fillText("CHAI KI TAPRI", board.width / 2 + 6, 112 + 6); // block shadow
+      bc.fillStyle = "#d7263d"; // vermillion
+      bc.fillText("CHAI KI TAPRI", board.width / 2, 112);
+      bc.font = `72px ${deva}`;
+      bc.fillStyle = "#1a1a1a";
+      bc.fillText("चाय की टपरी", board.width / 2, 222);
+      const boardTex = new THREE.CanvasTexture(board);
+      boardTex.colorSpace = THREE.SRGBColorSpace;
+      const bannerW = stallSize.z * 0.85;
+      const banner = new THREE.Mesh(
+        new THREE.PlaneGeometry(bannerW, (bannerW * board.height) / board.width),
+        new THREE.MeshLambertMaterial({ map: boardTex, side: THREE.DoubleSide }),
+      );
+      banner.rotation.y = Math.PI / 2; // plane faces +z; turn it to the road (+x)
+      banner.position.set(stall.position.x + stallSize.x / 2 + 0.03, kerbTop + 0.55, stallZ);
+      street.add(banner);
+      const keeper = ground(model("stall-keeper").scene, STALL.keeper);
+      keeper.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+        if (m?.isMeshStandardMaterial) m.metalness = 0; // ships fully metallic (the glTF default), which renders black
+      });
+      keeper.rotation.y = Math.PI / 2; // faces +z as modelled; turn him to the road (+x)
+      keeper.position.set(stall.position.x - depth * 0.2, kerbTop + STALL.keeperBase, stall.position.z);
+      street.add(keeper);
+
+      auto = ground(model("auto").scene, AUTO.height); // faces +z as modelled, the way he walks
+      auto.position.x = apex.x + AUTO.x;
+      street.add(auto);
+
+      // Pedestrians. Man and old man walk with their own clips, root motion stripped so the lane sets the pace; the
+      // woman's own clip is an idle, so she borrows the soldier walk like the runner.
+      const types = Object.fromEntries(
+        Object.entries(PEOPLE).map(([who, height]) => {
+          const g = ground(model(who).scene, height);
+          g.updateMatrixWorld(true);
+          const m = new THREE.AnimationMixer(g);
+          let walkOf: THREE.AnimationClip;
+          let pace: number;
+          let yaw: number;
+          if (who === "woman") {
+            walkOf = retarget(g);
+            const a = m.clipAction(walkOf).play();
+            pace = strideSpeed(g, (t) => ((a.time = t), m.update(0)), walkOf.duration);
+            yaw = facesPlusZ((n) => bone(g, n).getWorldPosition(v3())) ? 0 : Math.PI;
+          } else {
+            walkOf = model(who).animations[0];
+            m.clipAction(walkOf).play();
+            const hz = (t: number) => (m.setTime(t), bone(g, "Hips").getWorldPosition(v3()).z);
+            const travel = hz(walkOf.duration - 1e-3) - hz(0);
+            pace = Math.abs(travel) / walkOf.duration;
+            yaw = travel > 0 ? 0 : Math.PI;
+            // strip the forward drift from the hips track so he walks in place
+            const track = walkOf.tracks.find((t) => t.name.endsWith(".position") && key(t.name.slice(0, -9)) === "Hips")!;
+            const [v, tt] = [track.values, track.times];
+            const n = tt.length;
+            for (let i = 0; i < n; i++)
+              for (let a = 0; a < 3; a++) v[i * 3 + a] -= ((v[(n - 1) * 3 + a] - v[a]) * (tt[i] - tt[0])) / (tt[n - 1] - tt[0]);
+          }
+          // Set the feet on the ground mid-walk: the bind pose the model was grounded in stands at another height.
+          const a = m.clipAction(walkOf).play();
+          let low = Infinity;
+          for (let i = 0; i < 6; i++) {
+            a.time = (i / 6) * walkOf.duration;
+            m.update(0);
+            g.updateMatrixWorld(true);
+            low = Math.min(low, new THREE.Box3().setFromObject(g, true).min.y);
+          }
+          g.children[0].position.y -= low;
+          m.stopAllAction();
+          return [who, { model: g, clip: walkOf, pace, yaw }];
+        }),
+      );
+      for (const lane of LANES) {
+        const speed = lane.mix.reduce((s, who) => s + types[who].pace, 0) / lane.mix.length; // the lane's one speed
+        const [gapMin, gapMax] = lane.gap;
+        // random gaps; the one across the wrap is kept at least gapMin too
+        for (let z = rand() * gapMin; z < WALKWAY.len - gapMin; z += gapMin + rand() * (gapMax - gapMin)) {
+          const t = types[lane.mix[Math.floor(rand() * lane.mix.length)]];
+          const g = cloneRig(t.model);
+          g.position.set(lane.side * (kerb + LANE_X[lane.lane]), kerbTop, 0);
+          g.rotation.y = t.yaw + (lane.dir > 0 ? 0 : Math.PI);
+          const m = new THREE.AnimationMixer(g);
+          m.clipAction(t.clip).play().timeScale = speed / t.pace; // steps match the lane speed, so feet do not slide
+          m.setTime(rand() * t.clip.duration); // out of step with each other
+          walkers.push({ g, mixer: m, z0: z, v: lane.dir * speed });
+          street.add(g);
+        }
+      }
+      // Standing people: random spots on the outer edges, at least 1.5 m from trees and each other, facing the road.
+      const standing = Object.entries(STANDING).map(([n, height]) => ground(model(n).scene, height));
+      for (const side of [-1, 1]) {
+        const taken = edgeTaken[(side + 1) / 2];
+        for (let placed = 0, tries = 0; placed < STANDING_PER_SIDE && tries < 50; tries++) {
+          const z = WALKWAY.from + rand() * WALKWAY.len;
+          if (taken.some((t) => Math.abs(t - z) < 1.5)) continue;
+          taken.push(z);
+          const s = standing[Math.floor(rand() * standing.length)].clone();
+          s.position.set(side * (kerb + EDGE_X), kerbTop, z);
+          s.rotation.y = (-side * Math.PI) / 2 + (rand() - 0.5) * 0.8; // roughly toward the road
+          street.add(s);
+          placed++;
+        }
+      }
+      await renderer.compileAsync(street, camera, scene);
+      if (dead) return;
+      scene.add(street);
+      stroll(0);
+      draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
+    })().catch((e) => console.error("RoadJump:", e));
+
+    return () => {
+      dead = true;
+      cleanup();
+    };
+  }, []);
+
+  return (
+    // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
+    <div>
+      <section ref={pin} aria-label="Flip over the barricade" className="relative h-[100dvh] overflow-hidden bg-cream">
+        <div
+          ref={host}
+          role="img"
+          aria-label="A runner flip-jumps over a Delhi Police barricade on a city road"
+          className="absolute inset-0"
+        />
+        {/* CC BY 4.0 requires credit */}
+        <p className="absolute bottom-2 left-3 right-3 z-[1] font-mono text-[10px] text-ink/70">
+          Models (CC BY 4.0 unless noted):{" "}
+          {CREDITS.map(([what, who, href], i) => (
+            <span key={href}>
+              {i > 0 && " · "}
+              <a className="underline" href={href}>
+                {what}
+              </a>{" "}
+              by {who}
+            </span>
+          ))}
+        </p>
+      </section>
+    </div>
+  );
+}

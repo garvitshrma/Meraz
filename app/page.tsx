@@ -1,20 +1,17 @@
-import Hero from "@/components/Hero";
-import TvSection from "@/components/TvSection";
-import Loader from "@/components/Loader";
-import { TLink } from "@/components/Transition";
+import { preload } from "react-dom";
+import RoadJump from "@/components/RoadJump";
 import { site } from "@/data/site";
 
-// Same structure as meraz.iitbhilai.ac.in: preloader, frame-zoom hero, aftermovie TV, fixed REGISTER.
-// Navigation lives in the site-wide NavBar.
+// Home: just the 3D road jump. Navigation lives in the site-wide NavBar.
 export default function Home() {
+  // Start the opening shot's downloads from the HTML, before any JavaScript runs. Must match what RoadJump loads
+  // first (GLTFLoader fetches in cors mode, TextureLoader sets crossOrigin, hence crossOrigin on both).
+  for (const n of ["jump", "road", "walk", "barricade"]) preload(`/models/${n}.glb`, { as: "fetch", crossOrigin: "anonymous" });
+  preload("/sky.jpg", { as: "image", crossOrigin: "anonymous" });
   return (
     <>
-      <Loader video={site.aftermovie} />
-      <Hero />
-      <TvSection src={site.aftermovie} />
-      <TLink href="/passes" className="btn fixed bottom-4 right-4 z-40 bg-marigold text-lg sm:bottom-6 sm:right-6">
-        REGISTER
-      </TLink>
+      <h1 className="sr-only">{site.name}</h1>
+      <RoadJump />
     </>
   );
 }
