@@ -7,6 +7,7 @@
 // Loading: three.js ships with the page (the scene is the page), the opening shot's few assets are preloaded from the
 // HTML (app/page.tsx) and drawn as soon as they land, and the rest of the street streams in behind them.
 import { useEffect, useRef } from "react";
+import { ArrowDown } from "@phosphor-icons/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import * as THREE from "three";
@@ -713,6 +714,8 @@ export default function RoadJump() {
         const [ask, go] = riding ? [false, false] : [!reduce && at >= ASK, reduce || at >= GO];
         if (sec.hasAttribute("data-ask") !== ask) sec.toggleAttribute("data-ask", ask);
         if (sec.hasAttribute("data-go") !== go) sec.toggleAttribute("data-go", go);
+        const moved = reduce || at > 0.02; // the scroll hint goes once scrolling starts (reduced motion has none)
+        if (sec.hasAttribute("data-moved") !== moved) sec.toggleAttribute("data-moved", moved);
         if (ask && driverHead) {
           const s = driverHead.getWorldPosition(v3()).project(camera); // the bubble's tail points at the top of his head
           tip.style.setProperty("--x", `${((s.x + 1) / 2) * el.clientWidth}px`);
@@ -1081,6 +1084,14 @@ export default function RoadJump() {
             ))}
           </ul>
         </nav>
+        {/* Scroll hint: up from the first paint (before the scene loads), gone once scrolling starts. */}
+        <p
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-16 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 border-4 border-ink bg-ink px-4 py-2 font-mono text-sm font-bold tracking-widest text-turmeric shadow-[4px_4px_0_var(--color-marigold)] transition-opacity duration-300 group-data-[moved]:opacity-0"
+        >
+          SCROLL
+          <ArrowDown size={18} weight="bold" className="motion-safe:animate-bounce" />
+        </p>
         {/* CC BY 4.0 requires credit */}
         <p className="absolute bottom-2 left-3 right-3 z-[1] font-mono text-[10px] text-ink/70">
           Models (CC BY 4.0 unless noted):{" "}
