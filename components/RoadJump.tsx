@@ -44,6 +44,11 @@ const AUTO = { height: 1.75, x: 1.8, behind: 4, ahead: 1.2 };
 // (z), its cushion about 0.5 m up, so seated hips are at hips. The side is open only ahead of the rear body panels,
 // so he crosses in at entry, then slides back onto the bench. outside: how far out from the bench he stops.
 const SEAT = { z: -0.75, hips: 0.62, entry: -0.35, outside: 1.0 };
+// The driver (the old man, shrunk by scale and posed seated), measured from auto.glb the same way: hips on the
+// front of the driver's seat (cushion top about 0.75 m) so his arms reach the handlebar grips (x either side) with the
+// elbows bent; back straight, leaning forward by lean radians; shins sloping forward by shin (run per metre down), so
+// his shoes rest on the floor.
+const DRIVER = { scale: 0.93, z: 0.28, hips: 0.8, lean: 0.1, shin: 0.3, grip: { x: 0.33, y: 1.03, z: 0.66 } };
 // Sitting: thighs swing forward and knees bend back by these angles (radians), on top of the standing pose; duck is
 // the forward lean of his back as he passes under the roof edge.
 const SIT_BEND = { thigh: 1.45, knee: 1.5, duck: 0.6 };
@@ -850,6 +855,46 @@ export default function RoadJump() {
           street.add(g);
         }
       }
+      // Driver: a copy of the old man (the walking man's texture shows white seams up close), held mid-stride, then
+      // posed seated by pointing each limb bone (at its child bone) along a direction: back leant forward, thighs along
+      // the seat, shins down, arms reaching to the grips.
+      const driver = cloneRig(types.oldman.model);
+      driver.rotation.y = types.oldman.yaw; // face +z, the way the auto drives
+      driver.scale.setScalar(DRIVER.scale);
+      auto.add(driver);
+      auto.updateMatrixWorld(true);
+      const pointBone = (n: string, child: string, dir: THREE.Vector3) => {
+        const b = bone(driver, n);
+        const from = bone(driver, child).getWorldPosition(v3()).sub(b.getWorldPosition(v3())).normalize();
+        const w = b.getWorldQuaternion(q()).premultiply(q().setFromUnitVectors(from, dir.clone().normalize()));
+        b.quaternion.copy(b.parent!.getWorldQuaternion(q()).invert().multiply(w));
+        b.updateMatrixWorld(true);
+      };
+      const dHips = bone(driver, "Hips");
+      driver.position.add(auto.localToWorld(v3().set(0, DRIVER.hips, DRIVER.z)).sub(dHips.getWorldPosition(v3())));
+      driver.updateMatrixWorld(true);
+      // Straighten each link of the back (the walk pose curls it), then hold the head up, looking down the road.
+      const lean = v3().set(0, Math.cos(DRIVER.lean), Math.sin(DRIVER.lean));
+      for (const [n, child] of [["Spine", "Spine1"], ["Spine1", "Spine2"], ["Spine2", "Neck"]]) pointBone(n, child, lean);
+      for (const [n, child] of [["Neck", "Head"], ["Head", "HeadTop_End"]]) pointBone(n, child, v3().set(0, 1, 0.1));
+      for (const s of ["Left", "Right"]) {
+        const side = Math.sign(bone(driver, `${s}UpLeg`).getWorldPosition(v3()).x - dHips.getWorldPosition(v3()).x);
+        pointBone(`${s}UpLeg`, `${s}Leg`, v3().set(side * 0.15, 0, 1)); // knees a little apart
+        pointBone(`${s}Leg`, `${s}Foot`, v3().set(0, -1, DRIVER.shin));
+        // Arm: two-bone reach, elbow bent down and out, so the wrist lands on the grip (or as near as the arm allows).
+        const [arm, fore, hand] = [`${s}Arm`, `${s}ForeArm`, `${s}Hand`].map((n) => bone(driver, n).getWorldPosition(v3()));
+        const [a, b] = [arm.distanceTo(fore), fore.distanceTo(hand)];
+        const grip = auto.localToWorld(v3().set(side * DRIVER.grip.x, DRIVER.grip.y, DRIVER.grip.z));
+        const toGrip = grip.clone().sub(arm);
+        const d = Math.min(toGrip.length(), (a + b) * 0.999);
+        const reach = toGrip.normalize();
+        const out = v3().set(side * 0.5, -1, 0);
+        const bendDir = out.sub(reach.clone().multiplyScalar(out.dot(reach))).normalize();
+        const elbow = Math.acos(THREE.MathUtils.clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1));
+        pointBone(`${s}Arm`, `${s}ForeArm`, reach.clone().multiplyScalar(Math.cos(elbow)).addScaledVector(bendDir, Math.sin(elbow)));
+        pointBone(`${s}ForeArm`, `${s}Hand`, grip.sub(bone(driver, `${s}ForeArm`).getWorldPosition(v3())));
+      }
+
       // Standing people: random spots on the outer edges, at least 1.5 m from trees and each other, facing the road.
       const standing = Object.entries(STANDING).map(([n, height]) => ground(model(n).scene, height));
       for (const side of [-1, 1]) {
