@@ -25,17 +25,33 @@ const HAZE = 0x9ca1b1; // the sky panorama's colour at the horizon, so the far r
 // metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
 const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
 // Scroll beats: [0, ORBIT] walk while the camera swings round, [ORBIT, LAND] the jump, [LAND, STOP] two steps on,
-// [STOP, 1] he stands, with the auto (which set off when he jumped) pulled up beside him.
-const ORBIT = 0.3;
-const LAND = 0.65;
-const STOP = 0.8;
+// [STOP, SIT] without stopping he curves round to the auto (which set off when he jumped and has pulled up just
+// ahead), ducks in and slides onto the bench, turning to face forward as he settles, [SIT, 1] he sits still.
+const ORBIT = 0.24;
+const LAND = 0.52;
+const STOP = 0.62;
+const SIT = 0.93;
 const WALK_CYCLES = 3; // walk cycles (two steps each) during the swing
 const WALK_ON_CYCLES = 1; // and after landing
 const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stretches the dhoti (and the saree)
 const BLEND = 0.03; // share of the scroll spent blending walk into jump, jump into walk, and walk into standing
 // Auto rickshaw: comes up from behind on his left (as seen from the chase camera, i.e. +x) once he jumps, and slows
 // to a stop beside him as he stops. It slides; the model's wheels are part of one mesh and cannot turn.
-const AUTO = { height: 1.75, x: 1.8, behind: 4 }; // metres: height, line, start behind his jump spot (in frame at once)
+// metres: height, line, start behind his jump spot (in frame at once), where it stops ahead of his last step (so he
+// can curve round into it)
+const AUTO = { height: 1.75, x: 1.8, behind: 4, ahead: 1.2 };
+// The auto's rear bench, measured from auto.glb (metres, relative to the auto's centre): it sits behind the centre
+// (z), its cushion about 0.5 m up, so seated hips are at hips. The side is open only ahead of the rear body panels,
+// so he crosses in at entry, then slides back onto the bench. outside: how far out from the bench he stops.
+const SEAT = { z: -0.75, hips: 0.62, entry: -0.35, outside: 1.0 };
+// Sitting: thighs swing forward and knees bend back by these angles (radians), on top of the standing pose; duck is
+// the forward lean of his back as he passes under the roof edge.
+const SIT_BEND = { thigh: 1.45, knee: 1.5, duck: 0.6 };
+// Camera: as the jump starts it pushes in to (push times) its chase distance, aiming up at aim metres to keep the flip in
+// frame. As he turns to the auto it moves behind his head (behind metres back, over metres up); as he steps in it cuts
+// to his eyes. eye: how far ahead of the head bone the eye camera sits (clear of
+// his face), lift: how far above it once seated (high enough to see over the driver's seat to the handlebar).
+const CAMERA = { push: 0.55, aim: 1.1, eye: 0.25, lift: 0.3, eyeFov: 75, behind: 0.9, over: 0.2 }; // eyeFov: wide lens of his eye view
 // Roadside props, scattered along both kerbs. front: yaw that turns the model's front to face +z.
 // size: target height in metres (models come at mixed scales). weight: how often it is picked.
 const PROPS = [
@@ -278,6 +294,17 @@ export default function RoadJump() {
         sMixer.stopAllAction();
         const sAct = sMixer.clipAction(src).play();
         const times = src.tracks.find((t) => t.name.startsWith(sHips.name + "."))!.times;
+        // Some clips stand turned: the soldier's Idle faces 44 deg off his Walk and T-pose. Turn the whole clip back so
+        // its hips face like the T-pose; otherwise blending walk into idle swings the body round.
+        const pelvisYaw = (pos: (n: string) => THREE.Vector3) => {
+          const across = pos("LeftUpLeg").sub(pos("RightUpLeg"));
+          return Math.atan2(across.z, across.x);
+        };
+        sAct.time = 0;
+        sMixer.update(0);
+        walker.scene.updateMatrixWorld(true);
+        const off = pelvisYaw((n) => sol.get(n)!.getWorldPosition(v3())) - pelvisYaw((n) => sRestPos.get(n)!.clone());
+        const face = q().setFromAxisAngle(v3().set(0, 1, 0), Math.atan2(Math.sin(off), Math.cos(off)));
         rig.updateMatrixWorld(true);
         const ours: Object3D[] = []; // mapped bones, parents before children
         rig.traverse((o) => (o as THREE.Bone).isBone && sol.has(key(o.name)) && ours.push(o));
@@ -310,7 +337,12 @@ export default function RoadJump() {
           walker.scene.updateMatrixWorld(true);
           for (const b of ours) {
             const n = key(b.name);
-            const d = turn.clone().multiply(sol.get(n)!.getWorldQuaternion(q())).multiply(sRestInv.get(n)!).multiply(turnInv);
+            const d = turn
+              .clone()
+              .multiply(face)
+              .multiply(sol.get(n)!.getWorldQuaternion(q()))
+              .multiply(sRestInv.get(n)!)
+              .multiply(turnInv);
             if (/(UpLeg|Leg|Foot|ToeBase)$/.test(n)) d.slerp(q(), 1 - STRIDE); // shorter stride, less pull on the cloth
             const w = d.multiply(bind.get(b) ?? b.getWorldQuaternion(q()));
             world.set(b, w);
@@ -322,6 +354,7 @@ export default function RoadJump() {
           }
           sHips
             .getWorldPosition(v3())
+            .applyQuaternion(face)
             .applyQuaternion(turn)
             .multiplyScalar(k)
             .applyMatrix4(hipsParentInv)
@@ -397,7 +430,30 @@ export default function RoadJump() {
       pose(walkOnTime, clip.duration, 0);
       const stopZ = hips.getWorldPosition(p).z;
       rig.position.z = 0;
+      pose(0, 0, 0, 1);
+      const standHips = hips.getWorldPosition(p).y;
       pose(0, 0, 0);
+
+      // Sitting, layered on whatever the mixer posed: thighs forward, knees back, about his left-right axis (world x,
+      // as he faces +z once seated). Parents first, so each knee bends from its already-raised thigh.
+      const sitBones = (["LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg"] as const).map(
+        (n) => [bone(rig, n), n.endsWith("UpLeg") ? -SIT_BEND.thigh : SIT_BEND.knee] as const,
+      );
+      const yAxis = v3().set(0, 1, 0);
+      const sideAxis = v3();
+      const spine = bone(rig, "Spine");
+      const turnBone = (b: Object3D, angle: number) => {
+        const w = b.getWorldQuaternion(q()).premultiply(q().setFromAxisAngle(sideAxis, angle));
+        b.quaternion.copy(b.parent!.getWorldQuaternion(q()).invert().multiply(w));
+        b.updateMatrixWorld(true);
+      };
+      const sitDown = (s: number, lean: number) => {
+        sideAxis.set(1, 0, 0).applyAxisAngle(yAxis, rig.rotation.y); // his left-right axis, whichever way he faces
+        if (s <= 0 && lean <= 0) return;
+        rig.updateMatrixWorld(true);
+        for (const [b, angle] of sitBones) turnBone(b, angle * s);
+        turnBone(spine, SIT_BEND.duck * lean); // lean forward, head down
+      };
 
       gate.position.set(apex.x, 0, walkDist + HAND_PLANT.z);
 
@@ -473,33 +529,107 @@ export default function RoadJump() {
         const jump = clamp01((at - ORBIT) / (LAND - ORBIT));
         const on = clamp01((at - LAND) / (STOP - LAND)); // the two steps after landing
         const back = clamp01((at - LAND) / BLEND); // jump -> walk
-        const still = clamp01((at - STOP) / BLEND); // walk -> standing
-        rig.position.z = Math.min(w, 1) * walkDist + back * landGap + speed * on * walkOnTime;
+        // Boarding, as people get into an auto: no stop. He walks on along a curve that bends him round, a little at
+        // a time, until he faces the auto's open side; then ducks into the sitting pose, slides in and back onto the
+        // middle of the bench (so his head stays under the roof and his legs fold away), turning forward as he settles.
+        const ease = (t: number) => t * t * (3 - 2 * t);
+        const board = clamp01((at - STOP) / (SIT - STOP));
+        const arc = clamp01(board / 0.45); // walking the curve to the opening
+        const arrive = ease(clamp01((board - 0.4) / 0.08)); // walk -> standing as he reaches it
+        const sit = ease(clamp01((board - 0.45) / 0.12)); // drop into the sitting pose before reaching the opening
+        const slide = ease(clamp01((board - 0.52) / 0.33)); // slide in through the opening and back onto the bench
+        const duck = Math.sin(Math.PI * slide); // lean lowest while passing under the roof edge
+        const forward = ease(clamp01((board - 0.68) / 0.32)); // turns slowly to face forward as he settles onto the bench
+        const autoZ = stopZ + AUTO.ahead;
+        const seat = v3().set(apex.x + AUTO.x, 0, autoZ + SEAT.z); // middle of the bench
+        const door = v3().set(seat.x - SEAT.outside, 0, autoZ + SEAT.entry); // where he arrives outside the opening
+        // The curve: a cubic from his last step (heading +z) to the opening (heading +x), relative to his last step.
+        const end = v3().set(door.x - apex.x, 0, door.z - stopZ);
+        const bend = 0.55 * Math.min(end.x, end.z);
+        const curve = (t: number) => {
+          const [b, cc, d] = [3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3]; // control points (0,0) (0,bend) (end.x-bend,end.z) end
+          return v3().set(cc * (end.x - bend) + d * end.x, 0, b * bend + (cc + d) * end.z);
+        };
+        const along = curve(arc);
+        const heading = curve(Math.min(arc + 0.01, 1)).sub(curve(Math.max(arc - 0.01, 0))); // direction of travel
+        const arcLen = Array.from({ length: 8 }, (_, i) => curve((i + 1) / 8).distanceTo(curve(i / 8))).reduce((s, d) => s + d);
+        rig.rotation.y = (arc < 1 ? Math.atan2(heading.x, heading.z) : Math.PI / 2) - (Math.PI / 2) * forward;
+        rig.position.set(
+          along.x + SEAT.outside * slide,
+          (SEAT.hips - standHips) * sit,
+          Math.min(w, 1) * walkDist + back * landGap + speed * on * walkOnTime + along.z + (seat.z - door.z) * slide,
+        );
         pose(
-          on > 0 ? on * walkOnTime : w * walkTime,
+          on > 0 ? on * walkOnTime + (arc * arcLen) / speed : w * walkTime,
           jump * clip.duration,
           clamp01((at - ORBIT) / BLEND) * (1 - back),
-          still,
-          Math.max(0, at - STOP) * 20, // idle sways on as you keep scrolling
+          arrive,
+          Math.max(0, at - STOP) * 20, // idle sways on once he has stopped walking
         );
-        // The auto sets off from behind when he jumps and slows into its stop beside him as he stops.
+        sitDown(sit, duck);
+        // Pin him to the middle of the bench as he slides on (turning about the rig's origin would shift him).
+        if (slide > 0) {
+          const hp = hips.getWorldPosition(v3());
+          rig.position.x += (seat.x - hp.x) * slide;
+          rig.position.z += (seat.z - hp.z) * slide;
+          rig.updateMatrixWorld(true);
+        }
+        // The auto sets off from behind when he jumps and slows into its stop just ahead of him as he lands his steps.
         const drive = clamp01((at - ORBIT) / (STOP - ORBIT));
         if (auto) {
           auto.visible = at > ORBIT;
-          auto.position.z = lerp(walkDist - AUTO.behind, stopZ, 1 - (1 - drive) ** 2);
+          auto.position.z = lerp(walkDist - AUTO.behind, autoZ, 1 - (1 - drive) ** 2);
         }
         const o = Math.min(w, 1);
         const u = o * o * (3 - 2 * o); // ease in and out of the swing
         const z = hips.getWorldPosition(p).z;
         head.getWorldPosition(f);
-        // Swing round a pivot that slides from his face to the chase line along the road.
+        // Swing round a pivot that slides from his face to the chase line along the road; the jump pushes it in.
+        const push = ease(clamp01((at - ORBIT) / 0.06));
         const x = lerp(f.x, apex.x, u);
         const pz = lerp(f.z, z, u);
-        const r = lerp(1.4 * zoom, 7 * zoom, u);
+        const r = lerp(1.4 * zoom, 7 * zoom, u) * lerp(1, CAMERA.push, push);
         const a = Math.PI * u; // 0 = in front of him (he faces +z), PI = behind
         // sideways reach stays inside the kerb so the swing never passes through a house
-        camera.position.set(x + Math.min(r * Math.sin(a), kerb - 0.5), lerp(f.y, 1 + 1.2 * zoom, u), pz + r * Math.cos(a));
-        camera.lookAt(x, lerp(f.y + 1.4 * zoom * TITLE.tilt, 0.8, u), pz + 1.5 * u);
+        camera.position.set(
+          x + Math.min(r * Math.sin(a), kerb - 0.5),
+          lerp(f.y, 1 + 1.2 * zoom * lerp(1, CAMERA.push, push), u),
+          pz + r * Math.cos(a),
+        );
+        const aim = v3().set(x, lerp(f.y + 1.4 * zoom * TITLE.tilt, lerp(0.8, CAMERA.aim, push), u), pz + 1.5 * u);
+        // Boarding camera: as he curves round to the auto it moves in just behind his head, looking where he looks; as he
+        // takes his first step in (starts to sit) it cuts into his eyes, wide lens, and stays there: in through the
+        // open side, onto the bench, then over the driver down the road.
+        const facing = v3().set(Math.sin(rig.rotation.y), 0, Math.cos(rig.rotation.y));
+        const behind = ease(clamp01(board / 0.3));
+        const eyes = ease(clamp01((board - 0.45) / 0.05));
+        const nape = f
+          .clone()
+          .addScaledVector(facing, -CAMERA.behind)
+          .setY(f.y + CAMERA.over);
+        const gaze = f
+          .clone()
+          .addScaledVector(facing, 3)
+          .setY(f.y - 0.3);
+        // Eyes ride on his hips, not his head: ducking tips the head into the bench and the auto's side. Hips to eyes is
+        // about 0.5 m standing or seated; lift raises the view once seated, to see over the driver to the handlebar.
+        const hp = hips.getWorldPosition(v3());
+        const eye = hp.addScaledVector(facing, CAMERA.eye).setY(hp.y + 0.5 + CAMERA.lift * sit);
+        eye.x = lerp(eye.x, seat.x, forward); // once he faces forward, look from the middle of the auto, down its centre line
+        const ahead = eye
+          .clone()
+          .addScaledVector(facing, 5)
+          .setY(eye.y - 0.4);
+        ahead.x = lerp(ahead.x, seat.x, forward);
+        camera.position.lerp(nape, behind).lerp(eye, eyes);
+        aim.lerp(gaze, behind).lerp(ahead, eyes);
+        rig.visible = eyes < 0.05; // the eye camera sits inside him: hide him as soon as it cuts in
+        const fov = lerp(40, CAMERA.eyeFov, eyes); // wider in his eyes, to take in the auto and the road ahead
+        if (camera.fov !== fov) {
+          camera.fov = fov;
+          camera.updateProjectionMatrix();
+        }
+        camera.lookAt(aim);
         renderer.render(scene, camera);
       };
 
@@ -520,13 +650,13 @@ export default function RoadJump() {
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (reduce) progress = ORBIT + (LAND - ORBIT) * (apexT / clip.duration); // still frame mid-flip over the barricade
       resize();
-      // Pin the section and scrub all three beats across 4.5 screens of scrolling; the frame loop draws them.
+      // Pin the section and scrub the beats across 6 screens of scrolling; the frame loop draws them.
       const st = reduce
         ? null
         : ScrollTrigger.create({
             trigger: pin.current,
             start: "top top",
-            end: "+=450%",
+            end: "+=600%",
             pin: true,
             scrub: true,
             onUpdate: (self) => (progress = self.progress),
