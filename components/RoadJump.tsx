@@ -222,15 +222,26 @@ export default function RoadJump() {
       let seed = 7;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // seeded: the same street every visit
 
-      // The road and barricade are matte (roughness 0.93-1, no metal), so Lambert shades them much as the glTF's PBR
-      // material would, and its shaders compile far faster: the PBR ones were most of the first frame's wait.
-      const matte = (root: Object3D) =>
+      // Every model's PBR material becomes Lambert, which is cheaper to compile (the road's and barricade's PBR shaders
+      // were most of the first frame's wait) and to draw. With no environment to reflect, PBR adds little here: what
+      // goes is the glossy highlight and metalness, which without an environment only darkened surfaces towards black.
+      // Transparency, cut-outs (leaves), glow and baked shadow carry over. Shared materials stay shared.
+      const matte = (root: Object3D) => {
+        const made = new Map<THREE.Material, THREE.MeshLambertMaterial>();
         root.traverse((o) => {
-          const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
-          if (!m?.isMeshStandardMaterial) return;
-          (o as THREE.Mesh).material = new THREE.MeshLambertMaterial({ color: m.color, map: m.map, normalMap: m.normalMap, side: m.side });
-          m.dispose();
+          const mesh = o as THREE.Mesh;
+          const m = mesh.material as THREE.MeshStandardMaterial | undefined;
+          if (!m?.isMeshStandardMaterial) return; // unlit (basic) materials are cheap already
+          if (!made.has(m)) {
+            const { color, map, normalMap, normalScale, aoMap, aoMapIntensity, emissive, emissiveMap, emissiveIntensity } = m;
+            const { alphaMap, alphaTest, transparent, opacity, side, depthWrite, vertexColors, name } = m;
+            made.set(m, new THREE.MeshLambertMaterial({ color, map, normalMap, normalScale, aoMap, aoMapIntensity, emissive,
+              emissiveMap, emissiveIntensity, alphaMap, alphaTest, transparent, opacity, side, depthWrite, vertexColors, name }));
+            m.dispose();
+          }
+          mesh.material = made.get(m)!;
         });
+      };
       matte(road.scene);
       matte(barricade.scene);
       // Road: one tile, cloned along z to run past the fog.
@@ -802,6 +813,10 @@ export default function RoadJump() {
       const [streetModels] = await streetLoad;
       if (dead) return;
       const model = (n: string) => streetModels[streetNames.indexOf(n)];
+      for (const m of streetModels) matte(m.scene);
+      // The street's ~20 shader programs take about a second to compile. Start them now, from the models as loaded
+      // (clones share their materials), so they compile while the street is laid out below rather than after.
+      const streetCompiling = Promise.all(streetModels.map((m) => renderer.compileAsync(m.scene, camera, scene)));
       const street = new THREE.Group();
       // Roadside: props laid along both footpaths in a seeded random order, end to end with fronts on one line.
       const kinds = PROPS.map((p) => ({ ...p, model: ground(model(p.name).scene, p.size) }));
@@ -880,10 +895,6 @@ export default function RoadJump() {
       banner.position.set(stall.position.x + stallSize.x / 2 + 0.03, kerbTop + 0.55, stallZ);
       street.add(banner);
       const keeper = ground(model("stall-keeper").scene, STALL.keeper);
-      keeper.traverse((o) => {
-        const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
-        if (m?.isMeshStandardMaterial) m.metalness = 0; // ships fully metallic (the glTF default), which renders black
-      });
       keeper.rotation.y = Math.PI / 2; // faces +z as modelled; turn him to the road (+x)
       keeper.position.set(stall.position.x - depth * 0.2, kerbTop + STALL.keeperBase, stall.position.z);
       street.add(keeper);
@@ -1007,7 +1018,7 @@ export default function RoadJump() {
           placed++;
         }
       }
-      await renderer.compileAsync(street, camera, scene);
+      await Promise.all([streetCompiling, renderer.compileAsync(street, camera, scene)]); // and the banner's
       if (dead) return;
       scene.add(street);
       stroll(0);
