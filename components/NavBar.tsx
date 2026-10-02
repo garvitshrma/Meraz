@@ -1,6 +1,6 @@
 "use client";
 
-// Site-wide top navigation: logo (home) + the five reference links. Collapses to a dropdown on phones.
+// Top navigation on every page but home: logo (home) + the five reference links. Collapses to a dropdown on phones.
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { List, X } from "@phosphor-icons/react";
@@ -20,6 +20,7 @@ export default function NavBar() {
   }, [open]);
 
   const current = (href: string) => (pathname.startsWith(href) ? "page" : undefined);
+  if (pathname === "/") return null; // home is the road scene: its auto ride ends at the links as destinations
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b-4 border-ink bg-cream print:hidden">

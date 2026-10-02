@@ -14,6 +14,8 @@ import type { Object3D, SkinnedMesh } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
+import { navLinks } from "@/data/site";
+import { TLink, useGo } from "./Transition";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,6 +33,13 @@ const ORBIT = 0.24;
 const LAND = 0.52;
 const STOP = 0.62;
 const SIT = 0.93;
+// Seated, the driver asks where to (a speech bubble from his head at ASK), then the site's pages come up as
+// destinations at GO. The home page has no nav bar; these are its navigation.
+const ASK = 0.95;
+const GO = 0.97;
+// Picking a destination: the auto pulls away (accel m/s^2, carrying him and his eye camera, the lens widening by up to
+// fov degrees with speed) and after fade seconds the screen starts fading to white into the new page.
+const RIDE = { accel: 6, fov: 10, fade: 0.9 };
 const WALK_CYCLES = 3; // walk cycles (two steps each) during the swing
 const WALK_ON_CYCLES = 1; // and after landing
 const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stretches the dhoti (and the saree)
@@ -130,9 +139,15 @@ const CREDITS = [
 export default function RoadJump() {
   const pin = useRef<HTMLElement>(null);
   const host = useRef<HTMLDivElement>(null);
+  const bubble = useRef<HTMLDivElement>(null);
+  const ride = useRef<((href: string) => void) | null>(null); // starts the ride to a page, once the scene can play it
+  const goTo = useGo(); // stable while home is mounted
 
   useEffect(() => {
     const el = host.current!;
+    // Held here, not read from the refs in the frame loop: navigating away detaches the refs a frame before cleanup.
+    const sec = pin.current!;
+    const tip = bubble.current!;
     let cleanup = () => {};
     let dead = false;
 
@@ -511,6 +526,7 @@ export default function RoadJump() {
 
       const walkers: { g: Object3D; mixer: THREE.AnimationMixer; z0: number; v: number }[] = [];
       let auto: Object3D | undefined;
+      let driverHead: Object3D | undefined;
       let clock = 0;
       const stroll = (dt: number) => {
         clock += dt;
@@ -526,9 +542,14 @@ export default function RoadJump() {
       // the walk for two steps and stands. The camera rides behind the hips; x and height stay fixed so the flip does not
       // sway it. Narrow screens pull it back (zoom).
       const lerp = THREE.MathUtils.lerp;
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const f = v3();
       let zoom = 1;
-      const draw = (at: number) => {
+      let rideFrom = -1; // performance.now() when a destination was picked
+      let rideZ = 0; // how far the auto has gone since
+      let rideV = 0;
+      const draw = (scrolled: number) => {
+        const at = rideFrom < 0 ? scrolled : 1; // once riding, he stays seated whatever the scroll does
         const w = at / ORBIT; // walk progress, keeps running through the blend
         const clamp01 = (x: number) => THREE.MathUtils.clamp(x, 0, 1);
         const jump = clamp01((at - ORBIT) / (LAND - ORBIT));
@@ -545,7 +566,8 @@ export default function RoadJump() {
         const slide = ease(clamp01((board - 0.52) / 0.33)); // slide in through the opening and back onto the bench
         const duck = Math.sin(Math.PI * slide); // lean lowest while passing under the roof edge
         const forward = ease(clamp01((board - 0.68) / 0.32)); // turns slowly to face forward as he settles onto the bench
-        const autoZ = stopZ + AUTO.ahead;
+        const autoZ = stopZ + AUTO.ahead + rideZ;
+        const bob = 0.012 * Math.sin(rideZ * 3) * Math.min(rideV / 3, 1); // the road under a moving auto
         const seat = v3().set(apex.x + AUTO.x, 0, autoZ + SEAT.z); // middle of the bench
         const door = v3().set(seat.x - SEAT.outside, 0, autoZ + SEAT.entry); // where he arrives outside the opening
         // The curve: a cubic from his last step (heading +z) to the opening (heading +x), relative to his last step.
@@ -561,7 +583,7 @@ export default function RoadJump() {
         rig.rotation.y = (arc < 1 ? Math.atan2(heading.x, heading.z) : Math.PI / 2) - (Math.PI / 2) * forward;
         rig.position.set(
           along.x + SEAT.outside * slide,
-          (SEAT.hips - standHips) * sit,
+          (SEAT.hips - standHips) * sit + bob,
           Math.min(w, 1) * walkDist + back * landGap + speed * on * walkOnTime + along.z + (seat.z - door.z) * slide,
         );
         pose(
@@ -584,6 +606,7 @@ export default function RoadJump() {
         if (auto) {
           auto.visible = at > ORBIT;
           auto.position.z = lerp(walkDist - AUTO.behind, autoZ, 1 - (1 - drive) ** 2);
+          auto.position.y = bob;
         }
         const o = Math.min(w, 1);
         const u = o * o * (3 - 2 * o); // ease in and out of the swing
@@ -629,13 +652,25 @@ export default function RoadJump() {
         camera.position.lerp(nape, behind).lerp(eye, eyes);
         aim.lerp(gaze, behind).lerp(ahead, eyes);
         rig.visible = eyes < 0.05; // the eye camera sits inside him: hide him as soon as it cuts in
-        const fov = lerp(40, CAMERA.eyeFov, eyes); // wider in his eyes, to take in the auto and the road ahead
+        // wider in his eyes, to take in the auto and the road ahead; wider still as the ride picks up speed
+        const fov = lerp(40, CAMERA.eyeFov, eyes) + RIDE.fov * Math.min(rideV / 10, 1);
         if (camera.fov !== fov) {
           camera.fov = fov;
           camera.updateProjectionMatrix();
         }
         camera.lookAt(aim);
         renderer.render(scene, camera);
+        // Driver's question and the destinations: shown by data attributes on the section, styled in the markup.
+        // Reduced motion never scrolls, so its destinations stay up; once riding, the question and destinations go.
+        const riding = rideFrom >= 0;
+        const [ask, go] = riding ? [false, false] : [!reduce && at >= ASK, reduce || at >= GO];
+        if (sec.hasAttribute("data-ask") !== ask) sec.toggleAttribute("data-ask", ask);
+        if (sec.hasAttribute("data-go") !== go) sec.toggleAttribute("data-go", go);
+        if (ask && driverHead) {
+          const s = driverHead.getWorldPosition(v3()).project(camera); // the bubble's tail points at the top of his head
+          tip.style.setProperty("--x", `${((s.x + 1) / 2) * el.clientWidth}px`);
+          tip.style.setProperty("--y", `${((1 - s.y) / 2) * el.clientHeight}px`);
+        }
       };
 
       let progress = 0;
@@ -652,7 +687,6 @@ export default function RoadJump() {
       const ro = new ResizeObserver(resize);
       ro.observe(el);
 
-      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (reduce) progress = ORBIT + (LAND - ORBIT) * (apexT / clip.duration); // still frame mid-flip over the barricade
       resize();
       // Pin the section and scrub the beats across 6 screens of scrolling; the frame loop draws them.
@@ -675,14 +709,28 @@ export default function RoadJump() {
             ? (now) => {
                 stroll(Math.min((now - last) / 1000, 0.1));
                 last = now;
+                if (rideFrom >= 0) {
+                  const t = (now - rideFrom) / 1000;
+                  [rideZ, rideV] = [0.5 * RIDE.accel * t * t, RIDE.accel * t];
+                }
                 draw(progress);
               }
             : null,
         );
       });
       io.observe(el);
+      // The ride needs the frame loop, so reduced motion leaves ride unset and the links navigate as usual.
+      let rideTimer = 0;
+      if (!reduce)
+        ride.current = (href) => {
+          if (rideFrom >= 0) return;
+          rideFrom = performance.now();
+          rideTimer = window.setTimeout(() => goTo(href, "white"), RIDE.fade * 1000);
+        };
 
       cleanup = () => {
+        ride.current = null;
+        clearTimeout(rideTimer);
         io.disconnect();
         renderer.setAnimationLoop(null);
         st?.kill(true);
@@ -894,6 +942,7 @@ export default function RoadJump() {
         pointBone(`${s}Arm`, `${s}ForeArm`, reach.clone().multiplyScalar(Math.cos(elbow)).addScaledVector(bendDir, Math.sin(elbow)));
         pointBone(`${s}ForeArm`, `${s}Hand`, grip.sub(bone(driver, `${s}ForeArm`).getWorldPosition(v3())));
       }
+      driverHead = bone(driver, "HeadTop_End");
 
       // Standing people: random spots on the outer edges, at least 1.5 m from trees and each other, facing the road.
       const standing = Object.entries(STANDING).map(([n, height]) => ground(model(n).scene, height));
@@ -926,13 +975,53 @@ export default function RoadJump() {
   return (
     // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
     <div>
-      <section ref={pin} aria-label="Flip over the barricade" className="relative h-[100dvh] overflow-hidden bg-cream">
+      <section ref={pin} aria-label="Flip over the barricade" className="group relative h-[100dvh] overflow-hidden bg-cream">
         <div
           ref={host}
           role="img"
           aria-label="A runner flip-jumps over a Delhi Police barricade on a city road"
           className="absolute inset-0"
         />
+        {/* The driver's question, pinned above his head by the frame loop (--x, --y); kept clear of the screen top. */}
+        <div
+          ref={bubble}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[var(--x,50%)] top-[max(var(--y,40%),6.5rem)] z-[2] origin-bottom-left -translate-x-6 -translate-y-[calc(100%_+_1.25rem)] scale-0 opacity-0 transition-[scale,opacity] duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-data-[ask]:scale-100 group-data-[ask]:opacity-100"
+        >
+          <p className="relative whitespace-nowrap border-4 border-ink bg-cream px-4 py-2 font-display text-lg shadow-[5px_5px_0_var(--color-ink)] sm:text-2xl">
+            Bhaiya! Where to go?
+            {/* tail, pointing down at his head */}
+            <span className="absolute -bottom-[14px] left-4 size-5 rotate-45 border-b-4 border-r-4 border-ink bg-cream" />
+          </p>
+        </div>
+        {/* Destinations: the nav links as signboards, coming up one after another. */}
+        <nav aria-label="Main" className="absolute inset-x-3 bottom-14 z-[2] sm:bottom-16">
+          <ul className="flex flex-wrap justify-center gap-3 sm:gap-4">
+            {navLinks.map((l, i) => (
+              <li
+                key={l.href}
+                style={{ transitionDelay: `${i * 70}ms` }}
+                className="invisible translate-y-6 opacity-0 transition-all duration-300 group-data-[go]:visible group-data-[go]:translate-y-0 group-data-[go]:opacity-100"
+              >
+                <TLink
+                  href={l.href}
+                  onClick={(e) => {
+                    // a plain click rides there; modifier clicks (new tab etc.) and no scene fall through to the link
+                    if (!ride.current || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                    e.preventDefault();
+                    ride.current(l.href);
+                  }}
+                  className="flex min-h-12 flex-col items-center border-4 border-ink bg-marigold px-4 py-1.5 shadow-[4px_4px_0_var(--color-ink)] transition-[translate,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--color-ink)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-6"
+                >
+                  <span className="font-display text-base sm:text-xl">{l.label}</span>
+                  <span className="font-deva text-sm text-rani-deep" aria-hidden="true">
+                    {l.hindi}
+                  </span>
+                </TLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
         {/* CC BY 4.0 requires credit */}
         <p className="absolute bottom-2 left-3 right-3 z-[1] font-mono text-[10px] text-ink/70">
           Models (CC BY 4.0 unless noted):{" "}
