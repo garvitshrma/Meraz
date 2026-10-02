@@ -162,7 +162,16 @@ export default function RoadJump() {
         load("barricade"),
         load("jump"),
         load("walk"),
-        new THREE.TextureLoader().loadAsync("/sky.jpg"),
+        // decoded off the main thread (an <img> would be decoded on the first frame); ImageBitmaps upload top row first,
+        // so v is turned round in place of flipY
+        new THREE.ImageBitmapLoader().loadAsync("/sky.jpg").then((bitmap) => {
+          const t = new THREE.Texture(bitmap);
+          t.flipY = false;
+          t.repeat.y = -1;
+          t.offset.y = 1;
+          t.needsUpdate = true;
+          return t;
+        }),
         document.fonts.load(`300px ${font}`).catch(() => {}), // the title sign is drawn in it
       ]);
       // The street downloads while the first frame is built, without competing with it for bandwidth.
@@ -185,13 +194,25 @@ export default function RoadJump() {
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(el.clientWidth, el.clientHeight); // sized now: each resize reallocates the canvas (~0.15 s)
       el.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
-      sky.mapping = THREE.EquirectangularReflectionMapping;
+      // Sky: the panorama on the inside of a sphere that follows the camera, not scene.background. As a background it
+      // is first converted to a cube map, with shaders of its own, on the first frame (~0.4 s); as a mesh its shader
+      // compiles with the rest. It is only ever magnified, so it needs no mipmaps (a slower upload).
       sky.colorSpace = THREE.SRGBColorSpace;
-      scene.background = sky;
+      sky.generateMipmaps = false;
+      sky.minFilter = THREE.LinearFilter;
+      const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(150, 48, 24).scale(-1, 1, 1), // seen from inside
+        new THREE.MeshBasicMaterial({ map: sky, fog: false, depthWrite: false }),
+      );
+      dome.rotation.y = Math.PI; // lines its seam up where scene.background put it
+      dome.renderOrder = -1; // drawn first, behind everything
+      dome.frustumCulled = false;
       scene.fog = new THREE.Fog(HAZE, 18, 60);
       const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+      scene.add(dome);
       scene.add(new THREE.HemisphereLight(0xfff4dc, 0x6b4a2a, 2));
       const sun = new THREE.DirectionalLight(0xffe2a8, 2.5);
       sun.position.set(6, 10, 4);
@@ -201,6 +222,17 @@ export default function RoadJump() {
       let seed = 7;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // seeded: the same street every visit
 
+      // The road and barricade are matte (roughness 0.93-1, no metal), so Lambert shades them much as the glTF's PBR
+      // material would, and its shaders compile far faster: the PBR ones were most of the first frame's wait.
+      const matte = (root: Object3D) =>
+        root.traverse((o) => {
+          const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+          if (!m?.isMeshStandardMaterial) return;
+          (o as THREE.Mesh).material = new THREE.MeshLambertMaterial({ color: m.color, map: m.map, normalMap: m.normalMap, side: m.side });
+          m.dispose();
+        });
+      matte(road.scene);
+      matte(barricade.scene);
       // Road: one tile, cloned along z to run past the fog.
       road.scene.scale.setScalar(ROAD_SCALE);
       const roadBox = new THREE.Box3().setFromObject(road.scene);
@@ -405,6 +437,9 @@ export default function RoadJump() {
       const hips = bone(rig, "Hips");
       const head = bone(rig, "Head");
       rig.traverse((o) => (o.frustumCulled = false)); // skinned bounds stay at the start pose; root motion carries him out
+      // Compiling the opening shot's shaders is the slowest part of the first frame. Start it now, in parallel where the
+      // browser can (KHR_parallel_shader_compile), while his clips are prepared below; the first frame waits for it.
+      const compiling = renderer.compileAsync(scene, camera);
       const mixer = new THREE.AnimationMixer(rig);
       const clip = man.animations.find((a) => a.name === "Flip jump") ?? man.animations[0];
       const action = mixer.clipAction(clip).play(); // the flip jump
@@ -659,6 +694,7 @@ export default function RoadJump() {
           camera.updateProjectionMatrix();
         }
         camera.lookAt(aim);
+        dome.position.copy(camera.position);
         renderer.render(scene, camera);
         // Driver's question and the destinations: shown by data attributes on the section, styled in the markup.
         // Reduced motion never scrolls, so its destinations stay up; once riding, the question and destinations go.
@@ -675,7 +711,8 @@ export default function RoadJump() {
 
       let progress = 0;
       const resize = () => {
-        renderer.setSize(el.clientWidth, el.clientHeight);
+        const size = renderer.getSize(new THREE.Vector2());
+        if (size.x !== el.clientWidth || size.y !== el.clientHeight) renderer.setSize(el.clientWidth, el.clientHeight);
         camera.aspect = el.clientWidth / el.clientHeight;
         camera.updateProjectionMatrix();
         zoom = Math.max(1, 0.8 / camera.aspect);
@@ -684,6 +721,17 @@ export default function RoadJump() {
         title.scale.setScalar(Math.min(1, (0.9 * seen) / TITLE.width));
         draw(progress);
       };
+      // Upload the textures while the shaders compile, rather than in the first frame.
+      scene.traverse((o) => {
+        for (const m of [(o as THREE.Mesh).material ?? []].flat())
+          for (const v of Object.values(m)) if ((v as THREE.Texture | null)?.isTexture) renderer.initTexture(v);
+      });
+      await Promise.all([compiling, renderer.compileAsync(gate, camera, scene)]); // with the lettering added since
+      if (dead) {
+        renderer.dispose();
+        renderer.domElement.remove();
+        return;
+      }
       const ro = new ResizeObserver(resize);
       ro.observe(el);
 
