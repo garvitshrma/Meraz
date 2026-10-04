@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Contact", description: "Contact the 
 
 const tilts = ["-rotate-1", "rotate-1", "-rotate-[.5deg]", "rotate-[.6deg]"];
 
-// Same nine contact cards as the reference, as old postcards. Phone numbers and email are tappable.
+// Address plus the Meraz 7.0 conveners, as old postcards. Phone numbers and email are tappable.
 export default function ContactPage() {
   return (
     <>

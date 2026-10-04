@@ -82,14 +82,15 @@ export const contacts: ContactCard[] = [
     kind: "mail",
     details: [{ label: "Email", value: "meraz@iitbhilai.ac.in" }, { label: "Indian Institute of Technology, Bhilai" }, { label: "Durg, Chhattisgarh" }, { label: "India - 491002" }],
   },
-  { title: "Fest Head", kind: "phone", details: [{ label: "Fest Head - Gaurav Yogi", value: "+91 6376910782" }] },
-  { title: "Fest Convenor", kind: "phone", details: [{ label: "Fest Convenor - Gajanand Kumawat", value: "+91 8769976268" }] },
-  { title: "Finance", kind: "phone", details: [{ label: "Convenor - Jiya Mehta", value: "+91 7990195809" }, { label: "Convenor - Vikas Choudhary", value: "+91 9257617826" }] },
-  { title: "Sci-Tech", kind: "phone", details: [{ label: "Convenor - Prashant Asati", value: "+91 8237436265" }] },
-  { title: "Sports & Informals", kind: "phone", details: [{ label: "Convenor - Devansh Tejwani", value: "+91 7030429299" }, { label: "Convenor - Tanishq Gupta", value: "+91 8955947415" }] },
-  { title: "Media & Design", kind: "phone", details: [{ label: "Convener - Kabeer More", value: "+91 9156057574" }, { label: "Convener - Harshal Singh", value: "+91 9414258313" }] },
-  { title: "Cultural", kind: "phone", details: [{ label: "Convenor - Purva Jivani", value: "+91 9898040800" }, { label: "Convenor - Lakshay Gupta", value: "+91 9911118016" }] },
-  { title: "Outreach", kind: "phone", details: [{ label: "Convenor - Ashtha Priya", value: "+91 6204411316" }, { label: "Convenor - Aditya Yadav", value: "+91 7470380899" }] },
+  { title: "Fest Head", kind: "phone", details: [{ label: "Fest Head - Arush Ranjan", value: "+91 7780070550" }] },
+  { title: "Fest Convener", kind: "phone", details: [{ label: "Fest Convener - Kumar Utkarsh", value: "+91 7667416430" }] },
+  { title: "Finance", kind: "phone", details: [{ label: "Convener - Varshitha", value: "+91 6281521833" }, { label: "Convener - Ankan Mondal", value: "+91 9064825588" }] },
+  { title: "Cultural", kind: "phone", details: [{ label: "Convener - Andiyappan Rohan", value: "+91 6303011550" }, { label: "Convener - Tancia Boro", value: "+91 7002108549" }] },
+  { title: "Management", kind: "phone", details: [{ label: "Convener - Banotu Santhosh", value: "+91 7013751880" }] },
+  { title: "Sci-Tech", kind: "phone", details: [{ label: "Convener - Aditya Girish Seoker", value: "+91 9511629108" }, { label: "Convener - Kanad Bajpai", value: "+91 9302860795" }] },
+  { title: "Outreach", kind: "phone", details: [{ label: "Convener - Stuti Jain", value: "+91 7440779990" }, { label: "Convener - Lanka Devi Satwika", value: "+91 9177926758" }] },
+  { title: "Sports & Informals", kind: "phone", details: [{ label: "Convener - Shubham Jha", value: "+91 8797717222" }, { label: "Convener - Harsh Vardhan Singh", value: "+91 8400281102" }] },
+  { title: "Media & Design", kind: "phone", details: [{ label: "Convener - Manjot Singh", value: "+91 7003603365" }, { label: "Convener - Amit Patel", value: "+91 8602275578" }] },
 ];
 
 // Same placeholder timeline as the reference site's /timeline route. PLACEHOLDER dates.
