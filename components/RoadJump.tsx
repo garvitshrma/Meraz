@@ -81,7 +81,7 @@ const SHOWS = [
 const SHELL = { burst: 2.1, end: 10, droop: 0.5, size: 1.4 };
 const FIREWORK_COLOURS = [0xffb627, 0xff3d3d, 0x19d3c5, 0xff4fa3, 0x7dff6b, 0x8f7bff, 0xff7a1a];
 // Keyboard: holding W scrolls on down the scene, S back up, at this many pixels a second.
-const KEY_SCROLL = 1200;
+const KEY_SCROLL = 450;
 // The "MERAZ 7.0" sign: metres wide, centre height, behind his start. The opening shot tilts up by tilt (rise per
 // metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
 const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
