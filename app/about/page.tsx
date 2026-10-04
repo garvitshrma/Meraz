@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarStar, GlobeHemisphereEast, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { Container } from "@/components/ui";
-import { about } from "@/data/content";
+import { about, modelCredits } from "@/data/content";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "About", description: "About Meraz 7.0 and this year's Retro India theme." };
@@ -79,6 +79,26 @@ export default function AboutPage() {
           </ul>
         </Container>
       </section>
+
+      {/* 3D model credits for the home road scene (CC BY 4.0 needs them on the site) */}
+      {/* <section id="credits" className="scroll-mt-24 border-t-4 border-ink py-12" aria-labelledby="credits-title">
+        <Container>
+          <h2 id="credits-title" className="font-mono text-sm font-bold tracking-[.3em]">
+            3D MODEL CREDITS
+          </h2>
+          <p className="mt-2 font-mono text-xs text-ink/70">Home page road scene. CC BY 4.0 unless noted.</p>
+          <ul className="mt-4 grid gap-x-8 gap-y-2 font-mono text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {modelCredits.map(([what, who, href]) => (
+              <li key={href}>
+                <a className="underline decoration-2 underline-offset-4 hover:text-rani-deep" href={href}>
+                  {what}
+                </a>{" "}
+                by {who}
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </section> */}
     </div>
   );
 }

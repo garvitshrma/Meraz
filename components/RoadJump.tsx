@@ -144,23 +144,6 @@ const WALKWAY = { from: -60, len: 130 }; // pedestrians loop over this z range; 
 // Stall on the right-hand footpath (right as seen from the chase camera, i.e. -x) level with the barricade, its back at
 // back (in front of the environment's wall), clear of the walking line. The keeper is a bust, behind the counter.
 const STALL = { height: 2.6, keeper: 0.95, keeperBase: 0.75, back: -9.9 };
-const CREDITS = [
-  ["Barricade", "InnoFrame", "https://sketchfab.com/3d-models/delhi-police-security-barricade-3d-model-f17ecc171f3441ceb0e9effd90f31c1f"],
-  ["Runner", "As7 3d models", "https://sketchfab.com/3d-models/spiderman-india-pavitr-prabhakar-ed5f6c5ba8a94c98aee68b5b6ed1f29b"],
-  ["Man", "pankhkhan", "https://sketchfab.com/3d-models/indian-man-with-red-clothes-23b1805e473d4e5cb3e439b576ca39a9"],
-  ["Old man", "anandmohan662", "https://sketchfab.com/3d-models/indian-old-man-walking-e70a140ad4334c2e8648ac78d61545b3"],
-  [
-    "Woman",
-    "Pixel_Monster (Sketchfab Standard licence)",
-    "https://sketchfab.com/3d-models/indian-woman-in-saree-b5965a93b03440dea65160f7cbac1fc7",
-  ],
-  ["Stall", "Cyril43", "https://sketchfab.com/3d-models/medieval-stall-4a5a40e78e4b481bafbb576303f992cd"],
-  ["Stall keeper", "chitreshyadav", "https://sketchfab.com/3d-models/modi-ji-e14d0a18080b434c9c28e87c9db485ee"],
-  ["Auto", "rSquare", "https://sketchfab.com/3d-models/auto-rickshaw-44776bcb34e04c1a8b9c18a70376304e"],
-  ["Tree", "farhad.Guli", "https://sketchfab.com/3d-models/tree-7016d1d32fe748f0a8b3f5eb39374bc4"],
-  ["Pine", "evolveduk", "https://sketchfab.com/3d-models/pine-tree-d45218a3fab349e5b1de040f29e7b6f9"],
-  ["Birch", "evolveduk", "https://sketchfab.com/3d-models/birch-tree-aa842dffd9654d33b8b91170ce83c172"],
-];
 
 export default function RoadJump() {
   const pin = useRef<HTMLElement>(null);
@@ -1299,19 +1282,10 @@ export default function RoadJump() {
           SCROLL
           <ArrowDown size={18} weight="bold" className="motion-safe:animate-bounce" />
         </p>
-        {/* CC BY 4.0 requires credit */}
-        <p className="absolute bottom-2 left-3 right-3 z-[1] font-mono text-[10px] text-ink/70">
-          Models (CC BY 4.0 unless noted):{" "}
-          {CREDITS.map(([what, who, href], i) => (
-            <span key={href}>
-              {i > 0 && " · "}
-              <a className="underline" href={href}>
-                {what}
-              </a>{" "}
-              by {who}
-            </span>
-          ))}
-        </p>
+        {/* CC BY 4.0 requires credit: the full list lives on the About page, linked from here.
+        <TLink href="/about#credits" className="absolute bottom-2 right-3 z-[1] font-mono text-[10px] text-cream/70 underline hover:text-cream">
+          3D credits
+        </TLink> */}
       </section>
     </div>
   );
