@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Class scanning skips the 3D assets: reading the binary fireworks data as text crashed the scanner. */
+@source not "../public";
+@source not "../*.glb";
 
 /* ---------- Design tokens ---------- */
 @theme {

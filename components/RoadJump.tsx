@@ -20,10 +20,68 @@ import { TLink, useGo } from "./Transition";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ROAD_SCALE = 0.01; // road.glb is in centimetres
+// Street: the hand-built environment (enviroment.glb), split at build time into its road tile (env-road.glb) and
+// everything else (env.glb). It is modelled about 1.7x life size (its chai-wala stands 2.9 m), so both are scaled by
+// scale, turned round so its street runs on ahead of him (+z) to the water tank and billboard, raised by y (its road
+// surface sits 0.17 below its origin) and moved along by z. Its houses end short of where he starts, so the row of
+// houses (both sides) is repeated twice behind its first house, row (model units) apart; the tank and billboard are
+// pushed vista metres further on, far enough to fit whole in the chase camera's view. The road tile repeats along z.
+// Measured at that scale: the carriageway's edge is edge metres out, the footpaths kerbTop above the road.
+const ENV = { scale: 0.6, y: 0.1, z: 35, edge: 5.5, kerbTop: 0.41, row: 95, vista: 30 };
+// (Names as three.js loads them: "wall.001" becomes "wall001".)
+const HOUSE_ROW = /^(pair_of_house|pan_shop|wall|tall_house|house_with_tank|good_house)(\d+)?$/;
+const VISTA = /^(water_tank|Sketchfab_model|250px-.*|MV5B.*)$/; // the tank, the billboard and its two posters
+// Footpaths, keyed by side (+x is left as seen from the chase camera). Pedestrians walk one line along each, lane
+// metres out, clear of the railings and house fronts. Trees stand on tree, street lights on lamp (at the kerb, arm
+// over the road), except over the z spans where the environment's houses, walls, stalls and railings (or the title
+// sign, for lamps) are in the way. Scanned from the model.
+const PATHS: Record<number, { lane: number; tree: number; trees: number[][]; lamp: number; lamps: number[][] }> = {
+  1: {
+    lane: 6.3,
+    tree: 7.6,
+    trees: [[-74.1, -67.6], [-45.8, -42.8], [-36.9, -27.7], [-17.1, -10.6], [11.2, 14.9], [20.1, 29.7], [36.8, 46.6],
+      [68.2, 71.2], [77.1, 86.3]],
+    lamp: 5.65,
+    lamps: [[-12, -8]],
+  },
+  [-1]: {
+    lane: -6.3,
+    tree: -7.6,
+    trees: [[-84.3, -74.9], [-69.3, -65.8], [-44.2, -37.7], [-27.3, -17.9], [-12.3, -8.8], [12.8, 19.3], [29.7, 39.1],
+      [44.7, 48.2], [69.8, 76.3], [107.3, 110.7]],
+    lamp: -5.65,
+    lamps: [[-12, -8], [33.3, 37.4], [42.6, 45.1], [107.4, 109.6]],
+  },
+};
+const LAMP_GAP = 14; // metres between street lights along each side (staggered across the road)
 // Where the left hand rests mid-vault (t ≈ 0.5–0.7 s), measured from the clip: the barricade top goes here.
 const HAND_PLANT = { y: 0.9, z: 1.95 };
-const HAZE = 0x9ca1b1; // the sky panorama's colour at the horizon, so the far road fades into it
+const HAZE = 0x304a60; // the sky photo's colour at the horizon, so the far road fades into it
+// Night sky: "Qwantani Moonrise (Pure Sky)" by Greg Zaal, Poly Haven (CC0), graded from its lifted exposure back to
+// night, turned so the moon rises straight down the street, and cut off 9 deg below the horizon (sky.jpg). That band is
+// spread over SKY_SPAN degrees from the zenith, which lowers the moon from 14 to 8 deg up, into the chase camera's view.
+const SKY_SPAN = 106.8;
+// The photo's moon is a blown-out blob, so its glare is toned down in sky.jpg and NASA's full Moon (Scientific
+// Visualization Studio, "Moon Phase and Libration, 2024", public domain; moon.webp) is laid over it: el degrees up,
+// straight down the street, size degrees across (a long lens's moon, bigger than the eye's 0.5), dimmed to tint.
+const MOON = { el: 8.1, size: 1.6, tint: 0xcfd0c6 };
+// Fireworks: one baked shell (fireworks.glb, baked by the build into fireworks.bin: a rocket climbing about 38 units,
+// then 2,200 sparks bursting out about 50 units over 8 s), let off again and again at each show, out past the houses:
+// two behind his start, three down the road ahead. at: launch point in metres (below the road, so the rockets rise out
+// from behind the rooftops), scale: shell size, speed: playback rate (the bake runs slow), gap: seconds between shells.
+const SHOWS = [
+  { at: [-45, -5, -150], scale: 0.9, speed: 2.4, gap: 1.5 },
+  { at: [55, -5, -190], scale: 1.1, speed: 2.1, gap: 2.5 },
+  { at: [-35, -5, 210], scale: 1, speed: 2.3, gap: 1 },
+  { at: [45, -5, 180], scale: 0.8, speed: 2.6, gap: 2 },
+  { at: [5, -5, 250], scale: 1.2, speed: 2, gap: 3 },
+];
+// The shell's timeline in bake seconds: it bursts at burst and its last sparks die by end. Sparks sag under gravity by
+// droop units per second squared after the burst; size is a spark's size in metres.
+const SHELL = { burst: 2.1, end: 10, droop: 0.5, size: 1.4 };
+const FIREWORK_COLOURS = [0xffb627, 0xff3d3d, 0x19d3c5, 0xff4fa3, 0x7dff6b, 0x8f7bff, 0xff7a1a];
+// Keyboard: holding W scrolls on down the scene, S back up, at this many pixels a second.
+const KEY_SCROLL = 1200;
 // The "MERAZ 7.0" sign: metres wide, centre height, behind his start. The opening shot tilts up by tilt (rise per
 // metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
 const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
@@ -47,9 +105,10 @@ const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stret
 const BLEND = 0.03; // share of the scroll spent blending walk into jump, jump into walk, and walk into standing
 // Auto rickshaw: comes up from behind on his left (as seen from the chase camera, i.e. +x) once he jumps, and slows
 // to a stop beside him as he stops. It slides; the model's wheels are part of one mesh and cannot turn.
-// metres: height, line, start behind his jump spot (in frame at once), where it stops ahead of his last step (so he
-// can curve round into it)
-const AUTO = { height: 1.75, x: 1.8, behind: 4, ahead: 1.2 };
+// It passes the barricade's end close by: its line is set so that clear metres separate the two (half: half the auto's
+// width at that height, measured from auto.glb). Metres: height, start behind his jump spot (in frame at once), where
+// it stops ahead of his last step (so he can curve round into it).
+const AUTO = { height: 1.75, half: 0.75, clear: 0.1, behind: 4, ahead: 1.2 };
 // The auto's rear bench, measured from auto.glb (metres, relative to the auto's centre): it sits behind the centre
 // (z), its cushion about 0.5 m up, so seated hips are at hips. The side is open only ahead of the rear body panels,
 // so he crosses in at entry, then slides back onto the bench. outside: how far out from the bench he stops.
@@ -67,54 +126,27 @@ const SIT_BEND = { thigh: 1.45, knee: 1.5, duck: 0.6 };
 // to his eyes. eye: how far ahead of the head bone the eye camera sits (clear of
 // his face), lift: how far above it once seated (high enough to see over the driver's seat to the handlebar).
 const CAMERA = { push: 0.55, aim: 1.1, eye: 0.25, lift: 0.3, eyeFov: 75, behind: 0.9, over: 0.2 }; // eyeFov: wide lens of his eye view
-// Roadside props, scattered along both kerbs. front: yaw that turns the model's front to face +z.
-// size: target height in metres (models come at mixed scales). weight: how often it is picked.
-const PROPS = [
-  { name: "house-1", front: 0, size: 4.3, weight: 3 },
-  { name: "house-2", front: Math.PI, size: 5, weight: 3 }, // porch faces -z
-  { name: "hut", front: 0, size: 2.2, weight: 2 },
-  { name: "wall-1", front: -Math.PI / 2, size: 2.2, weight: 2 }, // long side along z, posters face +x
-  { name: "wall-2", front: Math.PI / 2, size: 3, weight: 1 }, // posters face -x
-];
-const STREET = { from: -45, to: 75 }; // z range lined with props, past the fog both ways
+const STREET = { from: -80, to: 110 }; // z range lined with trees and lamps, from the fog behind him to the tank
 const TREES = [
   { name: "tree-1", size: 5.5 },
   { name: "tree-2", size: 5.3 },
   { name: "tree-3", size: 7 },
 ];
-// Footpath: the road model's kerb strip (about 1 m) plus a concrete strip of PAVE metres beyond it. Walking lanes
-// sit at these offsets from the kerb's outer edge, 1.15 m apart; trees and standing people go along the outer edge.
-const PAVE = 3.2;
-const LANE_X = [-0.45, 0.7, 1.85]; // inner, middle, slow
-const EDGE_X = PAVE - 0.5;
 // Pedestrians (height in metres). Within a lane everyone walks at the lane's one speed in one direction (their steps
-// sped up or slowed to match), so gaps never close and nobody collides; neighbouring lanes walk opposite ways.
-// Old men keep their own slow lane: their walk is a third of the pace of the others.
+// sped up or slowed to match), so gaps never close and nobody collides; the two footpaths walk opposite ways.
+// The old man only drives the auto.
 const PEOPLE = { man: 1.75, oldman: 1.65, woman: 1.6 };
 const LANES = [
-  { side: 1, lane: 0, dir: -1, mix: ["man", "woman"], gap: [18, 30] },
-  { side: 1, lane: 1, dir: 1, mix: ["man", "woman"], gap: [18, 30] },
-  { side: 1, lane: 2, dir: -1, mix: ["oldman"], gap: [35, 50] },
-  { side: -1, lane: 0, dir: 1, mix: ["man", "woman"], gap: [18, 30] },
-  { side: -1, lane: 1, dir: -1, mix: ["man", "woman"], gap: [18, 30] },
-  // no slow lane on the -x footpath: the stall stands on that part of it
+  { side: 1, dir: -1, mix: ["man", "woman"], gap: [9, 16] },
+  { side: -1, dir: 1, mix: ["man", "woman"], gap: [9, 16] },
 ] as const;
-const WALKWAY = { from: -45, len: 110 }; // pedestrians loop over this z range; the ends are lost in the haze
-// People with no skeleton (they cannot be animated) stand about on the footpath's outer edge, facing the road.
-const STANDING = { "stand-1": 1.75, "stand-2": 1.58, "stand-3": 1.62 };
-const STANDING_PER_SIDE = 4;
-// Stall on the right-hand footpath (right as seen from the chase camera, i.e. -x) level with the barricade, on the
-// footpath's outer part, clear of the two walking lanes. The keeper is a bust, standing behind the counter.
-const STALL = { height: 2.6, keeper: 0.95, keeperBase: 0.75 };
+const WALKWAY = { from: -60, len: 130 }; // pedestrians loop over this z range; the ends are lost in the haze
+// Stall on the right-hand footpath (right as seen from the chase camera, i.e. -x) level with the barricade, its back at
+// back (in front of the environment's wall), clear of the walking line. The keeper is a bust, behind the counter.
+const STALL = { height: 2.6, keeper: 0.95, keeperBase: 0.75, back: -9.9 };
 const CREDITS = [
-  ["Road", "ahmagh2e", "https://sketchfab.com/3d-models/road--avenue--street-7f657c3eceb343ceaf5e542c50dab27a"],
   ["Barricade", "InnoFrame", "https://sketchfab.com/3d-models/delhi-police-security-barricade-3d-model-f17ecc171f3441ceb0e9effd90f31c1f"],
   ["Runner", "As7 3d models", "https://sketchfab.com/3d-models/spiderman-india-pavitr-prabhakar-ed5f6c5ba8a94c98aee68b5b6ed1f29b"],
-  ["House", "bhagathartworks", "https://sketchfab.com/3d-models/indian-house-old-3beb064c1ae841c5beb556b5aa267036"],
-  ["House", "nayan pachori", "https://sketchfab.com/3d-models/indian-house-gameasset-3f2b22855bd14cbf877b1ab5f6689582"],
-  ["Hut", "magann", "https://sketchfab.com/3d-models/old-hut-1b9c7573ea7b4661814296b20a83a6ae"],
-  ["Wall", "saksham12x", "https://sketchfab.com/3d-models/indian-wall-for-hindi-kahaniya-465b9e3c9d2d4a4cbf24fd4fe447eb60"],
-  ["Dhaba wall", "saksham12x", "https://sketchfab.com/3d-models/indian-dhaba-wall-02eeca6d50404e769aa9298ce80ca450"],
   ["Man", "pankhkhan", "https://sketchfab.com/3d-models/indian-man-with-red-clothes-23b1805e473d4e5cb3e439b576ca39a9"],
   ["Old man", "anandmohan662", "https://sketchfab.com/3d-models/indian-old-man-walking-e70a140ad4334c2e8648ac78d61545b3"],
   [
@@ -122,13 +154,6 @@ const CREDITS = [
     "Pixel_Monster (Sketchfab Standard licence)",
     "https://sketchfab.com/3d-models/indian-woman-in-saree-b5965a93b03440dea65160f7cbac1fc7",
   ],
-  [
-    "Man",
-    "Gameyan Animations Studio",
-    "https://sketchfab.com/3d-models/semi-cartoon-indian-human-3d-character-5720e7e45d21456db1b8d6bb430ccb8d",
-  ],
-  ["Woman", "dk8026854", "https://sketchfab.com/3d-models/saree-woman-3d-model-bf88ccd60916495b9e81588bf5e00d44"],
-  ["Woman", "sam-30", "https://sketchfab.com/3d-models/traditional-indian-saree-model-528f28ebdf214c7d9278b7bdd16292ca"],
   ["Stall", "Cyril43", "https://sketchfab.com/3d-models/medieval-stall-4a5a40e78e4b481bafbb576303f992cd"],
   ["Stall keeper", "chitreshyadav", "https://sketchfab.com/3d-models/modi-ji-e14d0a18080b434c9c28e87c9db485ee"],
   ["Auto", "rSquare", "https://sketchfab.com/3d-models/auto-rickshaw-44776bcb34e04c1a8b9c18a70376304e"],
@@ -156,36 +181,21 @@ export default function RoadJump() {
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       const load = (n: string) => loader.loadAsync(`/models/${n}.glb`);
       const font = getComputedStyle(document.documentElement).getPropertyValue("--font-bungee").trim() || "Impact";
-      // The opening shot needs only these (preloaded by app/page.tsx). Sky: "Kloofendal 48d Partly Cloudy (Pure Sky)"
-      // from Poly Haven (CC0), tonemapped and cut to 2048x1024.
-      const [road, barricade, man, walker, sky] = await Promise.all([
-        load("road"),
+      // The opening shot needs only these (preloaded by app/page.tsx): it looks back down the road, away from the street.
+      const [road, barricade, man, walker] = await Promise.all([
+        load("env-road"),
         load("barricade"),
         load("jump"),
         load("walk"),
-        // decoded off the main thread (an <img> would be decoded on the first frame); ImageBitmaps upload top row first,
-        // so v is turned round in place of flipY
-        new THREE.ImageBitmapLoader().loadAsync("/sky.jpg").then((bitmap) => {
-          const t = new THREE.Texture(bitmap);
-          t.flipY = false;
-          t.repeat.y = -1;
-          t.offset.y = 1;
-          t.needsUpdate = true;
-          return t;
-        }),
         document.fonts.load(`300px ${font}`).catch(() => {}), // the title sign is drawn in it
       ]);
       // The street downloads while the first frame is built, without competing with it for bandwidth.
-      const streetNames = [
-        ...PROPS.map((p) => p.name),
-        ...TREES.map((t) => t.name),
-        ...Object.keys(PEOPLE),
-        ...Object.keys(STANDING),
-        "stall",
-        "stall-keeper",
-        "auto",
-      ];
+      const streetNames = ["env", ...TREES.map((t) => t.name), ...Object.keys(PEOPLE), "stall", "stall-keeper", "auto"];
       const deva = getComputedStyle(document.documentElement).getPropertyValue("--font-yatra").trim() || "serif";
+      const skyLoad = new THREE.ImageBitmapLoader().loadAsync("/sky.jpg"); // decoded off the main thread
+      skyLoad.catch(() => {}); // reported where it is awaited
+      const shellLoad = fetch("/models/fireworks.bin").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)));
+      shellLoad.catch(() => {}); // reported where it is awaited
       const streetLoad = Promise.all([
         Promise.all(streetNames.map(load)),
         document.fonts.load(`100px ${deva}`, "चाय").catch(() => {}), // the stall banner's Hindi line
@@ -198,30 +208,77 @@ export default function RoadJump() {
       renderer.setSize(el.clientWidth, el.clientHeight); // sized now: each resize reallocates the canvas (~0.15 s)
       el.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
-      // Sky: the panorama on the inside of a sphere that follows the camera, not scene.background. As a background it
-      // is first converted to a cube map, with shaders of its own, on the first frame (~0.4 s); as a mesh its shader
-      // compiles with the rest. It is only ever magnified, so it needs no mipmaps (a slower upload).
-      sky.colorSpace = THREE.SRGBColorSpace;
-      sky.generateMipmaps = false;
-      sky.minFilter = THREE.LinearFilter;
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(150, 48, 24).scale(-1, 1, 1), // seen from inside
-        new THREE.MeshBasicMaterial({ map: sky, fog: false, depthWrite: false }),
-      );
-      dome.rotation.y = Math.PI; // lines its seam up where scene.background put it
-      dome.renderOrder = -1; // drawn first, behind everything
-      dome.frustumCulled = false;
-      scene.fog = new THREE.Fog(HAZE, 18, 60);
-      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
-      scene.add(dome);
-      scene.add(new THREE.HemisphereLight(0xfff4dc, 0x6b4a2a, 2));
-      const sun = new THREE.DirectionalLight(0xffe2a8, 2.5);
-      sun.position.set(6, 10, 4);
-      scene.add(sun);
       const q = () => new THREE.Quaternion();
       const v3 = () => new THREE.Vector3();
       let seed = 7;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // seeded: the same street every visit
+      // A soft round dot: firework sparks and street-lamp glows.
+      const glow = document.createElement("canvas");
+      glow.width = glow.height = 64;
+      const gc = glow.getContext("2d")!;
+      const spot = gc.createRadialGradient(32, 32, 0, 32, 32, 32);
+      spot.addColorStop(0, "#fff");
+      spot.addColorStop(0.25, "rgba(255,255,255,0.8)");
+      spot.addColorStop(1, "rgba(255,255,255,0)");
+      gc.fillStyle = spot;
+      gc.fillRect(0, 0, 64, 64);
+      const sparkTex = new THREE.CanvasTexture(glow);
+
+      // Sky (see SKY_SPAN): on the inside of a sphere that follows the camera, not scene.background (as a background
+      // it is first converted to a cube map, with shaders of its own, on the first frame, ~0.4 s). Below its cut-off
+      // the background is the haze colour. The photo does not hold up the first frame: until it lands the dome shows a
+      // one-pixel stand-in in the haze colour, through the same shader, so swapping it in costs nothing.
+      const hazeRGB = new THREE.Color(HAZE).toArray().map((c) => Math.round(c * 255));
+      let sky: THREE.Texture = new THREE.DataTexture(new Uint8Array([...hazeRGB, 255]), 1, 1);
+      sky.needsUpdate = true;
+      const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(250, 64, 32, 0, 2 * Math.PI, 0, THREE.MathUtils.degToRad(SKY_SPAN)).scale(-1, 1, 1),
+        new THREE.MeshBasicMaterial({ map: sky, fog: false, depthWrite: false }),
+      );
+      dome.renderOrder = -1; // drawn first, behind everything
+      dome.frustumCulled = false;
+      scene.background = new THREE.Color(HAZE);
+      skyLoad
+        .then((bitmap) => {
+          if (dead) return bitmap.close();
+          // ImageBitmaps upload top row first, so v is turned round in place of flipY. Only ever magnified: no mipmaps.
+          const t = new THREE.Texture(bitmap);
+          t.flipY = false;
+          t.repeat.y = -1;
+          t.offset.y = 1;
+          t.colorSpace = THREE.SRGBColorSpace;
+          t.generateMipmaps = false;
+          t.minFilter = THREE.LinearFilter;
+          t.needsUpdate = true;
+          sky.dispose();
+        moonTex?.dispose();
+          dome.material.map = sky = t;
+        })
+        .catch((e) => console.error("RoadJump sky:", e));
+      let moonTex: THREE.Texture | undefined;
+      new THREE.TextureLoader()
+        .loadAsync("/moon.webp")
+        .then((t) => {
+          if (dead) return t.dispose();
+          t.colorSpace = THREE.SRGBColorSpace;
+          moonTex = t;
+          const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: MOON.tint, fog: false, depthWrite: false }));
+          const el = THREE.MathUtils.degToRad(MOON.el);
+          moon.position.set(0, Math.sin(el), Math.cos(el)).multiplyScalar(240); // just inside the sky
+          moon.scale.setScalar(2 * 240 * Math.tan(THREE.MathUtils.degToRad(MOON.size / 2)));
+          dome.add(moon);
+        })
+        .catch((e) => console.error("RoadJump moon:", e));
+      scene.fog = new THREE.Fog(HAZE, 60, 200); // far enough to see the tank and billboard at the end of the street
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 300);
+      scene.add(dome);
+      // Moonlight, and a flash that takes each firework's colour as it bursts (no falloff: it lights the whole street).
+      scene.add(new THREE.HemisphereLight(0x8a9ad0, 0x2a2238, 1.6));
+      const moon = new THREE.DirectionalLight(0xb8c8ff, 1.3);
+      moon.position.set(-6, 10, -4);
+      scene.add(moon);
+      const flash = new THREE.PointLight(0xffffff, 0, 0, 0);
+      scene.add(flash);
 
       // Every model's PBR material becomes Lambert, which is cheaper to compile (the road's and barricade's PBR shaders
       // were most of the first frame's wait) and to draw. With no environment to reflect, PBR adds little here: what
@@ -245,25 +302,25 @@ export default function RoadJump() {
       };
       matte(road.scene);
       matte(barricade.scene);
-      // Road: one tile, cloned along z to run past the fog.
-      road.scene.scale.setScalar(ROAD_SCALE);
-      const roadBox = new THREE.Box3().setFromObject(road.scene);
+      // Placed as the environment sits (see ENV).
+      const placeEnv = (o: Object3D) => {
+        const g = new THREE.Group().add(o);
+        g.scale.setScalar(ENV.scale);
+        g.rotation.y = Math.PI;
+        g.position.set(0, ENV.y, ENV.z);
+        return g;
+      };
+      // Road: the environment's tile, cloned along z to run past the fog.
+      const tile = placeEnv(road.scene);
+      const roadBox = new THREE.Box3().setFromObject(tile);
       const tileLen = roadBox.getSize(v3()).z;
-      for (let i = -6; i < 6; i++) scene.add(road.scene.clone().translateZ(i * tileLen));
-      const kerb = roadBox.max.x; // outer edge of the kerb strip
-      const kerbTop = roadBox.max.y; // footpath height
-      // Bare earth under everything, so gaps beside the road show ground instead of the sky panorama's lower half.
+      for (let i = -4; i < 5; i++) scene.add(tile.clone().translateZ(i * tileLen));
+      const kerbTop = ENV.kerbTop;
+      // Bare earth under everything, so gaps beside the road show ground instead of the sky's lower half.
       const earth = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshLambertMaterial({ color: 0x9a8466 }));
       earth.rotation.x = -Math.PI / 2;
       earth.position.y = roadBox.min.y - 0.02; // just under the road
       scene.add(earth);
-      // Concrete footpath beyond each kerb, level with its top.
-      const concrete = new THREE.MeshLambertMaterial({ color: 0x8f8b84 });
-      for (const side of [-1, 1]) {
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(PAVE, kerbTop - earth.position.y, 400), concrete);
-        slab.position.set(side * (kerb + PAVE / 2), (kerbTop + earth.position.y) / 2, 0);
-        scene.add(slab);
-      }
 
       // Title: "MERAZ 7.0" painted in the site's display font (Bungee) with a retro block shadow, on a sign standing
       // over the road behind his start. It fills the opening face-on shot; once the camera swings round it is behind it.
@@ -523,6 +580,9 @@ export default function RoadJump() {
       };
 
       gate.position.set(apex.x, 0, walkDist + HAND_PLANT.z);
+      // The auto's line: just clear of the barricade's end. His boarding, the seat, the eye camera and the driver all
+      // follow from it.
+      const autoX = apex.x + box.getSize(v3()).x / 2 + AUTO.half + AUTO.clear;
 
       // Re-letter the barricade: it ships with "DELHI POLICE" modelled as text on both faces of its sloped front panel
       // (the compressor merged the two into one mesh). The text is hidden and a painted "BHILAI POLICE" sign laid on
@@ -584,12 +644,84 @@ export default function RoadJump() {
       };
       stroll(0);
 
+      // Fireworks: every show plays the baked shell, each spark drawn with a short trail (the same spark a moment
+      // earlier, dimmer). The sparks fade as they burn out, crackling at the end, and sag under gravity. Each shell
+      // takes a new colour, with a few warm-white sparks in its core; its burst flashes the street in that colour.
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const TRAIL = [[0, 1], [0.1, 0.5], [0.22, 0.22]]; // bake seconds behind the spark, brightness
+      const fwGeo = new THREE.BufferGeometry();
+      const sparks = new THREE.Points(
+        fwGeo,
+        new THREE.PointsMaterial({ size: SHELL.size, map: sparkTex, vertexColors: true, transparent: true,
+          blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+      );
+      sparks.frustumCulled = false;
+      scene.add(sparks);
+      const pick = () => FIREWORK_COLOURS[Math.floor(Math.random() * FIREWORK_COLOURS.length)];
+      let fireworks = (dt: number) => void dt; // quiet until the shell has landed
+      const buildFireworks = (buf: ArrayBuffer) => {
+        const head = new Float32Array(buf, 0, 9);
+        const [frames, P, DT] = head;
+        const [lo, span] = [head.subarray(3, 6), head.subarray(6, 9)];
+        const at = new Uint16Array(buf, 36, frames * P * 3); // positions, scaled into lo..lo+span
+        const big = new Uint8Array(buf, 36 + frames * P * 6, frames * P); // size: 0 before it is lit and after it dies
+        const n = SHOWS.length * TRAIL.length * P;
+        const pos = new Float32Array(n * 3);
+        const col = new Float32Array(n * 3);
+        fwGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+        fwGeo.setAttribute("color", new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
+        // Reduced motion draws one still frame, so its shells are caught mid-burst; otherwise they go up in turn.
+        const shells = SHOWS.map((s, i) => ({ ...s, t: reduce ? 3.5 + i * 0.6 : -i * 1.4, colour: new THREE.Color(pick()) }));
+        const core = new THREE.Color(0xfff1c1);
+        fireworks = (dt) => {
+          let bright = 0;
+          shells.forEach((s, si) => {
+            s.t += dt * s.speed;
+            if (s.t > SHELL.end) {
+              s.t = -s.gap * s.speed; // a pause, then the next shell, in a new colour
+              s.colour.setHex(pick());
+            }
+            const burst = s.t > SHELL.burst ? Math.exp(-1.5 * (s.t - SHELL.burst)) : 0;
+            if (burst > bright) {
+              bright = burst;
+              flash.color.copy(s.colour);
+              flash.position.set(s.at[0], s.at[1] + 38 * s.scale, s.at[2]);
+            }
+            TRAIL.forEach(([back, glowing], j) => {
+              const t = s.t - back;
+              const f = t / DT - 1; // frame k was baked at (k + 1) * DT
+              const f0 = Math.floor(f);
+              const first = (si * TRAIL.length + j) * P;
+              if (f0 < 0 || f0 >= frames - 1) return void col.fill(0, first * 3, (first + P) * 3);
+              const u = f - f0;
+              const age = Math.max(0, t - SHELL.burst);
+              const fade = glowing * Math.max(0, 1 - age / (SHELL.end - SHELL.burst)) ** 1.3;
+              const sag = SHELL.droop * age * age;
+              for (let i = 0; i < P; i++) {
+                const [k0, o] = [f0 * P + i, (first + i) * 3];
+                let b = ((big[k0] + (big[k0 + P] - big[k0]) * u) / 255) * fade;
+                if (b > 0 && age > 4 && Math.random() < 0.3) b *= 0.25; // crackle as they burn out
+                for (let c = 0; c < 3; c++) {
+                  const q = at[k0 * 3 + c] + (at[(k0 + P) * 3 + c] - at[k0 * 3 + c]) * u;
+                  pos[o + c] = s.at[c] + (lo[c] + (q / 65535) * span[c] - (c === 1 ? sag : 0)) * s.scale;
+                }
+                const tint = i % 6 === 0 ? core : s.colour;
+                [col[o], col[o + 1], col[o + 2]] = [tint.r * b, tint.g * b, tint.b * b];
+              }
+            });
+          });
+          flash.intensity = 1.2 * bright;
+          fwGeo.attributes.position.needsUpdate = true;
+          fwGeo.attributes.color.needsUpdate = true;
+        };
+        fireworks(0);
+      };
+
       // First he walks toward the camera while it swings from a close-up of his face, round his side, out to a
       // chase position behind him. Then the jump clip plays (blending in from the walk), then he blends back into
       // the walk for two steps and stands. The camera rides behind the hips; x and height stay fixed so the flip does not
       // sway it. Narrow screens pull it back (zoom).
       const lerp = THREE.MathUtils.lerp;
-      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const f = v3();
       let zoom = 1;
       let rideFrom = -1; // performance.now() when a destination was picked
@@ -615,7 +747,7 @@ export default function RoadJump() {
         const forward = ease(clamp01((board - 0.68) / 0.32)); // turns slowly to face forward as he settles onto the bench
         const autoZ = stopZ + AUTO.ahead + rideZ;
         const bob = 0.012 * Math.sin(rideZ * 3) * Math.min(rideV / 3, 1); // the road under a moving auto
-        const seat = v3().set(apex.x + AUTO.x, 0, autoZ + SEAT.z); // middle of the bench
+        const seat = v3().set(autoX, 0, autoZ + SEAT.z); // middle of the bench
         const door = v3().set(seat.x - SEAT.outside, 0, autoZ + SEAT.entry); // where he arrives outside the opening
         // The curve: a cubic from his last step (heading +z) to the opening (heading +x), relative to his last step.
         const end = v3().set(door.x - apex.x, 0, door.z - stopZ);
@@ -665,9 +797,9 @@ export default function RoadJump() {
         const pz = lerp(f.z, z, u);
         const r = lerp(1.4 * zoom, 7 * zoom, u) * lerp(1, CAMERA.push, push);
         const a = Math.PI * u; // 0 = in front of him (he faces +z), PI = behind
-        // sideways reach stays inside the kerb so the swing never passes through a house
+        // sideways reach stays inside the carriageway so the swing never passes through a lamp post or railing
         camera.position.set(
-          x + Math.min(r * Math.sin(a), kerb - 0.5),
+          x + Math.min(r * Math.sin(a), ENV.edge - 0.5),
           lerp(f.y, 1 + 1.2 * zoom * lerp(1, CAMERA.push, push), u),
           pz + r * Math.cos(a),
         );
@@ -751,6 +883,13 @@ export default function RoadJump() {
 
       if (reduce) progress = ORBIT + (LAND - ORBIT) * (apexT / clip.duration); // still frame mid-flip over the barricade
       resize();
+      shellLoad
+        .then((buf) => {
+          if (dead) return;
+          buildFireworks(buf);
+          if (reduce) draw(progress); // no frame loop to show them
+        })
+        .catch((e) => console.error("RoadJump fireworks:", e));
       // Pin the section and scrub the beats across 6 screens of scrolling; the frame loop draws them.
       const st = reduce
         ? null
@@ -762,14 +901,16 @@ export default function RoadJump() {
             scrub: true,
             onUpdate: (self) => (progress = self.progress),
           });
-      // Pedestrians need a frame loop; run it only while the section is on screen (and never for reduced motion).
+      // Pedestrians and fireworks need a frame loop; run it only while the section is on screen (never for reduced motion).
       let last = 0;
       const io = new IntersectionObserver(([e]) => {
         last = performance.now();
         renderer.setAnimationLoop(
           e.isIntersecting && !reduce
             ? (now) => {
-                stroll(Math.min((now - last) / 1000, 0.1));
+                const dt = Math.min((now - last) / 1000, 0.1);
+                stroll(dt);
+                fireworks(dt);
                 last = now;
                 if (rideFrom >= 0) {
                   const t = (now - rideFrom) / 1000;
@@ -808,6 +949,9 @@ export default function RoadJump() {
         });
         signTex.dispose();
         sky.dispose();
+        fwGeo.dispose();
+        sparks.material.dispose();
+        sparkTex.dispose();
         renderer.dispose();
         renderer.domElement.remove();
       };
@@ -817,55 +961,99 @@ export default function RoadJump() {
       if (dead) return;
       const model = (n: string) => streetModels[streetNames.indexOf(n)];
       for (const m of streetModels) matte(m.scene);
+      // The billboard is lit at night: its board and movie posters glow with their own pictures.
+      model("env").scene.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.MeshLambertMaterial | undefined;
+        if (!m?.map || !/billboard|poster|^MV5B/.test(m.name)) return;
+        m.emissive.set(0xffffff);
+        m.emissiveMap = m.map;
+        m.emissiveIntensity = m.name.startsWith("billboard") ? 0.4 : 0.8;
+      });
       // The street's ~20 shader programs take about a second to compile. Start them now, from the models as loaded
       // (clones share their materials), so they compile while the street is laid out below rather than after.
       const streetCompiling = Promise.all(streetModels.map((m) => renderer.compileAsync(m.scene, camera, scene)));
       const street = new THREE.Group();
-      // Roadside: props laid along both footpaths in a seeded random order, end to end with fronts on one line.
-      const kinds = PROPS.map((p) => ({ ...p, model: ground(model(p.name).scene, p.size) }));
-      const total = PROPS.reduce((s, p) => s + p.weight, 0);
-      const pick = () => {
-        let r = rand() * total;
-        return kinds.find((k) => (r -= k.weight) < 0) ?? kinds[0];
-      };
-      for (const side of [-1, 1]) {
-        for (let z = STREET.from; z < STREET.to;) {
-          const k = pick();
-          const g = k.model.clone();
-          g.rotation.y = k.front - (side * Math.PI) / 2; // front toward the road
-          const size = new THREE.Box3().setFromObject(g).getSize(v3());
-          g.position.set(side * (kerb + PAVE + size.x / 2), 0, z + size.z / 2);
-          street.add(g);
-          z += size.z;
+      // Lay out the environment (in its own units, before it is placed): repeat the house rows, push the vista on.
+      const envScene = model("env").scene;
+      for (const o of [...envScene.children]) {
+        if (VISTA.test(o.name)) o.position.z -= ENV.vista / ENV.scale; // the street runs toward -z in model units
+        if (!HOUSE_ROW.test(o.name)) continue;
+        for (const k of [1, 2]) {
+          const copy = o.clone();
+          copy.position.z += k * ENV.row;
+          envScene.add(copy);
         }
       }
+      const envPlaced = placeEnv(envScene);
+      street.add(envPlaced);
+      envPlaced.updateMatrixWorld(true);
 
-      // Trees: at random spots along the footpath's outer edge, random turn and size.
+      // Stall: counter facing the road (it faces +x as modelled), back against the wall line, level with the barricade.
+      const stall = ground(model("stall").scene, STALL.height);
+      const stallSize = new THREE.Box3().setFromObject(stall).getSize(v3());
+      const depth = stallSize.x;
+      stall.position.set(STALL.back + depth / 2, kerbTop, gate.position.z);
+      street.add(stall);
+      const stallZ = stall.position.z;
+
+      // Trees: at random spots along each footpath, random turn and size, clear of the environment and the stall.
       const trees = TREES.map((t) => ground(model(t.name).scene, t.size));
-      const edgeTaken: number[][] = [[], []]; // z of everything on each outer edge, so standing people keep clear
-      const edgeTrees: { t: Object3D; side: number; z: number }[] = [];
       for (const side of [-1, 1]) {
         for (let z = STREET.from + rand() * 10; z < STREET.to; z += 9 + rand() * 14) {
+          if (PATHS[side].trees.some(([a, b]) => z > a && z < b)) continue;
+          if (side < 0 && Math.abs(z - stallZ) < stallSize.z / 2 + 1.5) continue;
           const t = trees[Math.floor(rand() * trees.length)].clone();
-          edgeTaken[(side + 1) / 2].push(z);
-          edgeTrees.push({ t, side, z });
-          t.position.set(side * (kerb + EDGE_X), kerbTop, z);
+          t.position.set(PATHS[side].tree, kerbTop, z);
           t.rotation.y = rand() * Math.PI * 2;
           t.scale.setScalar(0.85 + rand() * 0.3);
           street.add(t);
         }
       }
 
-      // Stall: counter facing the road (it faces +x as modelled), back against the house line, level with the barricade.
-      const stall = ground(model("stall").scene, STALL.height);
-      const stallSize = new THREE.Box3().setFromObject(stall).getSize(v3());
-      const depth = stallSize.x;
-      stall.position.set(-(kerb + PAVE - depth / 2), kerbTop, gate.position.z);
-      street.add(stall);
-      // clear the trees from its spot, and keep standing people off it
-      const stallZ = stall.position.z;
-      for (const { t, side, z } of edgeTrees) if (side < 0 && Math.abs(z - stallZ) < stallSize.z / 2 + 1.5) street.remove(t);
-      edgeTaken[0].push(stallZ - stallSize.z / 2, stallZ, stallZ + stallSize.z / 2);
+      // Street lights: the environment's lamp post, copied along both kerbs with its arm out over the road, each lamp
+      // glowing warm with a pool of light on the road under it. Its mesh holds two posts at opposite ends of the
+      // street; only the near one's triangles are kept. That post stands at the +x end of its arm.
+      const posts = envScene.getObjectByName("streetLight_environemnt_0") as THREE.Mesh;
+      const all = posts.geometry.index ? posts.geometry.toNonIndexed() : posts.geometry;
+      const corner = all.getAttribute("position");
+      const near: number[] = []; // first vertex of each kept triangle
+      for (let i = 0; i < corner.count; i += 3)
+        if (v3().fromBufferAttribute(corner, i).applyMatrix4(posts.matrixWorld).z < ENV.z) near.push(i);
+      const one = new THREE.BufferGeometry();
+      for (const [name, attr] of Object.entries(all.attributes) as [string, THREE.BufferAttribute][]) {
+        const n = attr.itemSize * 3;
+        const arr = new (attr.array.constructor as Float32ArrayConstructor)(near.length * n);
+        near.forEach((i, k) => arr.set(attr.array.subarray(i * attr.itemSize, i * attr.itemSize + n), k * n));
+        one.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize, attr.normalized));
+      }
+      const body = new THREE.Mesh(one, posts.material);
+      posts.matrixWorld.decompose(body.position, body.quaternion, body.scale); // where the post stands, as a root
+      const pb = new THREE.Box3().setFromObject(body);
+      const foot = v3().set(pb.max.x - 0.1, pb.min.y, (pb.min.z + pb.max.z) / 2);
+      body.position.sub(foot);
+      const bulb = v3().set(pb.min.x + 0.15, pb.max.y - 0.25, foot.z).sub(foot);
+      const lampGlow = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: sparkTex, color: 0xffc070, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      lampGlow.position.copy(bulb);
+      lampGlow.scale.setScalar(1.8);
+      const pool = new THREE.Mesh(
+        new THREE.PlaneGeometry(7, 7).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ map: sparkTex, color: 0x8a5a20, blending: THREE.AdditiveBlending,
+          transparent: true, depthWrite: false }),
+      );
+      pool.position.set(bulb.x, 0.03 - kerbTop, 0); // on the road
+      const lampKit = new THREE.Group().add(body, lampGlow, pool);
+      for (const side of [-1, 1]) {
+        for (let z = STREET.from + (side > 0 ? LAMP_GAP / 2 : 0); z < STREET.to; z += LAMP_GAP) {
+          if (PATHS[side].lamps.some(([a, b]) => z > a && z < b)) continue;
+          const lamp = lampKit.clone();
+          lamp.position.set(PATHS[side].lamp, kerbTop, z);
+          lamp.rotation.y = side > 0 ? 0 : Math.PI; // arm over the road
+          street.add(lamp);
+        }
+      }
+
       // Banner on the front of the counter, below the keeper, facing the road: a painted board in the site's retro style.
       const board = document.createElement("canvas");
       board.width = 1024;
@@ -895,7 +1083,7 @@ export default function RoadJump() {
         new THREE.MeshLambertMaterial({ map: boardTex, side: THREE.DoubleSide }),
       );
       banner.rotation.y = Math.PI / 2; // plane faces +z; turn it to the road (+x)
-      banner.position.set(stall.position.x + stallSize.x / 2 + 0.03, kerbTop + 0.55, stallZ);
+      banner.position.set(stall.position.x + depth / 2 + 0.03, kerbTop + 0.55, stallZ);
       street.add(banner);
       const keeper = ground(model("stall-keeper").scene, STALL.keeper);
       keeper.rotation.y = Math.PI / 2; // faces +z as modelled; turn him to the road (+x)
@@ -903,7 +1091,7 @@ export default function RoadJump() {
       street.add(keeper);
 
       auto = ground(model("auto").scene, AUTO.height); // faces +z as modelled, the way he walks
-      auto.position.x = apex.x + AUTO.x;
+      auto.position.x = autoX;
       street.add(auto);
 
       // Pedestrians. Man and old man walk with their own clips, root motion stripped so the lane sets the pace; the
@@ -956,7 +1144,7 @@ export default function RoadJump() {
         for (let z = rand() * gapMin; z < WALKWAY.len - gapMin; z += gapMin + rand() * (gapMax - gapMin)) {
           const t = types[lane.mix[Math.floor(rand() * lane.mix.length)]];
           const g = cloneRig(t.model);
-          g.position.set(lane.side * (kerb + LANE_X[lane.lane]), kerbTop, 0);
+          g.position.set(PATHS[lane.side].lane, kerbTop, 0);
           g.rotation.y = t.yaw + (lane.dir > 0 ? 0 : Math.PI);
           const m = new THREE.AnimationMixer(g);
           m.clipAction(t.clip).play().timeScale = speed / t.pace; // steps match the lane speed, so feet do not slide
@@ -1006,21 +1194,6 @@ export default function RoadJump() {
       }
       driverHead = bone(driver, "HeadTop_End");
 
-      // Standing people: random spots on the outer edges, at least 1.5 m from trees and each other, facing the road.
-      const standing = Object.entries(STANDING).map(([n, height]) => ground(model(n).scene, height));
-      for (const side of [-1, 1]) {
-        const taken = edgeTaken[(side + 1) / 2];
-        for (let placed = 0, tries = 0; placed < STANDING_PER_SIDE && tries < 50; tries++) {
-          const z = WALKWAY.from + rand() * WALKWAY.len;
-          if (taken.some((t) => Math.abs(t - z) < 1.5)) continue;
-          taken.push(z);
-          const s = standing[Math.floor(rand() * standing.length)].clone();
-          s.position.set(side * (kerb + EDGE_X), kerbTop, z);
-          s.rotation.y = (-side * Math.PI) / 2 + (rand() - 0.5) * 0.8; // roughly toward the road
-          street.add(s);
-          placed++;
-        }
-      }
       await Promise.all([streetCompiling, renderer.compileAsync(street, camera, scene)]); // and the banner's
       if (dead) return;
       scene.add(street);
@@ -1028,8 +1201,42 @@ export default function RoadJump() {
       draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
     })().catch((e) => console.error("RoadJump:", e));
 
+    // Keyboard: hold W to scroll on down the scene, S to scroll back up (not while typing, nor with modifier keys).
+    let keyDir = 0;
+    let keyFrame = 0;
+    let keyLast = 0;
+    const roll = (now: number) => {
+      window.scrollBy(0, keyDir * KEY_SCROLL * Math.min((now - keyLast) / 1000, 0.05));
+      keyLast = now;
+      keyFrame = requestAnimationFrame(roll);
+    };
+    const stop = () => {
+      keyDir = 0;
+      cancelAnimationFrame(keyFrame);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const dir = e.code === "KeyW" ? 1 : e.code === "KeyS" ? -1 : 0;
+      const t = e.target as HTMLElement;
+      if (!dir || e.ctrlKey || e.metaKey || e.altKey || t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
+        return;
+      e.preventDefault();
+      if (e.type === "keyup") return void (keyDir === dir && stop());
+      if (keyDir === dir) return; // held down: already rolling
+      stop();
+      keyDir = dir;
+      keyLast = performance.now();
+      keyFrame = requestAnimationFrame(roll);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
+    window.addEventListener("blur", stop);
+
     return () => {
       dead = true;
+      stop();
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKey);
+      window.removeEventListener("blur", stop);
       cleanup();
     };
   }, []);

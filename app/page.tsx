@@ -6,7 +6,7 @@ import { site } from "@/data/site";
 export default function Home() {
   // Start the opening shot's downloads from the HTML, before any JavaScript runs. Must match what RoadJump loads
   // first (GLTFLoader and ImageBitmapLoader both fetch in cors mode, hence crossOrigin on all of them).
-  for (const n of ["jump", "road", "walk", "barricade"]) preload(`/models/${n}.glb`, { as: "fetch", crossOrigin: "anonymous" });
+  for (const n of ["jump", "env-road", "walk", "barricade"]) preload(`/models/${n}.glb`, { as: "fetch", crossOrigin: "anonymous" });
   preload("/sky.jpg", { as: "fetch", crossOrigin: "anonymous" });
   return (
     <>
