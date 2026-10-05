@@ -39,18 +39,31 @@ const POP = { lift: 0.014, grow: 0.08, shadow: 0.0012 };
 // A card in three layers, each a circle of the same size: the base (cream, darkening toward the rim as if shaded by
 // the hole), the text's soft shadow, and the text itself, with a solid poster-style extrusion down and to the right.
 // The text's title and details are centred, each line shrunk until it fits the circle's width.
+const S = 1024; // a card's layout units, drawn at res pixels per unit
+function layer(res: number, paint: (g: CanvasRenderingContext2D) => void) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = S * res;
+  const g = canvas.getContext("2d")!;
+  g.scale(res, res);
+  paint(g);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// The base is the same for every card, and smooth, so one small one does.
+const cardBase = () =>
+  layer(0.25, (g) => {
+    g.fillStyle = "#f3e6c8"; // cream
+    g.fillRect(0, 0, S, S);
+    const rim = g.createRadialGradient(S / 2, S / 2, S * 0.36, S / 2, S / 2, S / 2);
+    rim.addColorStop(0, "rgba(26,26,26,0)");
+    rim.addColorStop(1, "rgba(26,26,26,0.55)");
+    g.fillStyle = rim;
+    g.fillRect(0, 0, S, S);
+  });
+
 function cardTextures(c: (typeof contacts)[number], fonts: { display: string; mono: string }) {
-  const S = 1024; // layout units; drawn at twice that, so the text stays sharp filling a high-DPI screen
-  const layer = (paint: (g: CanvasRenderingContext2D) => void) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = S * 2;
-    const g = canvas.getContext("2d")!;
-    g.scale(2, 2);
-    paint(g);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
   const lines = [
     { text: c.title.toUpperCase(), font: fonts.display, weight: "400", size: 112, colour: "#b8166f", depth: 9, side: "#1a1a1a" }, // rani-deep on ink
     ...c.details.flatMap((d) => [
@@ -85,23 +98,16 @@ function cardTextures(c: (typeof contacts)[number], fonts: { display: string; mo
     }
   };
 
-  const base = layer((g) => {
-    g.fillStyle = "#f3e6c8"; // cream
-    g.fillRect(0, 0, S, S);
-    const rim = g.createRadialGradient(S / 2, S / 2, S * 0.36, S / 2, S / 2, S / 2);
-    rim.addColorStop(0, "rgba(26,26,26,0)");
-    rim.addColorStop(1, "rgba(26,26,26,0.55)");
-    g.fillStyle = rim;
-    g.fillRect(0, 0, S, S);
-  });
-  const shadow = layer((g) => {
-    g.filter = "blur(14px)";
+  // The shadow is a blur, so half resolution loses nothing; the text is drawn at twice, to stay sharp filling a
+  // high-DPI screen.
+  const shadow = layer(0.5, (g) => {
+    g.filter = "blur(3.5px)"; // in canvas pixels: 7 layout units
     g.fillStyle = "#000";
     text(g, (l) => {
       for (let k = 0; k <= l.depth; k++) g.fillText(l.text, S / 2 + k, l.mid + k); // the extruded outline's shadow
     });
   });
-  const face = layer((g) =>
+  const face = layer(2, (g) =>
     text(g, (l) => {
       g.fillStyle = l.side;
       for (let k = Math.ceil(l.depth); k > 0; k--) g.fillText(l.text, S / 2 + k, l.mid + k);
@@ -109,7 +115,7 @@ function cardTextures(c: (typeof contacts)[number], fonts: { display: string; mo
       g.fillText(l.text, S / 2, l.mid);
     }),
   );
-  return { base, shadow, face };
+  return { shadow, face };
 }
 
 export default function PhoneDial() {
@@ -197,12 +203,13 @@ export default function PhoneDial() {
       // The holes in visiting order 0, 9, 8 … 1, each carrying the next contact card.
       const across = new THREE.Vector3(0, 1, 0).cross(DIAL.normal).normalize();
       const up = DIAL.normal.clone().cross(across);
+      const base = cardBase();
       const cards = contacts.slice(0, 10).map((c, j) => {
         const [x, y, r] = HOLES[9 - j];
         const radius = r - CARD.gap;
         const disc = new THREE.CircleGeometry(radius, 96);
         const tex = cardTextures(c, fonts);
-        const layer = (map: THREE.Texture, over: boolean) => {
+        const mesh = (map: THREE.Texture, over: boolean) => {
           map.anisotropy = aniso;
           return new THREE.Mesh(disc, new THREE.MeshBasicMaterial({ map, transparent: over, depthWrite: !over }));
         };
@@ -210,10 +217,10 @@ export default function PhoneDial() {
         const card = new THREE.Group();
         card.position.copy(DIAL.centre).addScaledVector(across, x).addScaledVector(up, y).addScaledVector(DIAL.normal, CARD.lift);
         card.lookAt(card.position.clone().add(DIAL.normal)); // face out of the dial, text upright
-        const shadow = layer(tex.shadow, true);
-        const face = layer(tex.face, true);
+        const shadow = mesh(tex.shadow, true);
+        const face = mesh(tex.face, true);
         [shadow.renderOrder, face.renderOrder] = [1, 2]; // shadow under text
-        card.add(layer(tex.base, false), shadow, face);
+        card.add(mesh(base, false), shadow, face);
         scene.add(card);
         return { shot: { look: card.position.clone(), dir: DIAL.normal, dist: CLOSE * radius }, radius, shadow, face }; // straight on, mid-screen
       });
