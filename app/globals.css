@@ -3,6 +3,18 @@
 @source not "../public";
 @source not "../*.glb";
 
+/* Contact page booth: sign and meter beside the phone only on wide screens; phones and portrait tablets stack them
+   above it. Keep the ratio in step with STACKED in components/PhoneDial.tsx. */
+@custom-variant booth (@media (width >= 48rem) and (min-aspect-ratio: 6/5));
+@custom-variant booth-stack {
+  @media (width < 48rem) {
+    @slot;
+  }
+  @media (max-aspect-ratio: 1199/1000) {
+    @slot;
+  }
+}
+
 /* ---------- Design tokens ---------- */
 @theme {
   --color-marigold: #f4a300;

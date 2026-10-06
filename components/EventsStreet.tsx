@@ -60,7 +60,7 @@ const CHASE = { back: 2, up: 1.6, ahead: 3, aim: 1.3, fov: 45 };
 // Facing a page: it fills fill.w of the screen's width, or fill.h of its height below the nav bar, whichever is
 // smaller. A narrow screen would put the camera across the street, so it stops max metres out and widens its lens.
 const HOLD = { fill: { w: 0.86, h: 0.8 }, max: 3 };
-const COMPACT = 640; // pages narrower than this on screen show a summary that opens the full page in a dialog
+const COMPACT = 720; // pages narrower than this on screen (phones, portrait tablets) show a summary that opens the full page in a dialog
 // Giant wheels (wheel.glb, a wheel with its ticket booth, its base slab cut at build time, turning by its own 21 s
 // animation), height metres tall, in metres, both sides of the street and in view whichever way he walks: ahead, one
 // near on the left and one far on the right; behind the entrance, one near on the right and one far on the left. Each

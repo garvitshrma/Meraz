@@ -30,7 +30,7 @@ export default function AboutPage() {
       </section>
 
       {/* about text, with two spinning records like the reference's gears */}
-      <section className="relative py-20">
+      <section className="relative overflow-x-clip py-20">
         <div className="record absolute -left-24 top-10 hidden size-56 lg:block" aria-hidden="true" />
         <div className="record absolute -right-20 bottom-10 hidden size-44 lg:block" aria-hidden="true" />
         <Container>

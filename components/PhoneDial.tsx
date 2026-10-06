@@ -15,6 +15,8 @@ import { jumpScroll } from "./ScrollFx";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Phones and portrait tablets: the sign and meter stack above the phone (the booth-stack variant in globals.css).
+const STACKED = "(width < 48rem), (max-aspect-ratio: 1199/1000)";
 const FOV = 18; // narrow, so the opening shot reads as near-isometric
 // public/models/stool.glb: its seat's top in its own units, and the scale that makes the seat a little wider than the
 // phone's base.
@@ -246,6 +248,9 @@ export default function PhoneDial() {
       const dir = new THREE.Vector3();
       let progress = 0;
       let calls = 0; // times round the dial: the meter runs on across them
+      let nav = 0; // the fixed nav bar's height
+      let top = 0; // the whole-phone view's top edge: the nav bar, or the bottom of the stacked sign and meter
+      let shift = 0; // side by side, the whole phone sits centred this far right of the screen's centre, between the panels
       const draw = () => {
         // Each leg: hold on the shot for the first and last 20% of its scroll, glide in between.
         const legs = progress * (shots.length - 1);
@@ -257,7 +262,12 @@ export default function PhoneDial() {
         dir.lerpVectors(a.dir, b.dir, t).normalize();
         camera.position.copy(look).addScaledVector(dir, da ** (1 - t) * db ** t); // zooms at an even rate, near or far
         camera.lookAt(look);
+        // Centre each shot in the free space: below the nav bar, or for the whole phone, below anything stacked over it.
+        const whole = (a === iso ? 1 - t : 0) + (b === iso ? t : 0);
+        camera.setViewOffset(el.clientWidth, el.clientHeight, -shift * whole, -(nav + (top - nav) * whole) / 2, el.clientWidth, el.clientHeight);
         pop(i + t);
+        // Away from the whole-phone view the cards are up close: the booth's sign, meter and rate card fade out.
+        sec.toggleAttribute("data-dialing", whole < 1);
         // The booth's call meter: a minute of call per screen scrolled, at the STD rate on the card.
         const secs = Math.round((calls + progress) * (shots.length - 1) * 60);
         tally.textContent = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")} · Rs.${((secs / 60) * 2.4).toFixed(2)}`;
@@ -266,13 +276,24 @@ export default function PhoneDial() {
       const resize = () => {
         renderer.setSize(el.clientWidth, el.clientHeight);
         camera.aspect = el.clientWidth / el.clientHeight;
-        // The fixed nav bar (the layout's first header) covers the top: centre every shot in the space below it.
-        const nav = document.querySelector("header")?.offsetHeight ?? 0;
-        camera.setViewOffset(el.clientWidth, el.clientHeight, 0, -nav / 2, el.clientWidth, el.clientHeight);
+        // The fixed nav bar (the layout's first header) covers the top: every shot is centred in the space below it.
+        nav = document.querySelector("header")?.offsetHeight ?? 0;
+        // The whole phone fits in the space the booth's panels leave free. Stacked, the sign and meter sit over the top
+        // of the screen: below them. Side by side: between the sign on the left and the meter and rate card on the right.
+        const box = el.getBoundingClientRect();
+        const stacked = matchMedia(STACKED).matches;
+        let [x0, x1] = [0, el.clientWidth];
+        if (stacked) top = Math.max(nav, tally.parentElement!.getBoundingClientRect().bottom - box.top + 12);
+        else {
+          top = nav;
+          x0 = sec.querySelector("[data-sign]")!.getBoundingClientRect().right - box.left + 12;
+          x1 = sec.querySelector("[data-side]")!.getBoundingClientRect().left - box.left - 12;
+        }
+        shift = (x0 + x1) / 2 - el.clientWidth / 2;
         zoom = Math.max(1, 0.9 / camera.aspect);
-        // Fit the opening view: back off until the whole outline is inside FILL of the space below the nav bar.
-        const tanV = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * FILL * (1 - nav / el.clientHeight);
-        const tanH = tanV * camera.aspect;
+        // Fit the opening view: back off until the whole outline is inside FILL of that space.
+        const tanV = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * FILL * (1 - top / el.clientHeight);
+        const tanH = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * camera.aspect * FILL * ((x1 - x0) / el.clientWidth);
         iso.dist = outline.reduce((d, p) => Math.max(d, p.z + Math.max(Math.abs(p.x - cx) / tanH, Math.abs(p.y - cy) / tanV)), 0);
         draw();
       };
@@ -328,29 +349,30 @@ export default function PhoneDial() {
   return (
     // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
     <div>
-      {/* Dressed as a 90s STD-ISD-PCO booth: yellow walls, the block-letter sign, a call-rate card and the call meter. */}
-      <section ref={pin} aria-label="Rotary telephone" className="relative h-[100dvh] overflow-hidden bg-turmeric">
+      {/* Dressed as a 90s STD-ISD-PCO booth: yellow walls, the block-letter sign, a call-rate card and the call meter. They
+          sit in front of the phone on the whole-phone view, and fade out while the camera is in among the cards. */}
+      <section ref={pin} aria-label="Rotary telephone" className="group relative h-[100dvh] overflow-hidden bg-turmeric">
         <div className="halftone absolute inset-0 text-ink/10" aria-hidden="true" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 bottom-6 top-24 flex flex-col justify-between md:inset-x-8 md:flex-row md:items-center">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 bottom-6 top-24 flex flex-col booth:inset-x-8 booth:flex-row booth:items-center booth:justify-between">
           {/* the sign: black block capitals, stacked, on a yellow board with a black border */}
-          <div className="self-center border-[6px] border-ink bg-marigold px-4 py-2 text-center shadow-[8px_8px_0_var(--color-ink)] md:-rotate-2 md:self-auto md:px-6 md:py-4">
-            <p className="font-display text-[clamp(1.5rem,4.5vw,4.5rem)] leading-none text-ink max-md:flex max-md:gap-3">
+          <div data-sign className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 self-center border-[6px] border-ink bg-marigold px-4 py-2 text-center shadow-[8px_8px_0_var(--color-ink)] booth:-rotate-2 booth:self-auto booth:px-6 booth:py-4">
+            <p className="font-display text-[clamp(1.5rem,4.5vw,4.5rem)] leading-none text-ink booth-stack:flex booth-stack:gap-3">
               <span className="block">STD</span>
               <span className="block">ISD</span>
               <span className="block text-vermillion-deep">PCO</span>
             </p>
-            <p className="mt-2 font-deva text-base text-ink md:text-xl">यहाँ से देश-विदेश बात करें</p>
+            <p className="mt-2 font-deva text-base text-ink booth:text-xl">यहाँ से देश-विदेश बात करें</p>
           </div>
-          <div className="flex items-end justify-between gap-4 md:flex-col md:items-end md:gap-8">
-            {/* the call meter: duration and charge, ticking as the visitor scrolls */}
-            <div className="border-4 border-ink bg-ink p-2 shadow-[6px_6px_0_var(--color-vermillion-deep)] md:rotate-1 md:p-3">
-              <p className="font-mono text-[10px] font-bold tracking-widest text-cream/70 md:text-xs">DURATION · AMOUNT</p>
-              <p ref={meter} className="scanlines mt-1 bg-[#1f0d07] px-2 py-1 font-mono text-lg font-bold tabular-nums text-[#ff6a3d] [text-shadow:0_0_8px_#ff6a3d] md:text-3xl">
+          <div data-side className="flex justify-center booth-stack:mt-4 booth:flex-col booth:items-end booth:gap-8">
+            {/* the call meter: duration and charge, ticking as the visitor scrolls (stacked, it sits under the sign) */}
+            <div className="border-4 border-ink bg-ink p-2 shadow-[6px_6px_0_var(--color-vermillion-deep)] relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 booth:rotate-1 booth:p-3">
+              <p className="font-mono text-[10px] font-bold tracking-widest text-cream/70 booth:text-xs">DURATION · AMOUNT</p>
+              <p ref={meter} className="scanlines mt-1 bg-[#1f0d07] px-2 py-1 font-mono text-lg font-bold tabular-nums text-[#ff6a3d] [text-shadow:0_0_8px_#ff6a3d] booth:text-3xl">
                 00:00 · Rs.0.00
               </p>
             </div>
             {/* the rate card, hand-lettered on paper and taped up */}
-            <div className="relative hidden rotate-2 border-2 border-ink bg-cream px-5 py-4 font-mono text-sm shadow-[5px_5px_0_var(--color-ink)] md:block">
+            <div className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 hidden rotate-2 border-2 border-ink bg-cream px-5 py-4 font-mono text-sm shadow-[5px_5px_0_var(--color-ink)] booth:block">
               <span className="absolute -top-3 left-1/2 h-5 w-16 -translate-x-1/2 -rotate-3 bg-paper/80" />
               <p className="font-display text-lg text-rani-deep">CALL RATES</p>
               <p className="mt-2 flex justify-between gap-6"><span className="font-bold">LOCAL</span>Rs.1 / 3 min</p>

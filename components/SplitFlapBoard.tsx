@@ -81,7 +81,7 @@ export default function SplitFlapBoard({ days }: { days: TimelineDay[] }) {
         </div>
       </div>
       <div className="relative overflow-x-auto" data-lenis-prevent-wheel>
-        <table className="mt-4 w-full border-separate border-spacing-y-2 font-mono text-[10px] sm:text-sm xl:text-base">
+        <table className="mt-4 w-full border-separate border-spacing-y-2 font-mono text-[10px] sm:text-sm md:text-xs lg:text-sm xl:text-base">
           <caption className="sr-only">{d.date} schedule</caption>
           <thead>
             <tr className="text-left text-[10px] tracking-widest text-cream/60 sm:text-xs">
