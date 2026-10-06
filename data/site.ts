@@ -11,6 +11,12 @@ export const site = {
   passQueryPhone: "+91 94079 00542",
 };
 
+// The events page's street and booth. Models are cached for a day without asking (next.config.ts), so bump v whenever
+// a file changes, or visitors keep the old model under the new code.
+export const streetModel = "/models/events.glb?v=4";
+export const boothModel = "/models/booth.glb?v=1";
+export const wheelModel = "/models/wheel.glb?v=2";
+
 // Top nav links: same five, same order, as the menu on meraz.iitbhilai.ac.in
 export const navLinks = [
   { href: "/about", label: "About", hindi: "परिचय", freq: "91.2" },

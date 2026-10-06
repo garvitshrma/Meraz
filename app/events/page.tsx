@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import EventsPanels from "@/components/EventsPanels";
-import EventsReel from "@/components/EventsReel";
+import { preload } from "react-dom";
+import EventsStreet from "@/components/EventsStreet";
+import { boothModel, streetModel, wheelModel } from "@/data/site";
 
 export const metadata: Metadata = { title: "Events", description: "Culturals, Sci-Tech, Informals & Varchasva, E-Cell and FinTech events at Meraz 7.0." };
 
 export default function EventsPage() {
-  return (
-    <>
-      <EventsPanels />
-      <EventsReel />
-    </>
-  );
+  for (const url of [streetModel, boothModel, wheelModel, "/models/jump.glb", "/models/walk.glb", "/sky.jpg"]) preload(url, { as: "fetch", crossOrigin: "anonymous" }); // GLTFLoader fetches in cors mode
+  return <EventsStreet />;
 }

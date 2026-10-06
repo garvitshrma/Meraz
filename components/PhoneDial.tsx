@@ -11,6 +11,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contacts } from "@/data/content";
+import { jumpScroll } from "./ScrollFx";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -244,6 +245,7 @@ export default function PhoneDial() {
       const look = new THREE.Vector3();
       const dir = new THREE.Vector3();
       let progress = 0;
+      let calls = 0; // times round the dial: the meter runs on across them
       const draw = () => {
         // Each leg: hold on the shot for the first and last 20% of its scroll, glide in between.
         const legs = progress * (shots.length - 1);
@@ -257,7 +259,7 @@ export default function PhoneDial() {
         camera.lookAt(look);
         pop(i + t);
         // The booth's call meter: a minute of call per screen scrolled, at the STD rate on the card.
-        const secs = Math.round(progress * (shots.length - 1) * 60);
+        const secs = Math.round((calls + progress) * (shots.length - 1) * 60);
         tally.textContent = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")} · Rs.${((secs / 60) * 2.4).toFixed(2)}`;
         renderer.render(scene, camera);
       };
@@ -278,7 +280,9 @@ export default function PhoneDial() {
       ro.observe(el);
       resize();
 
-      // Pin and scrub: one screen of scrolling per shot. Reduced motion keeps the isometric still.
+      // Pin and scrub: one screen of scrolling per shot. Reduced motion keeps the isometric still. The tour ends as it
+      // starts, on the whole phone, so scrolling past its end jumps back a tour's length (keeping any overshoot) and
+      // dials on, round and round.
       const st = matchMedia("(prefers-reduced-motion: reduce)").matches
         ? null
         : ScrollTrigger.create({
@@ -290,6 +294,10 @@ export default function PhoneDial() {
             onUpdate: (self) => {
               progress = self.progress;
               draw();
+              if (self.scroll() >= self.end - 1) {
+                calls++;
+                jumpScroll(Math.max(self.start, self.scroll() - (self.end - self.start)));
+              }
             },
           });
 

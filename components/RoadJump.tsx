@@ -7,16 +7,19 @@
 // Loading: three.js ships with the page (the scene is the page), the opening shot's few assets are preloaded from the
 // HTML (app/page.tsx) and drawn as soon as they land, and the rest of the street streams in behind them.
 import { useEffect, useRef } from "react";
-import { ArrowDown } from "@phosphor-icons/react";
+import { ArrowDown, FastForward } from "@phosphor-icons/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import * as THREE from "three";
-import type { Object3D, SkinnedMesh } from "three";
+import type { Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
 import { navLinks } from "@/data/site";
 import { TLink, useGo } from "./Transition";
+import { getLenis } from "./ScrollFx";
+import { HAZE, fireworkShows, glowDot, nightSky, type Show } from "./night";
+import { bone, key, matte, soldier, strideSpeed } from "./rig";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,6 +34,19 @@ const ENV = { scale: 0.6, y: 0.1, z: 35, edge: 5.5, kerbTop: 0.41, row: 95, vist
 // (Names as three.js loads them: "wall.001" becomes "wall001".)
 const HOUSE_ROW = /^(pair_of_house|pan_shop|wall|tall_house|house_with_tank|good_house)(\d+)?$/;
 const VISTA = /^(water_tank|Sketchfab_model|250px-.*|MV5B.*)$/; // the tank, the billboard and its two posters
+// Lights on inside the houses: each building's street-facing windows (read off straight-on renders of its front), in
+// the environment's own units as [x, y, z, w, h]: x the wall's face there (it faces +x, the road), y up, z along the
+// street, w across, h tall. Their twins across the road (".001") are the same buildings turned round, so take the same.
+const WINDOWS: Record<string, number[][]> = {
+  pair_of_house: [
+    [-19.43, 8.92, 5.5, 2.33, 2.17], [-19.19, 8.96, -3.42, 2.17, 2.25], [-18.81, 9.08, -7.67, 2, 2.5],
+    [-19.19, 3.88, 4.62, 2.08, 1.58], [-18.87, 3.71, -3.79, 2.75, 1.75], [-19.26, 3.92, -8, 1.67, 2],
+  ],
+  tall_house: [[-18.38, 7.67, -47.71, 2.92, 1.83]], // behind its bars
+  house_with_tank: [[-18.09, 7.75, -55.08, 2.17, 1.67], [-18.1, 7.75, -58.86, 2.72, 1.67], [-17.9, 2.83, -58.46, 2.42, 1.67]],
+  good_house: [[-18.36, 9.17, -66.75, 1.33, 2.17], [-18.32, 9.17, -74.02, 1.29, 2.17]],
+};
+const WINDOW_TINTS = [0xffd27a, 0xffb85c, 0xfff0c8]; // warm lamplight, a little different in each
 // Footpaths, keyed by side (+x is left as seen from the chase camera). Pedestrians walk one line along each, lane
 // metres out, clear of the railings and house fronts. Trees stand on tree, street lights on lamp (at the kerb, arm
 // over the road), except over the z spans where the environment's houses, walls, stalls and railings (or the title
@@ -56,32 +72,23 @@ const PATHS: Record<number, { lane: number; tree: number; trees: number[][]; lam
 const LAMP_GAP = 14; // metres between street lights along each side (staggered across the road)
 // Where the left hand rests mid-vault (t ≈ 0.5–0.7 s), measured from the clip: the barricade top goes here.
 const HAND_PLANT = { y: 0.9, z: 1.95 };
-const HAZE = 0x304a60; // the sky photo's colour at the horizon, so the far road fades into it
-// Night sky: "Qwantani Moonrise (Pure Sky)" by Greg Zaal, Poly Haven (CC0), graded from its lifted exposure back to
-// night, turned so the moon rises straight down the street, and cut off 9 deg below the horizon (sky.jpg). That band is
-// spread over SKY_SPAN degrees from the zenith, which lowers the moon from 14 to 8 deg up, into the chase camera's view.
-const SKY_SPAN = 106.8;
-// The photo's moon is a blown-out blob, so its glare is toned down in sky.jpg and NASA's full Moon (Scientific
-// Visualization Studio, "Moon Phase and Libration, 2024", public domain; moon.webp) is laid over it: el degrees up,
-// straight down the street, size degrees across (a long lens's moon, bigger than the eye's 0.5), dimmed to tint.
-const MOON = { el: 8.1, size: 1.6, tint: 0xcfd0c6 };
-// Fireworks: one baked shell (fireworks.glb, baked by the build into fireworks.bin: a rocket climbing about 38 units,
-// then 2,200 sparks bursting out about 50 units over 8 s), let off again and again at each show, out past the houses:
-// two behind his start, three down the road ahead. at: launch point in metres (below the road, so the rockets rise out
-// from behind the rooftops), scale: shell size, speed: playback rate (the bake runs slow), gap: seconds between shells.
-const SHOWS = [
+// The full moon in the night sky (see night.ts): el degrees up, straight down the street (the sky's +z), size degrees
+// across (a long lens's moon, bigger than the eye's 0.5), dimmed to tint, in an aura aura times as wide.
+const MOON = { el: 8.1, size: 1.6, tint: 0xcfd0c6, aura: 6 };
+// Fireworks (see night.ts), out past the houses: two behind his start, three down the road ahead, launched below the
+// road so the rockets rise out from behind the rooftops.
+const SHOWS: Show[] = [
   { at: [-45, -5, -150], scale: 0.9, speed: 2.4, gap: 1.5 },
   { at: [55, -5, -190], scale: 1.1, speed: 2.1, gap: 2.5 },
   { at: [-35, -5, 210], scale: 1, speed: 2.3, gap: 1 },
   { at: [45, -5, 180], scale: 0.8, speed: 2.6, gap: 2 },
   { at: [5, -5, 250], scale: 1.2, speed: 2, gap: 3 },
 ];
-// The shell's timeline in bake seconds: it bursts at burst and its last sparks die by end. Sparks sag under gravity by
-// droop units per second squared after the burst; size is a spark's size in metres.
-const SHELL = { burst: 2.1, end: 10, droop: 0.5, size: 1.4 };
-const FIREWORK_COLOURS = [0xffb627, 0xff3d3d, 0x19d3c5, 0xff4fa3, 0x7dff6b, 0x8f7bff, 0xff7a1a];
 // Keyboard: holding W scrolls on down the scene, S back up, at this many pixels a second.
 const KEY_SCROLL = 450;
+// The skip button scrolls the scene by itself, this many seconds a screen, to just past GO: seated, asked where to,
+// with the destinations up.
+const SKIP_PACE = 2;
 // The "MERAZ 7.0" sign: metres wide, centre height, behind his start. The opening shot tilts up by tilt (rise per
 // metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
 const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
@@ -150,6 +157,7 @@ export default function RoadJump() {
   const host = useRef<HTMLDivElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
   const ride = useRef<((href: string) => void) | null>(null); // starts the ride to a page, once the scene can play it
+  const skip = useRef<(() => void) | null>(null); // plays the scene up to the driver's question, once it can
   const goTo = useGo(); // stable while home is mounted
 
   useEffect(() => {
@@ -195,63 +203,32 @@ export default function RoadJump() {
       const v3 = () => new THREE.Vector3();
       let seed = 7;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // seeded: the same street every visit
-      // A soft round dot: firework sparks and street-lamp glows.
-      const glow = document.createElement("canvas");
-      glow.width = glow.height = 64;
-      const gc = glow.getContext("2d")!;
-      const spot = gc.createRadialGradient(32, 32, 0, 32, 32, 32);
-      spot.addColorStop(0, "#fff");
-      spot.addColorStop(0.25, "rgba(255,255,255,0.8)");
-      spot.addColorStop(1, "rgba(255,255,255,0)");
-      gc.fillStyle = spot;
-      gc.fillRect(0, 0, 64, 64);
-      const sparkTex = new THREE.CanvasTexture(glow);
+      const sparkTex = glowDot(); // firework sparks and street-lamp glows
+      // A lit window: lamplight, brightest in the middle, behind a dark frame and its cross bars.
+      const pane = document.createElement("canvas");
+      pane.width = pane.height = 128;
+      const pc = pane.getContext("2d")!;
+      const lamp = pc.createRadialGradient(64, 70, 8, 64, 64, 90);
+      lamp.addColorStop(0, "#fff");
+      lamp.addColorStop(1, "#c8823c");
+      pc.fillStyle = lamp;
+      pc.fillRect(0, 0, 128, 128);
+      pc.strokeStyle = "rgba(40,22,10,0.85)";
+      pc.lineWidth = 10;
+      pc.strokeRect(0, 0, 128, 128);
+      pc.lineWidth = 6;
+      pc.beginPath();
+      pc.moveTo(64, 0);
+      pc.lineTo(64, 128);
+      pc.moveTo(0, 60);
+      pc.lineTo(128, 60);
+      pc.stroke();
+      const paneTex = new THREE.CanvasTexture(pane);
+      paneTex.colorSpace = THREE.SRGBColorSpace;
 
-      // Sky (see SKY_SPAN): on the inside of a sphere that follows the camera, not scene.background (as a background
-      // it is first converted to a cube map, with shaders of its own, on the first frame, ~0.4 s). Below its cut-off
-      // the background is the haze colour. The photo does not hold up the first frame: until it lands the dome shows a
-      // one-pixel stand-in in the haze colour, through the same shader, so swapping it in costs nothing.
-      const hazeRGB = new THREE.Color(HAZE).toArray().map((c) => Math.round(c * 255));
-      let sky: THREE.Texture = new THREE.DataTexture(new Uint8Array([...hazeRGB, 255]), 1, 1);
-      sky.needsUpdate = true;
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(250, 64, 32, 0, 2 * Math.PI, 0, THREE.MathUtils.degToRad(SKY_SPAN)).scale(-1, 1, 1),
-        new THREE.MeshBasicMaterial({ map: sky, fog: false, depthWrite: false }),
-      );
-      dome.renderOrder = -1; // drawn first, behind everything
-      dome.frustumCulled = false;
+      // Sky and moon (see night.ts), kept on the camera by draw.
+      const { dome, dispose: disposeSky } = nightSky(skyLoad, MOON, 0, () => dead);
       scene.background = new THREE.Color(HAZE);
-      skyLoad
-        .then((bitmap) => {
-          if (dead) return bitmap.close();
-          // ImageBitmaps upload top row first, so v is turned round in place of flipY. Only ever magnified: no mipmaps.
-          const t = new THREE.Texture(bitmap);
-          t.flipY = false;
-          t.repeat.y = -1;
-          t.offset.y = 1;
-          t.colorSpace = THREE.SRGBColorSpace;
-          t.generateMipmaps = false;
-          t.minFilter = THREE.LinearFilter;
-          t.needsUpdate = true;
-          sky.dispose();
-        moonTex?.dispose();
-          dome.material.map = sky = t;
-        })
-        .catch((e) => console.error("RoadJump sky:", e));
-      let moonTex: THREE.Texture | undefined;
-      new THREE.TextureLoader()
-        .loadAsync("/moon.webp")
-        .then((t) => {
-          if (dead) return t.dispose();
-          t.colorSpace = THREE.SRGBColorSpace;
-          moonTex = t;
-          const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: MOON.tint, fog: false, depthWrite: false }));
-          const el = THREE.MathUtils.degToRad(MOON.el);
-          moon.position.set(0, Math.sin(el), Math.cos(el)).multiplyScalar(240); // just inside the sky
-          moon.scale.setScalar(2 * 240 * Math.tan(THREE.MathUtils.degToRad(MOON.size / 2)));
-          dome.add(moon);
-        })
-        .catch((e) => console.error("RoadJump moon:", e));
       scene.fog = new THREE.Fog(HAZE, 60, 200); // far enough to see the tank and billboard at the end of the street
       const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 300);
       scene.add(dome);
@@ -263,26 +240,6 @@ export default function RoadJump() {
       const flash = new THREE.PointLight(0xffffff, 0, 0, 0);
       scene.add(flash);
 
-      // Every model's PBR material becomes Lambert, which is cheaper to compile (the road's and barricade's PBR shaders
-      // were most of the first frame's wait) and to draw. With no environment to reflect, PBR adds little here: what
-      // goes is the glossy highlight and metalness, which without an environment only darkened surfaces towards black.
-      // Transparency, cut-outs (leaves), glow and baked shadow carry over. Shared materials stay shared.
-      const matte = (root: Object3D) => {
-        const made = new Map<THREE.Material, THREE.MeshLambertMaterial>();
-        root.traverse((o) => {
-          const mesh = o as THREE.Mesh;
-          const m = mesh.material as THREE.MeshStandardMaterial | undefined;
-          if (!m?.isMeshStandardMaterial) return; // unlit (basic) materials are cheap already
-          if (!made.has(m)) {
-            const { color, map, normalMap, normalScale, aoMap, aoMapIntensity, emissive, emissiveMap, emissiveIntensity } = m;
-            const { alphaMap, alphaTest, transparent, opacity, side, depthWrite, vertexColors, name } = m;
-            made.set(m, new THREE.MeshLambertMaterial({ color, map, normalMap, normalScale, aoMap, aoMapIntensity, emissive,
-              emissiveMap, emissiveIntensity, alphaMap, alphaTest, transparent, opacity, side, depthWrite, vertexColors, name }));
-            m.dispose();
-          }
-          mesh.material = made.get(m)!;
-        });
-      };
       matte(road.scene);
       matte(barricade.scene);
       // Placed as the environment sits (see ENV).
@@ -362,126 +319,8 @@ export default function RoadJump() {
       const gate = new THREE.Group().add(barricade.scene);
       scene.add(gate);
 
-      // Bones are matched across rigs by name: "mixamorig:Hips_64", "mixamorigHips" and "Hips_01" all key as "Hips".
-      const key = (n: string) => n.replace(/_\d+$/, "").replace(/^mixamorig:?/, "");
-      const bone = (root: Object3D, n: string) => {
-        let found: Object3D | undefined;
-        root.traverse((o) => {
-          if (!found && (o as THREE.Bone).isBone && key(o.name) === n) found = o;
-        });
-        return found!;
-      };
-
-      // Walk: the Walk clip from three.js's "Soldier" sample (same Mixamo bone names, walks in place), retargeted in
-      // world space. The rigs' bones rest at different angles (thighs differ by 180 deg), so copying local rotations
-      // twists the legs and drags the cloth. Instead, at every keyframe each soldier bone's turn away from its T-pose
-      // is applied to the matching bone's bind pose on the target, then turned back into a local rotation. The target
-      // rig must stand at the origin; it keeps its own facing.
-      const sol = new Map<string, Object3D>();
-      walker.scene.traverse((o) => sol.set(key(o.name), o));
-      const sMixer = new THREE.AnimationMixer(walker.scene);
-      const sClip = (n: string) => walker.animations.find((a) => a.name === n)!;
-      const tpose = sMixer.clipAction(sClip("TPose")).play();
-      sMixer.update(0);
-      walker.scene.updateMatrixWorld(true);
-      const sRestInv = new Map([...sol].map(([n, o]) => [n, o.getWorldQuaternion(q()).invert()]));
-      const sRestPos = new Map([...sol].map(([n, o]) => [n, o.getWorldPosition(v3())]));
-      tpose.stop();
-      const sHips = sol.get("Hips")!;
-      const legLen = (pos: (n: string) => THREE.Vector3) => {
-        const [a, b, c] = ["LeftUpLeg", "LeftLeg", "LeftFoot"].map(pos);
-        return a.distanceTo(b) + b.distanceTo(c);
-      };
-      const facesPlusZ = (pos: (n: string) => THREE.Vector3) => pos("LeftUpLeg").x > pos("RightUpLeg").x;
-      const retarget = (rig: Object3D, clipName = "Walk") => {
-        const src = sClip(clipName);
-        sMixer.stopAllAction();
-        const sAct = sMixer.clipAction(src).play();
-        const times = src.tracks.find((t) => t.name.startsWith(sHips.name + "."))!.times;
-        // Some clips stand turned: the soldier's Idle faces 44 deg off his Walk and T-pose. Turn the whole clip back so
-        // its hips face like the T-pose; otherwise blending walk into idle swings the body round.
-        const pelvisYaw = (pos: (n: string) => THREE.Vector3) => {
-          const across = pos("LeftUpLeg").sub(pos("RightUpLeg"));
-          return Math.atan2(across.z, across.x);
-        };
-        sAct.time = 0;
-        sMixer.update(0);
-        walker.scene.updateMatrixWorld(true);
-        const off = pelvisYaw((n) => sol.get(n)!.getWorldPosition(v3())) - pelvisYaw((n) => sRestPos.get(n)!.clone());
-        const face = q().setFromAxisAngle(v3().set(0, 1, 0), Math.atan2(Math.sin(off), Math.cos(off)));
-        rig.updateMatrixWorld(true);
-        const ours: Object3D[] = []; // mapped bones, parents before children
-        rig.traverse((o) => (o as THREE.Bone).isBone && sol.has(key(o.name)) && ours.push(o));
-        // Bind-pose rotation of each bone. Mesh compression folds a scale and offset into the inverse-bind
-        // matrices, so only their rotation is trusted; lengths come from the live bones.
-        const bind = new Map<Object3D, THREE.Quaternion>();
-        rig.traverse((o) => {
-          const skel = (o as SkinnedMesh).isSkinnedMesh ? (o as SkinnedMesh).skeleton : undefined;
-          skel?.bones.forEach((b, i) => {
-            if (bind.has(b)) return;
-            const r = q();
-            skel.boneInverses[i].clone().invert().decompose(v3(), r, v3());
-            bind.set(b, r);
-          });
-        });
-        const livePos = (n: string) => bone(rig, n).getWorldPosition(v3());
-        const sPos = (n: string) => sRestPos.get(n)!.clone();
-        const k = legLen(livePos) / legLen(sPos);
-        // turn the soldier's motion to the target's facing
-        const turn = q().setFromAxisAngle(v3().set(0, 1, 0), facesPlusZ(livePos) === facesPlusZ(sPos) ? 0 : Math.PI);
-        const turnInv = turn.clone().invert();
-        const hips = bone(rig, "Hips");
-        const rotations = new Map(ours.map((b) => [b, new Float32Array(times.length * 4)]));
-        const hipsPos = new Float32Array(times.length * 3);
-        const hipsParentInv = hips.parent!.matrixWorld.clone().invert();
-        const world = new Map<Object3D, THREE.Quaternion>();
-        times.forEach((t, i) => {
-          sAct.time = t;
-          sMixer.update(0);
-          walker.scene.updateMatrixWorld(true);
-          for (const b of ours) {
-            const n = key(b.name);
-            const d = turn
-              .clone()
-              .multiply(face)
-              .multiply(sol.get(n)!.getWorldQuaternion(q()))
-              .multiply(sRestInv.get(n)!)
-              .multiply(turnInv);
-            if (/(UpLeg|Leg|Foot|ToeBase)$/.test(n)) d.slerp(q(), 1 - STRIDE); // shorter stride, less pull on the cloth
-            const w = d.multiply(bind.get(b) ?? b.getWorldQuaternion(q()));
-            world.set(b, w);
-            const parent = world.get(b.parent!)?.clone() ?? b.parent!.getWorldQuaternion(q());
-            parent
-              .invert()
-              .multiply(w)
-              .toArray(rotations.get(b)!, i * 4);
-          }
-          sHips
-            .getWorldPosition(v3())
-            .applyQuaternion(face)
-            .applyQuaternion(turn)
-            .multiplyScalar(k)
-            .applyMatrix4(hipsParentInv)
-            .toArray(hipsPos, i * 3);
-        });
-        return new THREE.AnimationClip(clipName, -1, [
-          ...ours.map((b) => new THREE.QuaternionKeyframeTrack(`${b.name}.quaternion`, times, rotations.get(b)!)),
-          new THREE.VectorKeyframeTrack(`${hips.name}.position`, times, hipsPos),
-        ]);
-      };
-      // Walking speed of an in-place walk, from the stride: the planted foot slides back over its range during
-      // stance (~60% of a cycle). setTime poses the rig at a clip time.
-      const strideSpeed = (rig: Object3D, setTime: (t: number) => void, duration: number) => {
-        const foot = bone(rig, "LeftFoot");
-        let lo = Infinity;
-        let hi = -Infinity;
-        for (let i = 0; i < 24; i++) {
-          setTime((i / 24) * duration);
-          const fz = foot.getWorldPosition(v3()).z;
-          [lo, hi] = [Math.min(lo, fz), Math.max(hi, fz)];
-        }
-        return (hi - lo) / (0.6 * duration);
-      };
+      // The soldier's Walk and Idle, retargeted onto our rigs (see rig.ts).
+      const { retarget, facesPlusZ, mixer: sMixer } = soldier(walker, STRIDE);
 
       // Runner.
       const rig = man.scene;
@@ -627,78 +466,12 @@ export default function RoadJump() {
       };
       stroll(0);
 
-      // Fireworks: every show plays the baked shell, each spark drawn with a short trail (the same spark a moment
-      // earlier, dimmer). The sparks fade as they burn out, crackling at the end, and sag under gravity. Each shell
-      // takes a new colour, with a few warm-white sparks in its core; its burst flashes the street in that colour.
+      // Fireworks (see night.ts); each burst flashes the street in its colour.
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const TRAIL = [[0, 1], [0.1, 0.5], [0.22, 0.22]]; // bake seconds behind the spark, brightness
-      const fwGeo = new THREE.BufferGeometry();
-      const sparks = new THREE.Points(
-        fwGeo,
-        new THREE.PointsMaterial({ size: SHELL.size, map: sparkTex, vertexColors: true, transparent: true,
-          blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
-      );
-      sparks.frustumCulled = false;
-      scene.add(sparks);
-      const pick = () => FIREWORK_COLOURS[Math.floor(Math.random() * FIREWORK_COLOURS.length)];
-      let fireworks = (dt: number) => void dt; // quiet until the shell has landed
-      const buildFireworks = (buf: ArrayBuffer) => {
-        const head = new Float32Array(buf, 0, 9);
-        const [frames, P, DT] = head;
-        const [lo, span] = [head.subarray(3, 6), head.subarray(6, 9)];
-        const at = new Uint16Array(buf, 36, frames * P * 3); // positions, scaled into lo..lo+span
-        const big = new Uint8Array(buf, 36 + frames * P * 6, frames * P); // size: 0 before it is lit and after it dies
-        const n = SHOWS.length * TRAIL.length * P;
-        const pos = new Float32Array(n * 3);
-        const col = new Float32Array(n * 3);
-        fwGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
-        fwGeo.setAttribute("color", new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
-        // Reduced motion draws one still frame, so its shells are caught mid-burst; otherwise they go up in turn.
-        const shells = SHOWS.map((s, i) => ({ ...s, t: reduce ? 3.5 + i * 0.6 : -i * 1.4, colour: new THREE.Color(pick()) }));
-        const core = new THREE.Color(0xfff1c1);
-        fireworks = (dt) => {
-          let bright = 0;
-          shells.forEach((s, si) => {
-            s.t += dt * s.speed;
-            if (s.t > SHELL.end) {
-              s.t = -s.gap * s.speed; // a pause, then the next shell, in a new colour
-              s.colour.setHex(pick());
-            }
-            const burst = s.t > SHELL.burst ? Math.exp(-1.5 * (s.t - SHELL.burst)) : 0;
-            if (burst > bright) {
-              bright = burst;
-              flash.color.copy(s.colour);
-              flash.position.set(s.at[0], s.at[1] + 38 * s.scale, s.at[2]);
-            }
-            TRAIL.forEach(([back, glowing], j) => {
-              const t = s.t - back;
-              const f = t / DT - 1; // frame k was baked at (k + 1) * DT
-              const f0 = Math.floor(f);
-              const first = (si * TRAIL.length + j) * P;
-              if (f0 < 0 || f0 >= frames - 1) return void col.fill(0, first * 3, (first + P) * 3);
-              const u = f - f0;
-              const age = Math.max(0, t - SHELL.burst);
-              const fade = glowing * Math.max(0, 1 - age / (SHELL.end - SHELL.burst)) ** 1.3;
-              const sag = SHELL.droop * age * age;
-              for (let i = 0; i < P; i++) {
-                const [k0, o] = [f0 * P + i, (first + i) * 3];
-                let b = ((big[k0] + (big[k0 + P] - big[k0]) * u) / 255) * fade;
-                if (b > 0 && age > 4 && Math.random() < 0.3) b *= 0.25; // crackle as they burn out
-                for (let c = 0; c < 3; c++) {
-                  const q = at[k0 * 3 + c] + (at[(k0 + P) * 3 + c] - at[k0 * 3 + c]) * u;
-                  pos[o + c] = s.at[c] + (lo[c] + (q / 65535) * span[c] - (c === 1 ? sag : 0)) * s.scale;
-                }
-                const tint = i % 6 === 0 ? core : s.colour;
-                [col[o], col[o + 1], col[o + 2]] = [tint.r * b, tint.g * b, tint.b * b];
-              }
-            });
-          });
-          flash.intensity = 1.2 * bright;
-          fwGeo.attributes.position.needsUpdate = true;
-          fwGeo.attributes.color.needsUpdate = true;
-        };
-        fireworks(0);
-      };
+      const shows = fireworkShows(SHOWS, sparkTex, flash, reduce);
+      scene.add(shows.sparks);
+      const fireworks = shows.update;
+      const buildFireworks = shows.build;
 
       // First he walks toward the camera while it swings from a close-up of his face, round his side, out to a
       // chase position behind him. Then the jump clip plays (blending in from the walk), then he blends back into
@@ -831,6 +604,8 @@ export default function RoadJump() {
         if (sec.hasAttribute("data-go") !== go) sec.toggleAttribute("data-go", go);
         const moved = reduce || at > 0.02; // the scroll hint goes once scrolling starts (reduced motion has none)
         if (sec.hasAttribute("data-moved") !== moved) sec.toggleAttribute("data-moved", moved);
+        const asked = riding || at >= ASK; // nothing left to skip
+        if (sec.hasAttribute("data-asked") !== asked) sec.toggleAttribute("data-asked", asked);
         if (ask && driverHead) {
           const s = driverHead.getWorldPosition(v3()).project(camera); // the bubble's tail points at the top of his head
           tip.style.setProperty("--x", `${((s.x + 1) / 2) * el.clientWidth}px`);
@@ -914,8 +689,20 @@ export default function RoadJump() {
           rideTimer = window.setTimeout(() => goTo(href, "white"), RIDE.fade * 1000);
         };
 
+      // Skip: scrolls the page by itself to just past GO, easing in and out; any scrolling of the visitor's takes over.
+      if (st)
+        skip.current = () => {
+          const y = st.start + (GO + 0.005) * (st.end - st.start);
+          const left = y - window.scrollY;
+          if (left <= 0) return;
+          const lenis = getLenis();
+          if (lenis) lenis.scrollTo(y, { duration: (left / window.innerHeight) * SKIP_PACE, easing: (t) => (1 - Math.cos(Math.PI * t)) / 2 });
+          else window.scrollTo({ top: y, behavior: "smooth" });
+        };
+
       cleanup = () => {
         ride.current = null;
+        skip.current = null;
         clearTimeout(rideTimer);
         io.disconnect();
         renderer.setAnimationLoop(null);
@@ -931,10 +718,10 @@ export default function RoadJump() {
           }
         });
         signTex.dispose();
-        sky.dispose();
-        fwGeo.dispose();
-        sparks.material.dispose();
+        disposeSky();
+        shows.dispose();
         sparkTex.dispose();
+        paneTex.dispose();
         renderer.dispose();
         renderer.domElement.remove();
       };
@@ -952,6 +739,34 @@ export default function RoadJump() {
         m.emissiveMap = m.map;
         m.emissiveIntensity = m.name.startsWith("billboard") ? 0.4 : 0.8;
       });
+      // Lights on in the houses (see WINDOWS): a warm pane over each street-facing window with a soft glow in front of
+      // it, on each building and its twin across the road; the rows repeated below copy them along.
+      const envRoot = model("env").scene;
+      envRoot.updateMatrixWorld(true);
+      const paneGeo = new THREE.PlaneGeometry(1, 1);
+      const paneMats = WINDOW_TINTS.map((c) => new THREE.MeshBasicMaterial({ map: paneTex, color: c }));
+      const haloMats = WINDOW_TINTS.map(
+        (c) => new THREE.SpriteMaterial({ map: sparkTex, color: c, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      let lit = 0;
+      for (const [name, list] of Object.entries(WINDOWS)) {
+        const house = envRoot.getObjectByName(name);
+        if (!house) continue;
+        const panes = new THREE.Group();
+        for (const [x, y, z, w, h] of list) {
+          const tint = lit++ % WINDOW_TINTS.length;
+          const glass = new THREE.Mesh(paneGeo, paneMats[tint]);
+          glass.position.set(x + 0.03, y, z); // just off the wall
+          glass.rotation.y = Math.PI / 2; // facing +x, the road
+          glass.scale.set(w, h, 1);
+          const halo = new THREE.Sprite(haloMats[tint]);
+          halo.position.set(x + 0.4, y, z);
+          halo.scale.set(w * 2.2, h * 2.2, 1);
+          panes.add(glass, halo);
+        }
+        house.attach(panes); // placed as measured, in the environment's space
+        envRoot.getObjectByName(`${name}001`)?.add(panes.clone()); // the twin: the same spot on the same building
+      }
       // The street's ~20 shader programs take about a second to compile. Start them now, from the models as loaded
       // (clones share their materials), so they compile while the street is laid out below rather than after.
       const streetCompiling = Promise.all(streetModels.map((m) => renderer.compileAsync(m.scene, camera, scene)));
@@ -1282,6 +1097,15 @@ export default function RoadJump() {
           SCROLL
           <ArrowDown size={18} weight="bold" className="motion-safe:animate-bounce" />
         </p>
+        {/* Skip: walks, jumps and boards for you, up to the driver's question; gone once he has asked. */}
+        <button
+          type="button"
+          onClick={() => skip.current?.()}
+          className="absolute bottom-3 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 border-4 border-ink bg-marigold px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-ink shadow-[4px_4px_0_var(--color-ink)] transition-[translate,box-shadow] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--color-ink)] active:translate-y-1 active:shadow-none motion-reduce:hidden group-data-[asked]:hidden"
+        >
+          SKIP SCROLLING
+          <FastForward size={18} weight="fill" aria-hidden="true" />
+        </button>
         {/* CC BY 4.0 requires credit: the full list lives on the About page, linked from here.
         <TLink href="/about#credits" className="absolute bottom-2 right-3 z-[1] font-mono text-[10px] text-cream/70 underline hover:text-cream">
           3D credits

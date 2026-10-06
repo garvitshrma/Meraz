@@ -9,7 +9,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { eventCategories, type EventCategory, type SubEvent } from "@/data/events";
 
-const tones = ["bg-marigold text-ink", "bg-rani-deep text-cream", "bg-teal-deep text-cream", "bg-vermillion-deep text-cream", "bg-ink text-cream", "bg-[#6b3f1f] text-cream"];
+export const tones = ["bg-marigold text-ink", "bg-rani-deep text-cream", "bg-teal-deep text-cream", "bg-vermillion-deep text-cream", "bg-ink text-cream", "bg-[#6b3f1f] text-cream"];
 const panels = [{ id: 0, title: "EVENTS", hindi: "कार्यक्रम" } as const, ...eventCategories];
 
 export default function EventsPanels() {
@@ -67,7 +67,7 @@ function TitleContent() {
   );
 }
 
-function CategoryContent({ cat }: { cat: EventCategory }) {
+export function CategoryContent({ cat }: { cat: EventCategory }) {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <h2 className="painted font-display text-[clamp(2rem,5vw,3.75rem)] leading-none text-cream">{cat.heading}</h2>
@@ -77,7 +77,7 @@ function CategoryContent({ cat }: { cat: EventCategory }) {
   );
 }
 
-function Carousel({ items, category }: { items: SubEvent[]; category: string }) {
+export function Carousel({ items, category }: { items: SubEvent[]; category: string }) {
   const [index, setIndex] = useState(0);
   const n = items.length;
   const go = (d: number) => setIndex((i) => (i + d + n) % n);

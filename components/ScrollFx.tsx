@@ -11,6 +11,11 @@ gsap.registerPlugin(ScrollTrigger);
 
 let lenis: Lenis | null = null;
 export const getLenis = () => lenis;
+// Moves the page's scroll at once, unsmoothed (even while Lenis is stopped): how the looping scenes wrap round.
+export function jumpScroll(y: number) {
+  if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+  else window.scrollTo({ top: y, behavior: "instant" });
+}
 
 export default function ScrollFx() {
   const pathname = usePathname();
