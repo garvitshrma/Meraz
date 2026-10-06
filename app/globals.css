@@ -247,18 +247,133 @@ html[data-seen] .crt-loader {
   background: #0b0b0b;
 }
 
-/* ---------- Page-transition curtains ---------- */
-.curtain {
+/* ---------- Page-transition fort gate ----------
+   Ram Pol, Kumbhalgarh (photo, public/gate/fort.webp) with its portal cut out, and two door leaves (from an Amber Fort
+   gate, graded to the portal's shade) set behind the hole. Shut: the fort fades in, doors closed. Opening: the leaves
+   swing away from us into the passage, darkening, their thick edges showing, while we walk in: the fort grows round the
+   doorway, faster as we near it, with a step's bob of the head, until the doorway fills the screen and the fort fades. */
+.gate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s 1.3s, visibility 0s 1.75s;
+}
+.gate[data-shut] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.35s, visibility 0s;
+}
+/* The 4:3 photo, zoomed in, covers the screen, centred on the doorway (53.4%, 76.5% of the photo) as far as it can be without
+   uncovering an edge. */
+.gate-stage {
+  --h: calc(max(100cqh, 75cqw) * 1.7); /* 1.7: zoomed in on the gate */
+  --w: calc(var(--h) * 4 / 3);
+  position: absolute;
+  width: var(--w);
+  height: var(--h);
+  left: clamp(100cqw - var(--w), 50cqw - var(--w) * 0.534, 0px);
+  top: clamp(100cqh - var(--h), 50cqh - var(--h) * 0.765, 0px);
+  perspective: calc(var(--h) * 0.5);
+  perspective-origin: 53.4% 76.5%;
+  transform-origin: 53.4% 76.5%;
+  will-change: scale, translate; /* keeps the fort on its own GPU layer, not re-painted at each zoom step */
+  /* scale and translate are separate properties, so the zoom runs on one unbroken curve and the bob rides on top */
+  animation:
+    gate-walk 1.6s 0.15s both
+      linear(0, 0.0007 5%, 0.0029 10%, 0.0066 15%, 0.012 20%, 0.0193 25%, 0.0289 30%, 0.0413 35%, 0.0571 40%, 0.0763 45%, 0.0984 50%, 0.1239 55%, 0.1538 60%, 0.1895 65%, 0.2326 70%, 0.2857 75%, 0.3529 80%, 0.4407 85%, 0.56 90%, 0.7317 95%, 1),
+    gate-bob 0.4s 0.15s 4 alternate both ease-in-out;
+}
+.gate[data-shut] .gate-stage {
+  animation: none; /* re-applied when the doors open, which restarts the walk */
+}
+/* A steady walk from a standing start: speed ramps up over the first 40%, then holds, and since apparent size goes as
+   1/distance the scale climbs ever faster (curve above, from s = 1 / (1 - k*x(t))). At 5.5x the fort is fading. */
+@keyframes gate-walk {
+  from { scale: 1; }
+  to { scale: 5.5; }
+}
+/* head bob, one step per 0.4s, in screen px (translate applies after scale) */
+@keyframes gate-bob {
+  from { translate: 0 0; }
+  to { translate: 0 -6px; }
+}
+.gate-fort {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* the doorway: left 47.377%, top 62.86%, 11.96% x 27.263% of the photo, one leaf per half; each leaf runs a hair
+   under the jamb, and the left one under the right, so no sliver of page shows between them */
+.gate-door {
+  position: absolute;
+  top: 62.86%;
+  width: 6.06%;
+  height: 27.263%;
+  transform-style: preserve-3d;
+  transition: transform 1.3s 0.05s cubic-bezier(0.5, 0, 0.25, 1);
+}
+.gate-door img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* the leaf's thickness, at its free edge, running back into the passage */
+.gate-door::before {
+  content: "";
   position: absolute;
   top: 0;
+  width: 9%;
   height: 100%;
-  width: 50.5%;
-  background:
-    linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 18%, transparent 80%, rgb(0 0 0 / 0.4)),
-    repeating-linear-gradient(90deg, #6d0b18 0 10px, #b01e30 22px, #d7263d 30px, #8e1020 44px, #6d0b18 56px);
-  border-bottom: 14px solid var(--color-turmeric);
-  box-shadow: inset 0 -6px 0 #a87a14;
-  transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+  background: linear-gradient(90deg, #120b06, #2a1c10 50%, #120b06);
+}
+/* shade that deepens as the leaf turns away; in front of the photo, which comes later in the DOM */
+.gate-door::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0.6;
+  transform: translateZ(1px);
+  transition: opacity 1.3s 0.05s;
+}
+.gate-door-l {
+  left: 47.3%;
+  width: 6.12%;
+  transform-origin: left;
+  transform: rotateY(82deg);
+}
+.gate-door-l img {
+  object-position: right center; /* keep the centre post at the seam */
+}
+.gate-door-l::before {
+  right: 0;
+  transform-origin: right;
+  transform: rotateY(-90deg);
+}
+.gate-door-r {
+  left: 53.357%;
+  transform-origin: right;
+  transform: rotateY(-82deg);
+}
+.gate-door-r img {
+  object-position: left center;
+}
+.gate-door-r::before {
+  left: 0;
+  transform-origin: left;
+  transform: rotateY(90deg);
+}
+.gate[data-shut] .gate-door {
+  transform: none;
+  transition: none;
+}
+.gate[data-shut] .gate-door::after {
+  opacity: 0;
+  transition: none;
 }
 
 /* ---------- Hero cinema facade (screen cut out with a mask) ---------- */
@@ -363,7 +478,7 @@ html[data-seen] .crt-loader {
   .crt-loader {
     display: none;
   }
-  .curtain {
+  .gate {
     display: none;
   }
   *,

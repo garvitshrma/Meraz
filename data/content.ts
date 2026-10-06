@@ -145,4 +145,7 @@ export const modelCredits: [string, string, string][] = [
   ["Tree", "farhad.Guli", "https://sketchfab.com/3d-models/tree-7016d1d32fe748f0a8b3f5eb39374bc4"],
   ["Pine", "evolveduk", "https://sketchfab.com/3d-models/pine-tree-d45218a3fab349e5b1de040f29e7b6f9"],
   ["Birch", "evolveduk", "https://sketchfab.com/3d-models/birch-tree-aa842dffd9654d33b8b91170ce83c172"],
+  // page-transition gate, cut from these photos
+  ["Fort photo (Ram Pol)", "Shivam Chaturvedi (CC BY-SA 3.0)", "https://commons.wikimedia.org/wiki/File:Ram_Pol.jpg"],
+  ["Gate doors photo", "Uhooep (CC BY-SA 4.0)", "https://commons.wikimedia.org/wiki/File:Door_of_a_gate_to_Amber_Fort,_Rajasthan.jpg"],
 ];

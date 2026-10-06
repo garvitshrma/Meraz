@@ -27,7 +27,7 @@ Import the repo on Vercel. `vercel.json` sets the framework to Next.js; no env v
 | Aftermovie in a pinned TV, scales 1.72 → 1, plays when visible | Same, inside an old wooden TV set |
 | Flip button: page slides away, full-screen menu with 3D gear | Same flip button and slide, menu with a spinning record |
 | Fixed REGISTER button → /passes | Same |
-| Shutter transition between pages | Cinema curtains ("Interval") |
+| Shutter transition between pages | Fort gate: doors swing open onto the new page |
 | Back to Home on inner pages | Same |
 | About: text, theme, 3 stats | Same sections, Retro India copy |
 | Events: category tabs, 3D carousel, IIT / non-IIT register rules | Same, tickets as carousel cards |

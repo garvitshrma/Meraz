@@ -42,7 +42,7 @@ Rule: bright rani, teal and vermillion never carry small text. Use the `-deep` t
 
 ## Motion
 
-- GSAP ScrollTrigger: pinned hero zoom, pinned TV scale, `[data-reveal]` batch reveals. CSS transitions: curtains, flip button, menu slide, carousel, accordions. Lenis smooth scroll.
+- GSAP ScrollTrigger: pinned hero zoom, pinned TV scale, `[data-reveal]` batch reveals. CSS transitions: fort gate, flip button, menu slide, carousel, accordions. Lenis smooth scroll.
 - Everything collapses under `prefers-reduced-motion`.
 
 ## Deliberate exceptions to the taste ban list
