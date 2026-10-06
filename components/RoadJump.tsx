@@ -7,6 +7,7 @@
 // Loading: three.js ships with the page (the scene is the page), the opening shot's few assets are preloaded from the
 // HTML (app/page.tsx) and drawn as soon as they land, and the rest of the street streams in behind them.
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowDown, FastForward } from "@phosphor-icons/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,9 +16,10 @@ import type { Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
-import { navLinks } from "@/data/site";
+import { boothModel, navLinks, streetModel, wheelModel } from "@/data/site";
 import { TLink, useGo } from "./Transition";
 import { getLenis } from "./ScrollFx";
+import { warmUp } from "./warmup";
 import { HAZE, fireworkShows, glowDot, nightSky, type Show } from "./night";
 import { bone, key, matte, soldier, strideSpeed } from "./rig";
 
@@ -159,6 +161,7 @@ export default function RoadJump() {
   const ride = useRef<((href: string) => void) | null>(null); // starts the ride to a page, once the scene can play it
   const skip = useRef<(() => void) | null>(null); // plays the scene up to the driver's question, once it can
   const goTo = useGo(); // stable while home is mounted
+  const router = useRouter();
 
   useEffect(() => {
     const el = host.current!;
@@ -166,6 +169,7 @@ export default function RoadJump() {
     const sec = pin.current!;
     const tip = bubble.current!;
     let cleanup = () => {};
+    let unwarm = () => {};
     let dead = false;
 
     (async () => {
@@ -997,6 +1001,15 @@ export default function RoadJump() {
       scene.add(street);
       stroll(0);
       draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
+      // The scene is complete: in idle moments from here, warm the events and contact pages (see warmup.ts). Their
+      // fireworks, sky, moon and runner are this page's own, already cached.
+      unwarm = warmUp(["/events", "/contact"], (href) => router.prefetch(href), [
+        streetModel,
+        boothModel,
+        wheelModel,
+        "/models/telephone.glb",
+        "/models/stool.glb",
+      ]);
     })().catch((e) => console.error("RoadJump:", e));
 
     // Keyboard: hold W to scroll on down the scene, S to scroll back up (not while typing, nor with modifier keys).
@@ -1031,6 +1044,7 @@ export default function RoadJump() {
 
     return () => {
       dead = true;
+      unwarm();
       stop();
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKey);
@@ -1072,6 +1086,7 @@ export default function RoadJump() {
               >
                 <TLink
                   href={l.href}
+                  prefetch={false} // laid out (hidden) from the start: the warm-up fetches their pages once home has loaded
                   onClick={(e) => {
                     // a plain click rides there; modifier clicks (new tab etc.) and no scene fall through to the link
                     if (!ride.current || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
