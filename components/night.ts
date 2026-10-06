@@ -30,7 +30,7 @@ export function glowDot() {
 // up, moon.size degrees across, dimmed to moon.tint, in an aura (a soft glow of its own, moon.aura times as wide, so it
 // shows on any screen, not only one bright enough to bring out the photo's own faint glare). The whole sky turns by
 // turn radians about y, the moon with it.
-export function nightSky(skyLoad: Promise<ImageBitmap>, moon: { el: number; size: number; tint: number; aura: number }, turn: number, gone: () => boolean) {
+export function nightSky(skyLoad: Promise<ImageBitmap>, moon: { el: number; size: number; tint: number; aura: number } | null, turn: number, gone: () => boolean) {
   const hazeRGB = new THREE.Color(HAZE).toArray().map((c) => Math.round(c * 255));
   let sky: THREE.Texture = new THREE.DataTexture(new Uint8Array([...hazeRGB, 255]), 1, 1);
   sky.needsUpdate = true;
@@ -57,46 +57,85 @@ export function nightSky(skyLoad: Promise<ImageBitmap>, moon: { el: number; size
       dome.material.map = sky = t;
     })
     .catch((e) => console.error("sky:", e));
-  const el = THREE.MathUtils.degToRad(moon.el);
-  const at = new THREE.Vector3(0, Math.sin(el), Math.cos(el)).multiplyScalar(240); // just inside the sky
-  const across = 2 * 240 * Math.tan(THREE.MathUtils.degToRad(moon.size / 2));
-  const glow = document.createElement("canvas");
-  glow.width = glow.height = 128;
-  const gc = glow.getContext("2d")!;
-  const fall = gc.createRadialGradient(64, 64, 0, 64, 64, 64);
-  fall.addColorStop(0, "rgba(255,252,240,0.6)");
-  fall.addColorStop(0.15, "rgba(255,252,240,0.35)");
-  fall.addColorStop(0.4, "rgba(255,252,240,0.1)");
-  fall.addColorStop(1, "rgba(255,252,240,0)");
-  gc.fillStyle = fall;
-  gc.fillRect(0, 0, 128, 128);
-  const auraTex = new THREE.CanvasTexture(glow);
-  const aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex, color: moon.tint, blending: THREE.AdditiveBlending, fog: false, depthWrite: false }));
-  aura.position.copy(at);
-  aura.scale.setScalar(across * moon.aura);
-  dome.add(aura);
   let moonTex: THREE.Texture | undefined;
-  new THREE.TextureLoader()
-    .loadAsync("/moon.webp")
-    .then((t) => {
-      if (gone()) return t.dispose();
-      t.colorSpace = THREE.SRGBColorSpace;
-      moonTex = t;
-      const disc = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: moon.tint, fog: false, depthWrite: false }));
-      disc.position.copy(at);
-      disc.scale.setScalar(across);
-      disc.renderOrder = 1; // over its aura
-      dome.add(disc);
-    })
-    .catch((e) => console.error("moon:", e));
+  let auraTex: THREE.CanvasTexture | undefined;
+  let aura: THREE.Sprite | undefined;
+  if (moon) {
+    const el = THREE.MathUtils.degToRad(moon.el);
+    const at = new THREE.Vector3(0, Math.sin(el), Math.cos(el)).multiplyScalar(240); // just inside the sky
+    const across = 2 * 240 * Math.tan(THREE.MathUtils.degToRad(moon.size / 2));
+    const glow = document.createElement("canvas");
+    glow.width = glow.height = 128;
+    const gc = glow.getContext("2d")!;
+    const fall = gc.createRadialGradient(64, 64, 0, 64, 64, 64);
+    fall.addColorStop(0, "rgba(255,252,240,0.6)");
+    fall.addColorStop(0.15, "rgba(255,252,240,0.35)");
+    fall.addColorStop(0.4, "rgba(255,252,240,0.1)");
+    fall.addColorStop(1, "rgba(255,252,240,0)");
+    gc.fillStyle = fall;
+    gc.fillRect(0, 0, 128, 128);
+    auraTex = new THREE.CanvasTexture(glow);
+    aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex, color: moon.tint, blending: THREE.AdditiveBlending, fog: false, depthWrite: false }));
+    aura.position.copy(at);
+    aura.scale.setScalar(across * moon.aura);
+    dome.add(aura);
+    new THREE.TextureLoader()
+      .loadAsync("/moon.webp")
+      .then((t) => {
+        if (gone()) return t.dispose();
+        t.colorSpace = THREE.SRGBColorSpace;
+          moonTex = t;
+        const disc = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: moon.tint, fog: false, depthWrite: false }));
+        disc.position.copy(at);
+        disc.scale.setScalar(across);
+        disc.renderOrder = 1; // over its aura
+        dome.add(disc);
+      })
+      .catch((e) => console.error("moon:", e));
+  }
   return {
     dome,
     dispose: () => {
       sky.dispose();
       moonTex?.dispose();
-      auraTex.dispose();
-      aura.material.dispose();
+      auraTex?.dispose();
+      aura?.material.dispose();
     },
+  };
+}
+
+// The same sky photo, turned into an environment map so the scene is lit by it rather than only backed by it: the
+// ambient light and every reflection then come out of the night sky itself, as a Blender scene lit by an HDRI does.
+// Only MeshStandardMaterial takes scene.environment, so a scene that wants this must keep its glTF materials (not
+// run them through matte). The photo does not hold up the first frame: until it lands the scene is lit by its lights
+// alone, and the map is dropped in when it arrives. turn: the same rotation the dome is given, so the sky's bright
+// quarter lights the scene from where it is seen. Returns the disposer.
+export function skyEnvironment(renderer: THREE.WebGLRenderer, scene: THREE.Scene, skyLoad: Promise<ImageBitmap>, turn: number, intensity: number, gone: () => boolean) {
+  let env: THREE.Texture | undefined;
+  skyLoad
+    .then((bitmap) => {
+      if (gone()) return;
+      // Through a canvas, not straight off the bitmap: an ImageBitmap uploads top row first and cannot be flipped on
+      // upload, and an environment map read upside down lights the scene from the ground instead of the sky.
+      const flat = document.createElement("canvas");
+      flat.width = bitmap.width;
+      flat.height = bitmap.height;
+      flat.getContext("2d")!.drawImage(bitmap, 0, 0);
+      const src = new THREE.CanvasTexture(flat);
+      src.mapping = THREE.EquirectangularReflectionMapping;
+      src.colorSpace = THREE.SRGBColorSpace;
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      env = pmrem.fromEquirectangular(src).texture;
+      pmrem.dispose();
+      src.dispose(); // the bitmap itself is the dome's; only this wrapper goes
+      scene.environment = env;
+      scene.environmentIntensity = intensity;
+      scene.environmentRotation.y = turn;
+    })
+    .catch((e) => console.error("sky environment:", e));
+  return () => {
+    scene.environment = null;
+    env?.dispose();
   };
 }
 

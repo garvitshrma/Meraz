@@ -16,12 +16,12 @@ import type { Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
-import { boothModel, navLinks, streetModel, wheelModel } from "@/data/site";
+import { melaModel, navLinks } from "@/data/site";
 import { TLink, useGo } from "./Transition";
 import { getLenis } from "./ScrollFx";
 import { warmUp } from "./warmup";
-import { HAZE, fireworkShows, glowDot, nightSky, type Show } from "./night";
-import { bone, key, matte, soldier, strideSpeed } from "./rig";
+import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
+import { bone, key, soldier, strideSpeed } from "./rig";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -124,6 +124,10 @@ const AUTO = { height: 1.75, half: 0.75, clear: 0.1, start: -14, out: 1.9, ahead
 // (z), its cushion about 0.5 m up, so seated hips are at hips. The side is open only ahead of the rear body panels,
 // so he crosses in at entry, then slides back onto the bench. outside: how far out from the bench he stops.
 const SEAT = { z: -0.75, hips: 0.62, entry: -0.35, outside: 1.0 };
+// The light inside the auto: tint and power of the bulb under its roof, how far it carries (reach metres, falling off
+// by decay), where it hangs (y up, z back from the auto's centre, roof just under the ceiling) and the size of the
+// little pane it shines through.
+const CABIN = { tint: 0x3f9dff, power: 24, reach: 5, decay: 2, y: 1.3, z: -0.5, roof: 1.46, size: 0.34, halo: 0.75 };
 // The driver (the old man, shrunk by scale and posed seated), measured from auto.glb the same way: hips on the
 // front of the driver's seat (cushion top about 0.75 m) so his arms reach the handlebar grips (x either side) with the
 // elbows bent; back straight, leaning forward by lean radians; shins sloping forward by shin (run per metre down), so
@@ -137,6 +141,11 @@ const SIT_BEND = { thigh: 1.45, knee: 1.5, duck: 0.6 };
 // to his eyes. eye: how far ahead of the head bone the eye camera sits (clear of
 // his face), lift: how far above it once seated (high enough to see over the driver's seat to the handlebar).
 const CAMERA = { push: 0.55, aim: 1.1, eye: 0.25, lift: 0.3, eyeFov: 75, behind: 0.9, over: 0.2 }; // eyeFov: wide lens of his eye view
+// The shadow map: the street runs 190 m, far more than one map can hold, so its camera is only span metres each way
+// and rides down the road with him (see draw). from: where the moonlight stands, relative to whatever it is lighting.
+// How hard the sky photo lights the street as an environment map (see skyEnvironment in night.ts).
+const ENV_LIGHT = 1.15;
+const SHADOW = { span: 22, from: new THREE.Vector3(-14, 15, -9), bias: -0.0005, normalBias: 0.04, map: 2048, small: 1024 };
 const STREET = { from: -80, to: 110 }; // z range lined with trees and lamps, from the fog behind him to the tank
 const TREES = [
   { name: "tree-1", size: 5.5 },
@@ -202,6 +211,9 @@ export default function RoadJump() {
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      // Shadows, as the scene was lit in Blender: one soft-edged map thrown by the moonlight (see SHADOW).
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setSize(el.clientWidth, el.clientHeight); // sized now: each resize reallocates the canvas (~0.15 s)
       el.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
@@ -238,16 +250,29 @@ export default function RoadJump() {
       scene.fog = new THREE.Fog(HAZE, 60, 200); // far enough to see the tank and billboard at the end of the street
       const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 300);
       scene.add(dome);
+      // The street is lit by the sky photo itself (see skyEnvironment): the ambient light and every reflection come
+      // out of the night sky, as a Blender scene lit by an HDRI does, which is why the environment's materials are
+      // left as the PBR ones they were authored with rather than being flattened to Lambert. What is left of the
+      // hemisphere light is a little lift in the shadows, under the sky's own.
+      const disposeEnv = skyEnvironment(renderer, scene, skyLoad, 0, ENV_LIGHT, () => dead);
       // Moonlight, and a flash that takes each firework's colour as it bursts (no falloff: it lights the whole street).
-      scene.add(new THREE.HemisphereLight(0x8a9ad0, 0x2a2238, 1.6));
-      const moon = new THREE.DirectionalLight(0xb8c8ff, 1.3);
-      moon.position.set(-6, 10, -4);
-      scene.add(moon);
+      scene.add(new THREE.HemisphereLight(0x8a9ad0, 0x2a2238, 0.45));
+      const moon = new THREE.DirectionalLight(0xb8c8ff, 1.75);
+      moon.position.copy(SHADOW.from);
+      moon.castShadow = true;
+      moon.shadow.mapSize.setScalar(innerWidth < 900 ? SHADOW.small : SHADOW.map); // set once: resizing it reallocates
+      moon.shadow.camera.near = 1;
+      moon.shadow.camera.far = SHADOW.from.length() + SHADOW.span * 2;
+      moon.shadow.camera.left = moon.shadow.camera.bottom = -SHADOW.span;
+      moon.shadow.camera.right = moon.shadow.camera.top = SHADOW.span;
+      moon.shadow.bias = SHADOW.bias;
+      moon.shadow.normalBias = SHADOW.normalBias;
+      scene.add(moon, moon.target);
       const flash = new THREE.PointLight(0xffffff, 0, 0, 0);
       scene.add(flash);
 
-      matte(road.scene);
-      matte(barricade.scene);
+      // road, barricade and the street models keep their glTF PBR materials: scene.environment only reaches
+      // MeshStandardMaterial, and flattening them to Lambert would cut them off from the sky's light.
       // Placed as the environment sits (see ENV).
       const placeEnv = (o: Object3D) => {
         const g = new THREE.Group().add(o);
@@ -605,6 +630,10 @@ export default function RoadJump() {
         }
         camera.lookAt(aim);
         dome.position.copy(camera.position);
+        // The shadow camera rides with him: it is only wide enough for the road around him, so it has to keep up.
+        moon.target.position.set(rig.position.x, 0, rig.position.z);
+        moon.position.copy(moon.target.position).add(SHADOW.from);
+        moon.target.updateMatrixWorld();
         renderer.render(scene, camera);
         // Driver's question and the destinations: shown by data attributes on the section, styled in the markup.
         // Reduced motion never scrolls, so its destinations stay up; once riding, the question and destinations go.
@@ -729,6 +758,7 @@ export default function RoadJump() {
         });
         signTex.dispose();
         disposeSky();
+        disposeEnv();
         shows.dispose();
         sparkTex.dispose();
         paneTex.dispose();
@@ -740,7 +770,6 @@ export default function RoadJump() {
       const [streetModels] = await streetLoad;
       if (dead) return;
       const model = (n: string) => streetModels[streetNames.indexOf(n)];
-      for (const m of streetModels) matte(m.scene);
       // The billboard is lit at night: its board and movie posters glow with their own pictures.
       model("env").scene.traverse((o) => {
         const m = (o as THREE.Mesh).material as THREE.MeshLambertMaterial | undefined;
@@ -901,6 +930,25 @@ export default function RoadJump() {
       auto = ground(model("auto").scene, AUTO.height); // faces +z as modelled, the way he walks
       auto.position.x = autoX;
       street.add(auto);
+      // The bulb autos run under their roof at night, in that cold blue every one of them seems to have. It rides
+      // with the auto, so it still lights the cabin once he is aboard and it pulls away; its falloff is kept short so
+      // it washes the roof, the bench and the driver's back without spilling out onto the road.
+      const cabin = new THREE.PointLight(CABIN.tint, CABIN.power, CABIN.reach, CABIN.decay);
+      cabin.position.set(0, CABIN.y, CABIN.z);
+      auto.add(cabin);
+      // and the fitting it comes from: a small bright pane on the underside of the roof, with a soft halo in front of
+      // it so the tube still reads from down the street, the way the houses' windows do.
+      const cabinPane = new THREE.Mesh(
+        new THREE.PlaneGeometry(CABIN.size, CABIN.size * 0.45).rotateX(Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: CABIN.tint, fog: false }),
+      );
+      cabinPane.position.set(0, CABIN.roof, CABIN.z);
+      const cabinHalo = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: sparkTex, color: CABIN.tint, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+      );
+      cabinHalo.scale.setScalar(CABIN.halo);
+      cabinHalo.position.copy(cabinPane.position);
+      auto.add(cabinPane, cabinHalo);
 
       // Pedestrians. Man and old man walk with their own clips, root motion stripped so the lane sets the pace; the
       // woman's own clip is an idle, so she borrows the soldier walk like the runner.
@@ -1005,14 +1053,22 @@ export default function RoadJump() {
       await Promise.all([streetCompiling, renderer.compileAsync(street, camera, scene)]); // and the banner's
       if (dead) return;
       scene.add(street);
+      // Everything on the road casts and catches shadows, except the sky dome (a 250 m sphere: it would shadow the
+      // whole street) and the flat sprites and billboards, which are lit by their own textures and have no depth to
+      // throw. Whatever stands outside the shadow camera as it rides past is culled from the map's pass anyway.
+      scene.traverse((o) => {
+        if (!(o as THREE.Mesh).isMesh) return;
+        const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+        o.receiveShadow = true;
+        o.castShadow = o !== dome && !(m && !Array.isArray(m) && (m as THREE.MeshBasicMaterial).isMeshBasicMaterial);
+      });
+      earth.castShadow = false; // it is the ground: it only catches them
       stroll(0);
       draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
       // The scene is complete: in idle moments from here, warm the events and contact pages (see warmup.ts). Their
       // fireworks, sky, moon and runner are this page's own, already cached.
       unwarm = warmUp(["/events", "/contact"], (href) => router.prefetch(href), [
-        streetModel,
-        boothModel,
-        wheelModel,
+        melaModel,
         "/models/telephone.glb",
         "/models/stool.glb",
       ]);
