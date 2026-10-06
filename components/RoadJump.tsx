@@ -112,12 +112,14 @@ const WALK_CYCLES = 3; // walk cycles (two steps each) during the swing
 const WALK_ON_CYCLES = 1; // and after landing
 const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stretches the dhoti (and the saree)
 const BLEND = 0.03; // share of the scroll spent blending walk into jump, jump into walk, and walk into standing
-// Auto rickshaw: comes up from behind on his left (as seen from the chase camera, i.e. +x) once he jumps, and slows
-// to a stop beside him as he stops. It slides; the model's wheels are part of one mesh and cannot turn.
-// It passes the barricade's end close by: its line is set so that clear metres separate the two (half: half the auto's
-// width at that height, measured from auto.glb). Metres: height, start behind his jump spot (in frame at once), where
-// it stops ahead of his last step (so he can curve round into it).
-const AUTO = { height: 1.75, half: 0.75, clear: 0.1, behind: 4, ahead: 1.2 };
+// Auto rickshaw: waits up the road behind him from the first frame (start metres back, out metres further toward the
+// kerb on his left as seen from the chase camera, i.e. +x, so the opening shot shows it beside him), pulls away as he
+// walks, merges into its line before the barricade, overtakes him on his left as he jumps, and slows to a stop beside
+// him as he stops. It slides; the model's wheels are part of one mesh and cannot turn.
+// Its line passes the barricade's end close by, so that clear metres separate the two (half: half the auto's width at
+// that height, measured from auto.glb). Metres: height, where it stops ahead of his last step (so he can curve round
+// into it).
+const AUTO = { height: 1.75, half: 0.75, clear: 0.1, start: -14, out: 1.9, ahead: 1.2 };
 // The auto's rear bench, measured from auto.glb (metres, relative to the auto's centre): it sits behind the centre
 // (z), its cushion about 0.5 m up, so seated hips are at hips. The side is open only ahead of the rear body panels,
 // so he crosses in at entry, then slides back onto the bench. outside: how far out from the bench he stops.
@@ -540,12 +542,16 @@ export default function RoadJump() {
           rig.position.z += (seat.z - hp.z) * slide;
           rig.updateMatrixWorld(true);
         }
-        // The auto sets off from behind when he jumps and slows into its stop just ahead of him as he lands his steps.
-        const drive = clamp01((at - ORBIT) / (STOP - ORBIT));
+        // The auto pulls away from its wait up the road as he sets off, easing up to speed and then into its stop just
+        // ahead of him as he lands his steps; on the way it merges in from the kerb, finished well before the barricade,
+        // turning a little as it steers.
         if (auto) {
-          auto.visible = at > ORBIT;
-          auto.position.z = lerp(walkDist - AUTO.behind, autoZ, 1 - (1 - drive) ** 2);
-          auto.position.y = bob;
+          const along = clamp01(at / STOP);
+          const az = lerp(AUTO.start, autoZ, along * along * (3 - 2 * along));
+          const wait = Math.min(autoX + AUTO.out, ENV.edge - AUTO.half - 0.3); // out toward the kerb, never onto it
+          const lane = (zz: number) => lerp(wait, autoX, THREE.MathUtils.smoothstep(zz, gate.position.z - 9, gate.position.z - 2));
+          auto.position.set(lane(az), bob, az);
+          auto.rotation.y = Math.atan2(lane(az + 0.5) - lane(az), 0.5); // facing along its path (+z, bending in)
         }
         const o = Math.min(w, 1);
         const u = o * o * (3 - 2 * o); // ease in and out of the swing
