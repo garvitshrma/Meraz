@@ -18,7 +18,7 @@ const description = `${site.name}, the annual techno-cultural fest of ${site.col
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name} · Retro India · ${site.college}`, template: `%s · ${site.name}` },
+  title: { default: site.name, template: `%s · ${site.name}` },
   description,
   keywords: ["Meraz", "IIT Bhilai", "techno-cultural fest", "college fest", "Chhattisgarh", "Retro India"],
   openGraph: { type: "website", siteName: site.name, title: `${site.name} · Retro India`, description, locale: "en_IN" },
