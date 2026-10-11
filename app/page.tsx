@@ -9,6 +9,7 @@ export default function Home() {
   // first (GLTFLoader and ImageBitmapLoader both fetch in cors mode, hence crossOrigin on all of them).
   for (const n of ["jump", "env-road", "walk", "barricade"]) preload(`/models/${n}.glb`, { as: "fetch", crossOrigin: "anonymous" });
   preload("/sky.jpg", { as: "fetch", crossOrigin: "anonymous" });
+  for (const n of ["logo", "typolog"]) preload(`/${n}.webp`, { as: "image" }); // the title sign
   return (
     <>
       <h1 className="sr-only">{site.name}</h1>

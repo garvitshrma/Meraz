@@ -71,7 +71,7 @@ export function CategoryContent({ cat }: { cat: EventCategory }) {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <h2 className="painted font-display text-[clamp(2rem,5vw,3.75rem)] leading-none text-cream">{cat.heading}</h2>
-      <p className="mt-3 max-w-2xl text-lg">{cat.description}</p>
+      <p className="mt-3 max-w-2xl text-base sm:text-lg">{cat.description}</p>
       <Carousel items={cat.subEvents} category={cat.title} />
     </div>
   );
@@ -87,14 +87,15 @@ export function Carousel({ items, category }: { items: SubEvent[]; category: str
   };
 
   return (
-    <div className="mt-8" role="region" aria-roledescription="carousel" aria-label={`${category} events`} onKeyDown={onKey}>
-      <div className="relative flex items-center gap-2">
+    <div className="mt-6 sm:mt-8" role="region" aria-roledescription="carousel" aria-label={`${category} events`} onKeyDown={onKey}>
+      {/* phones: the ticket takes the full width, its arrows on a row of their own below it */}
+      <div className="relative flex flex-wrap items-center justify-center gap-2 sm:flex-nowrap">
         {n > 1 && (
           <button type="button" onClick={() => go(-1)} aria-label="Previous event" className="btn relative z-10 size-11 shrink-0 justify-center bg-cream !p-0 text-ink">
             <CaretLeft weight="bold" aria-hidden="true" />
           </button>
         )}
-        <div className="relative grid flex-1 [perspective:1200px]">
+        <div className="relative order-first grid basis-full [perspective:1200px] sm:order-none sm:flex-1 sm:basis-auto">
           {items.map((ev, k) => {
             const off = (k - index + n) % n;
             const pos = off === 0 ? "active" : off === 1 ? "right" : off === n - 1 ? "left" : "hide";
@@ -138,12 +139,12 @@ export function Ticket({ ev, category, serial }: { ev: SubEvent; category: strin
   return (
     <div className="flex h-full overflow-hidden rounded-md border-[3px] border-ink bg-cream text-ink shadow-[6px_6px_0_var(--color-ink)]">
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between bg-ink px-4 py-2 font-mono text-xs font-bold text-turmeric">
-          <span>{category}</span>
-          <span>ADMIT ONE</span>
+        <div className="flex items-center justify-between gap-3 bg-ink px-3 py-2 font-mono text-xs font-bold text-turmeric sm:px-4">
+          <span className="min-w-0 truncate">{category}</span>
+          <span className="shrink-0">ADMIT ONE</span>
         </div>
-        <div className="flex flex-1 flex-col p-4 sm:p-5">
-          <h3 className="font-poster text-2xl leading-tight sm:text-3xl">{ev.title}</h3>
+        <div className="flex flex-1 flex-col p-3 sm:p-5">
+          <h3 className="font-poster text-xl leading-tight [overflow-wrap:anywhere] sm:text-3xl">{ev.title}</h3>
           <p className="mt-2 text-sm leading-relaxed sm:text-base">{ev.desc}</p>
           <div className="mt-auto pt-4">
             <RegisterArea ev={ev} category={category} />
@@ -154,7 +155,7 @@ export function Ticket({ ev, category, serial }: { ev: SubEvent; category: strin
         <span className="absolute -left-[11px] -top-3 size-5 rounded-full border-[3px] border-ink bg-cream" />
         <span className="absolute -bottom-3 -left-[11px] size-5 rounded-full border-[3px] border-ink bg-cream" />
       </div>
-      <div className="flex w-12 shrink-0 items-center justify-center bg-turmeric sm:w-14" aria-hidden="true">
+      <div className="flex w-9 shrink-0 items-center justify-center bg-turmeric sm:w-14" aria-hidden="true">
         <span className="rotate-90 whitespace-nowrap font-mono text-xs font-bold tracking-widest">No. {String(70123 + serial * 137).padStart(6, "0")}</span>
       </div>
     </div>

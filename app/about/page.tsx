@@ -1,83 +1,98 @@
 import type { Metadata } from "next";
-import { CalendarStar, GlobeHemisphereEast, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { Container } from "@/components/ui";
 import { about, modelCredits } from "@/data/content";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "About", description: "About Meraz 7.0 and this year's Retro India theme." };
 
-const icons = { calendar: CalendarStar, users: UsersThree, globe: GlobeHemisphereEast };
+// From the About design (Figma "rough"): its four 16:9 panels as sections. The artwork is cut out of the panels into
+// public/about (the panels' flat sand background keyed out, the text they carried painted out); the text is the
+// page's own, in the design's body face (Arbutus Slab); its calligraphic headings stay pictures of the design's.
 
-// Same sections as the reference About page: title, logo, about text, theme quote, theme titles, stats.
+// Hero, in the design's pixels (1920 x 1080): the street seen through the wall's doorway, and the elephant that walks
+// into it from behind the wall, seen only through the doorway (left, top, right edges of the opening).
+const DOOR = { left: 762, top: 372, right: 1147 };
+const ELEPHANT = { x: 761, y: 429, w: 366 };
+const pc = (v: number, of: number) => `${(v / of) * 100}%`;
+
 export default function AboutPage() {
   return (
-    <div className="pb-24">
-      <header className="border-b-4 border-ink bg-ink pb-4 pt-[5.6rem] text-center">
-        <p className="font-display text-2xl tracking-[.2em] text-turmeric">{site.name}</p>
-      </header>
+    <div className="bg-sand text-maroon">
+      <h1 className="sr-only">About {site.name}</h1>
 
-      {/* logo */}
-      <section className="relative overflow-hidden border-b-4 border-ink py-16" aria-label="Meraz 7.0 logo">
-        <div className="sunburst absolute left-1/2 top-1/2 size-[200vmax] -translate-x-1/2 -translate-y-1/2 animate-spin-slow" aria-hidden="true" />
-        <div className="relative text-center">
-          <p className="painted font-deva text-[clamp(2.5rem,8vw,4.5rem)] leading-none text-cream" aria-hidden="true">
-            मेराज़ ७.०
-          </p>
-          <p className="painted -rotate-2 font-display text-[clamp(4rem,15vw,10rem)] leading-[.85] text-cream misprint">
-            MERAZ <span className="text-turmeric">7.0</span>
-          </p>
+      {/* Hero: the picture covers the screen, about the doorway */}
+      <section aria-label="An elephant walks through the Meraz gate" className="relative h-svh overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 aspect-video w-[max(100%,calc(100svh*16/9))] -translate-x-1/2 -translate-y-1/2">
+          <img src="/about/street.webp" alt="" width={1920} height={1080} className="absolute inset-0 size-full" />
+          <div className="absolute inset-0" style={{ clipPath: `inset(${pc(DOOR.top, 1080)} ${pc(1920 - DOOR.right, 1920)} 0 ${pc(DOOR.left, 1920)})` }}>
+            <img
+              src="/about/elephant.webp"
+              alt=""
+              width={366}
+              height={576}
+              className="absolute animate-elephant"
+              style={{ left: pc(ELEPHANT.x, 1920), top: pc(ELEPHANT.y, 1080), width: pc(ELEPHANT.w, 1920) }}
+            />
+          </div>
+          <img src="/about/wall.webp" alt="" width={1920} height={1080} className="absolute inset-0 size-full" />
         </div>
       </section>
 
-      {/* about text, with two spinning records like the reference's gears */}
-      <section className="relative overflow-x-clip py-20">
-        <div className="record absolute -left-24 top-10 hidden size-56 lg:block" aria-hidden="true" />
-        <div className="record absolute -right-20 bottom-10 hidden size-44 lg:block" aria-hidden="true" />
-        <Container>
-          <div className="relative mx-auto max-w-3xl border-4 border-ink bg-cream p-6 shadow-[10px_10px_0_var(--color-ink)] sm:p-10" data-reveal>
-            <h1 className="-mt-12 mb-6 w-fit bg-rani-deep px-4 py-1 font-display text-3xl text-cream shadow-[4px_4px_0_var(--color-ink)] sm:-mt-16 sm:text-4xl">About</h1>
-            <p className="text-lg leading-relaxed first-letter:float-left first-letter:mr-2 first-letter:font-display first-letter:text-6xl first-letter:leading-none first-letter:text-vermillion-deep">{about.text}</p>
+      {/* About: the lady with the lotus and the 7.0 to the left of the text, the lettering and the lady with the bird to
+          its right; on a phone, the lettering above, the ladies side by side below */}
+      <section aria-labelledby="about-title" className="px-4 py-14 sm:px-8 lg:py-20">
+        <div className="mx-auto grid max-w-[110rem] grid-cols-2 items-center gap-x-6 gap-y-8 [grid-template-areas:'meraz_meraz'_'text_text'_'lotus_bird'_'seven_seven'] lg:grid-cols-[1fr_1.35fr_1fr] lg:gap-x-10 lg:[grid-template-areas:'lotus_text_meraz'_'seven_text_bird']">
+          <img src="/about/meraz.webp" alt="Meraz" width={744} height={262} className="mx-auto w-full max-w-md [grid-area:meraz] lg:max-w-none lg:self-start" />
+          <div className="text-center [grid-area:text]">
+            <h2 id="about-title">
+              <img src="/about/about-title.webp" alt="About" width={213} height={56} className="mx-auto h-[clamp(2.4rem,3.6vw,3.6rem)] w-auto" />
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl font-slab text-[clamp(1.05rem,1.55vw,1.65rem)] leading-snug">{about.text}</p>
           </div>
-        </Container>
+          <img src="/about/lady-lotus.webp" alt="" width={471} height={602} loading="lazy" className="w-full max-w-sm justify-self-center [grid-area:lotus] lg:self-start" />
+          <img src="/about/lady-bird.webp" alt="" width={659} height={531} loading="lazy" className="w-full max-w-md justify-self-center [grid-area:bird] lg:self-end" />
+          <img src="/about/seven.webp" alt="7.0" width={443} height={262} loading="lazy" className="mx-auto w-2/3 max-w-xs [grid-area:seven] lg:w-full lg:max-w-sm lg:self-end" />
+        </div>
       </section>
 
-      {/* theme quote + theme titles */}
-      <section className="border-y-4 border-ink bg-teal-deep py-20 text-cream">
-        <Container className="grid gap-12 md:grid-cols-[1.3fr_1fr] md:items-center">
-          <blockquote className="relative border-l-8 border-turmeric pl-6 font-poster text-xl leading-relaxed sm:text-2xl" data-reveal>
-            <span className="absolute -left-2 -top-10 font-display text-8xl leading-none text-turmeric" aria-hidden="true">
-              “
-            </span>
+      {/* Theme: the paragraph in the red cartouche between the two titles, three motifs each side; on a phone the
+          cartouche is a plain rounded panel and the motifs two rows below */}
+      <section aria-labelledby="theme-title" className="px-4 py-14 sm:px-8 lg:py-20">
+        <div className="mx-auto grid max-w-[110rem] items-center gap-8 [grid-template-areas:'title'_'card'_'retro'_'left'_'right'] lg:grid-cols-[1fr_4fr_1fr] lg:gap-x-10 lg:[grid-template-areas:'left_title_right'_'left_card_right'_'left_retro_right']">
+          <h2 id="theme-title" className="[grid-area:title]">
+            <img src="/about/theme-title.webp" alt="Theme" width={445} height={110} loading="lazy" className="mx-auto h-[clamp(3rem,5.5vw,6rem)] w-auto" />
+          </h2>
+          <p className="rounded-[2rem] bg-brick px-6 py-8 text-center font-slab text-[clamp(1rem,1.3vw,1.4rem)] leading-snug text-sand [grid-area:card] sm:px-10 lg:rounded-none lg:bg-transparent lg:bg-[url(/about/cartouche.webp)] lg:bg-[length:100%_100%] lg:px-[13%] lg:py-[5%]">
             {about.theme}
-          </blockquote>
-          <div className="text-center" data-reveal>
-            <h2 className="font-mono text-sm font-bold tracking-[.4em] text-turmeric">THEME</h2>
-            <p className="painted mt-3 -rotate-2 font-display text-[clamp(3rem,9vw,5.5rem)] leading-[.9] text-cream misprint">RETRO INDIA</p>
-            <p className="mt-4 inline-block rotate-1 border-4 border-ink bg-marigold px-4 py-2 font-deva text-3xl text-ink shadow-[5px_5px_0_var(--color-ink)]">{site.hindiTagline}</p>
-          </div>
-        </Container>
+          </p>
+          <img src="/about/retro-india.webp" alt="Retro India" width={941} height={128} loading="lazy" className="mx-auto w-full max-w-3xl [grid-area:retro]" />
+          {[0, 3].map((from) => (
+            <ul key={from} aria-hidden="true" className={`grid grid-cols-3 gap-4 lg:grid-cols-1 lg:gap-12 ${from ? "[grid-area:right]" : "[grid-area:left]"}`}>
+              {[1, 2, 3].map((k) => (
+                <li key={k}>
+                  <img src={`/about/icon-${from + k}.webp`} alt="" loading="lazy" className="mx-auto w-full max-w-[12rem]" />
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
       </section>
 
-      {/* stats */}
-      <section className="py-20" aria-label="Meraz in numbers">
-        <Container>
-          <ul className="grid gap-10 sm:grid-cols-3">
-            {about.stats.map((s) => {
-              const Icon = icons[s.icon];
-              return (
-                <li key={s.label} className="grid justify-items-center text-center" data-reveal>
-                  <span className="grid size-28 place-items-center rounded-full border-4 border-ink bg-marigold shadow-[6px_6px_0_var(--color-ink)] [background-image:repeating-conic-gradient(#f4a300_0_10deg,#f2c14e_10deg_20deg)]">
-                    <span className="grid size-16 place-items-center rounded-full border-4 border-ink bg-cream">
-                      <Icon size={32} weight="bold" aria-hidden="true" />
-                    </span>
-                  </span>
-                  <p className="mt-4 font-display text-5xl tabular-nums">{s.value}</p>
-                  <p className="font-mono text-sm font-bold uppercase tracking-widest">{s.label}</p>
-                </li>
-              );
-            })}
-          </ul>
-        </Container>
+      {/* Numbers: in three framed arches, between the peacocks, above the lotus on the waves */}
+      <section aria-label={`${site.name} in numbers`} className="relative overflow-hidden pt-14 lg:pt-20">
+        <img src="/about/peacock-left.webp" alt="" width={330} height={1012} loading="lazy" className="absolute bottom-0 left-0 h-[60%] w-auto sm:h-full" />
+        <img src="/about/peacock-right.webp" alt="" width={330} height={1013} loading="lazy" className="absolute bottom-0 right-0 h-[60%] w-auto sm:h-full" />
+        <ul className="relative mx-auto flex max-w-4xl justify-center gap-[4vw] px-[12%] sm:px-[18%]">
+          {about.stats.map((s) => (
+            <li key={s.label} className="relative aspect-[212/268] w-full max-w-52 bg-[url(/about/stat-frame.webp)] bg-[length:100%_100%]">
+              <p className="absolute inset-x-[10%] bottom-[18%] top-[42%] grid content-center text-center font-slab leading-none">
+                <span className="text-[clamp(1.1rem,3vw,2.6rem)]">{s.value}</span>
+                <span className="mt-1 text-[clamp(.6rem,1.3vw,1.1rem)] leading-tight">{s.label}</span>
+              </p>
+            </li>
+          ))}
+        </ul>
+        <img src="/about/lotus.webp" alt="" width={1340} height={660} loading="lazy" className="relative mx-auto mt-10 w-[70%] max-w-6xl" />
       </section>
 
       {/* 3D model credits for the home road scene (CC BY 4.0 needs them on the site) */}

@@ -20,6 +20,7 @@ import { melaModel, navLinks } from "@/data/site";
 import { TLink, useGo } from "./Transition";
 import { getLenis } from "./ScrollFx";
 import { warmUp } from "./warmup";
+import LoadingScreen from "./LoadingScreen";
 import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
 import { bone, key, soldier, strideSpeed } from "./rig";
 
@@ -29,13 +30,16 @@ gsap.registerPlugin(ScrollTrigger);
 // everything else (env.glb). It is modelled about 1.7x life size (its chai-wala stands 2.9 m), so both are scaled by
 // scale, turned round so its street runs on ahead of him (+z) to the water tank and billboard, raised by y (its road
 // surface sits 0.17 below its origin) and moved along by z. Its houses end short of where he starts, so the row of
-// houses (both sides) is repeated twice behind its first house, row (model units) apart; the tank and billboard are
-// pushed vista metres further on, far enough to fit whole in the chase camera's view. The road tile repeats along z.
-// Measured at that scale: the carriageway's edge is edge metres out, the footpaths kerbTop above the road.
-const ENV = { scale: 0.6, y: 0.1, z: 35, edge: 5.5, kerbTop: 0.41, row: 95, vista: 30 };
+// houses (both sides) is repeated twice behind its first house, row (model units) apart; the tank is pushed vista
+// metres further on, far enough to fit whole in the chase camera's view, and the billboard billboard metres: just
+// clear of the last house on its side (which ends at z 87.4), ~87 m from the chase camera, where its top (19.7 m up)
+// still clears the top of the frame (the camera looks a few degrees down, so that needs ~72 m, ~77 on a phone). The
+// road tile repeats along z. Measured at that scale: the carriageway's edge is edge metres out, the footpaths kerbTop
+// above the road.
+const ENV = { scale: 0.6, y: 0.1, z: 35, edge: 5.5, kerbTop: 0.41, row: 95, vista: 30, billboard: 1.5 };
 // (Names as three.js loads them: "wall.001" becomes "wall001".)
 const HOUSE_ROW = /^(pair_of_house|pan_shop|wall|tall_house|house_with_tank|good_house)(\d+)?$/;
-const VISTA = /^(water_tank|Sketchfab_model|250px-.*|MV5B.*)$/; // the tank, the billboard and its two posters
+const BILLBOARD = /^(Sketchfab_model|250px-.*|MV5B.*)$/; // the billboard and its two posters
 // Lights on inside the houses: each building's street-facing windows (read off straight-on renders of its front), in
 // the environment's own units as [x, y, z, w, h]: x the wall's face there (it faces +x, the road), y up, z along the
 // street, w across, h tall. Their twins across the road (".001") are the same buildings turned round, so take the same.
@@ -77,23 +81,30 @@ const HAND_PLANT = { y: 0.9, z: 1.95 };
 // The full moon in the night sky (see night.ts): el degrees up, straight down the street (the sky's +z), size degrees
 // across (a long lens's moon, bigger than the eye's 0.5), dimmed to tint, in an aura aura times as wide.
 const MOON = { el: 8.1, size: 1.6, tint: 0xcfd0c6, aura: 6 };
-// Fireworks (see night.ts), out past the houses: two behind his start, three down the road ahead, launched below the
+// Fireworks (see night.ts), out past the houses: three behind his start, three down the road ahead, launched below the
 // road so the rockets rise out from behind the rooftops.
 const SHOWS: Show[] = [
-  { at: [-45, -5, -150], scale: 0.9, speed: 2.4, gap: 1.5 },
-  { at: [55, -5, -190], scale: 1.1, speed: 2.1, gap: 2.5 },
-  { at: [-35, -5, 210], scale: 1, speed: 2.3, gap: 1 },
-  { at: [45, -5, 180], scale: 0.8, speed: 2.6, gap: 2 },
-  { at: [5, -5, 250], scale: 1.2, speed: 2, gap: 3 },
+  { at: [-45, -5, -150], scale: 0.9, speed: 2.4, gap: 0.4 },
+  { at: [55, -5, -190], scale: 1.1, speed: 2.1, gap: 0.8 },
+  { at: [5, -5, -230], scale: 1.2, speed: 2.2, gap: 0.6 },
+  { at: [-35, -5, 210], scale: 1, speed: 2.3, gap: 0.3 },
+  { at: [45, -5, 180], scale: 0.8, speed: 2.6, gap: 0.6 },
+  { at: [5, -5, 250], scale: 1.2, speed: 2, gap: 0.9 },
 ];
 // Keyboard: holding W scrolls on down the scene, S back up, at this many pixels a second.
 const KEY_SCROLL = 450;
 // The skip button scrolls the scene by itself, this many seconds a screen, to just past GO: seated, asked where to,
 // with the destinations up.
 const SKIP_PACE = 2;
-// The "MERAZ 7.0" sign: metres wide, centre height, behind his start. The opening shot tilts up by tilt (rise per
-// metre, about 9 deg) so his head sits low in the frame and the sign, raised high, shows clear above it.
-const TITLE = { width: 10, y: 4.7, z: -10, tilt: 0.16 }; // y: lowest that still clears his hair in the opening shot
+// The title sign (logo over lettering), z metres behind his start. The opening shot looks from his head height (eye)
+// and tilts up by tilt (rise per metre, about 12 deg), so his head sits low in the frame; the sign is sized to fill it
+// from the line of sight past the top of his hair (rising hair per metre) to the top edge (less margin), and no wider.
+// logo: its width on wide screens, gap: space between logo and lettering, both in lettering widths. On narrow screens
+// (phones) the logo grows into the height left over, up to the lettering's width. The gap is negative: the lettering's
+// picture has a clear margin over its letters (0.067 of its width), which the logo overlaps, leaving room for either
+// one's swell.
+const TITLE = { z: -10, eye: 1.63, tilt: 0.22, hair: 0.13, margin: 0.03, logo: 0.3, gap: -0.06 };
+const TITLE_HOVER = 1.1; // the logo or lettering under the mouse swells to this
 // Scroll beats: [0, ORBIT] walk while the camera swings round, [ORBIT, LAND] the jump, [LAND, STOP] two steps on,
 // [STOP, SIT] without stopping he curves round to the auto (which set off when he jumped and has pulled up just
 // ahead), ducks in and slides onto the bench, turning to face forward as he settles, [SIT, 1] he sits still.
@@ -187,32 +198,51 @@ export default function RoadJump() {
     let cleanup = () => {};
     let unwarm = () => {};
     let dead = false;
+    let loading = true; // the loading screen is up, and scrolling held, until the whole scene has landed
 
     (async () => {
+      // The loading screen's meter (see LoadingScreen): every file, font and shader compile below is one step of it.
+      const streetNames = ["env", ...TREES.map((t) => t.name), ...Object.keys(PEOPLE), "stall", "stall-keeper", "auto"];
+      const steps = 12 + streetNames.length; // 4 models + 2 images, the street's, 2 fonts, sky, shell, 2 compiles
+      const pct = sec.querySelector<HTMLElement>("[data-load-pct]");
+      let done = 0;
+      const tick = () => {
+        const f = Math.min(1, ++done / steps);
+        sec.style.setProperty("--load", String(f));
+        if (pct) pct.textContent = String(Math.round(f * 100));
+      };
+      const step = <T,>(p: Promise<T>) => (p.then(tick, tick), p);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-      const load = (n: string) => loader.loadAsync(`/models/${n}.glb`);
+      const load = (n: string) => step(loader.loadAsync(`/models/${n}.glb`));
       const font = getComputedStyle(document.documentElement).getPropertyValue("--font-bungee").trim() || "Impact";
       // The opening shot needs only these (preloaded by app/page.tsx): it looks back down the road, away from the street.
-      const [road, barricade, man, walker] = await Promise.all([
+      const image = (src: string) => {
+        const i = new Image();
+        i.src = src;
+        return step(i.decode().then(() => i));
+      };
+      const [road, barricade, man, walker, logo, lettering] = await Promise.all([
         load("env-road"),
         load("barricade"),
         load("jump"),
         load("walk"),
-        document.fonts.load(`300px ${font}`).catch(() => {}), // the title sign is drawn in it
+        image("/logo.webp"), // the title sign
+        image("/typolog.webp"),
       ]);
       // The street downloads while the first frame is built, without competing with it for bandwidth.
-      const streetNames = ["env", ...TREES.map((t) => t.name), ...Object.keys(PEOPLE), "stall", "stall-keeper", "auto"];
       const deva = getComputedStyle(document.documentElement).getPropertyValue("--font-yatra").trim() || "serif";
-      const skyLoad = new THREE.ImageBitmapLoader().loadAsync("/sky.jpg"); // decoded off the main thread
+      const skyLoad = step(new THREE.ImageBitmapLoader().loadAsync("/sky.jpg")); // decoded off the main thread
       skyLoad.catch(() => {}); // reported where it is awaited
-      const shellLoad = fetch("/models/fireworks.bin").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)));
+      const shellLoad = step(fetch("/models/fireworks.bin").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status))));
       shellLoad.catch(() => {}); // reported where it is awaited
       const streetLoad = Promise.all([
         Promise.all(streetNames.map(load)),
-        document.fonts.load(`100px ${deva}`, "चाय").catch(() => {}), // the stall banner's Hindi line
+        step(document.fonts.load(`100px ${deva}`, "चाय")).catch(() => {}), // the stall banner's Hindi line
+        step(document.fonts.load(`120px ${font}`)).catch(() => {}), // and its English one
       ]);
       streetLoad.catch(() => {}); // reported where it is awaited
       if (dead) return;
+      getLenis()?.stop(); // made by ScrollFx's effect, which runs after this one: here, past the first await
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -298,43 +328,25 @@ export default function RoadJump() {
       earth.position.y = roadBox.min.y - 0.02; // just under the road
       scene.add(earth);
 
-      // Title: "MERAZ 7.0" painted in the site's display font (Bungee) with a retro block shadow, on a sign standing
-      // over the road behind his start. It fills the opening face-on shot; once the camera swings round it is behind it.
-      const sign = document.createElement("canvas");
-      sign.width = 2048;
-      sign.height = 512;
-      const ctx = sign.getContext("2d")!;
-      ctx.font = `300px ${font}`;
-      ctx.textBaseline = "middle";
-      ctx.lineJoin = "round";
-      const runs = [
-        ["MERAZ ", "#d7263d"], // vermillion
-        ["7.0", "#0f7c7c"], // teal
-      ] as const;
-      const widths = runs.map(([t]) => ctx.measureText(t).width);
-      const fit = Math.min(1, (sign.width * 0.9) / widths.reduce((a, b) => a + b));
-      ctx.font = `${300 * fit}px ${font}`;
-      const paint = (dx: number, dy: number, fill?: string) => {
-        let x = (sign.width - widths.reduce((a, b) => a + b) * fit) / 2;
-        runs.forEach(([t, colour], i) => {
-          ctx.fillStyle = fill ?? colour;
-          ctx.fillText(t, x + dx, sign.height / 2 + dy);
-          if (!fill) ctx.strokeText(t, x, sign.height / 2);
-          x += widths[i] * fit;
-        });
-      };
-      for (let d = 18; d > 0; d -= 2) paint(d, d, "#1a1a1a"); // block shadow, down-right
-      ctx.strokeStyle = "#1a1a1a";
-      ctx.lineWidth = 10;
-      paint(0, 0);
-      const signTex = new THREE.CanvasTexture(sign);
-      signTex.colorSpace = THREE.SRGBColorSpace;
-      signTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      const title = new THREE.Mesh(
-        new THREE.PlaneGeometry(TITLE.width, (TITLE.width * sign.height) / sign.width),
-        new THREE.MeshBasicMaterial({ map: signTex, transparent: true, fog: false }),
-      );
-      title.position.set(0, TITLE.y, TITLE.z);
+      // Title: the Meraz logo above its Devanagari lettering, on a sign standing over the road behind his start. It
+      // fills the opening face-on shot; once the camera swings round it is behind it. Each is its own plane so it can
+      // swell under the mouse, inside a holder that resize sizes and places.
+      const title = new THREE.Group();
+      const aspects = [logo, lettering].map((i) => i.height / i.width);
+      const signs = [logo, lettering].map((i, n) => {
+        const tex = new THREE.Texture(i);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        tex.needsUpdate = true;
+        const m = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, aspects[n]), // 1 wide: the holder's scale is its width in metres
+          // alphaTest: the clear parts write no depth, so fireworks bursting behind still show through them
+          new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, fog: false }),
+        );
+        title.add(new THREE.Group().add(m));
+        return m;
+      });
+      title.position.z = TITLE.z;
       scene.add(title);
 
       // Scale a model to a height, centre it on x/z with its base on y=0, and wrap it so it turns about that centre.
@@ -664,9 +676,22 @@ export default function RoadJump() {
         camera.aspect = el.clientWidth / el.clientHeight;
         camera.updateProjectionMatrix();
         zoom = Math.max(1, 0.8 / camera.aspect);
-        // shrink the title sign if the opening shot is too narrow to show all of it
-        const seen = 2 * (1.4 * zoom - TITLE.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-        title.scale.setScalar(Math.min(1, (0.9 * seen) / TITLE.width));
+        // fit the title sign between his hair and the top of the opening shot, and inside its width: the lettering as
+        // wide as fits, the logo TITLE.logo of that or, where the screen is narrow, as big as the height left allows
+        const d = 1.4 * zoom - TITLE.z; // camera to sign
+        const half = THREE.MathUtils.degToRad(camera.fov / 2);
+        const room = d * (Math.tan(Math.atan(TITLE.tilt) + half) - TITLE.hair) * (1 - TITLE.margin);
+        const seen = 2 * d * Math.tan(half) * camera.aspect;
+        const wide = (1 - TITLE.margin) * seen;
+        const L = Math.min(wide, room / (TITLE.logo * aspects[0] + TITLE.gap + aspects[1])); // lettering width
+        const gap = TITLE.gap * L;
+        const G = Math.min(wide, L, Math.max(TITLE.logo * L, (room - gap - L * aspects[1]) / aspects[0])); // logo width
+        const [logoBox, letterBox] = signs.map((m) => m.parent!);
+        const base = TITLE.eye + d * TITLE.hair; // the line past his hair
+        letterBox.scale.setScalar(L);
+        letterBox.position.y = base + (L * aspects[1]) / 2;
+        logoBox.scale.setScalar(G);
+        logoBox.position.y = base + L * aspects[1] + gap + (G * aspects[0]) / 2;
         draw(progress);
       };
       // Upload the textures while the shaders compile, rather than in the first frame.
@@ -674,7 +699,7 @@ export default function RoadJump() {
         for (const m of [(o as THREE.Mesh).material ?? []].flat())
           for (const v of Object.values(m)) if ((v as THREE.Texture | null)?.isTexture) renderer.initTexture(v);
       });
-      await Promise.all([compiling, renderer.compileAsync(gate, camera, scene)]); // with the lettering added since
+      await step(Promise.all([compiling, renderer.compileAsync(gate, camera, scene)])); // with the lettering added since
       if (dead) {
         renderer.dispose();
         renderer.domElement.remove();
@@ -713,6 +738,7 @@ export default function RoadJump() {
                 const dt = Math.min((now - last) / 1000, 0.1);
                 stroll(dt);
                 fireworks(dt);
+                for (const m of signs) m.scale.setScalar(lerp(m.scale.x, m === hovered ? TITLE_HOVER : 1, 1 - Math.exp(-12 * dt)));
                 last = now;
                 if (rideFrom >= 0) {
                   const t = (now - rideFrom) / 1000;
@@ -724,6 +750,18 @@ export default function RoadJump() {
         );
       });
       io.observe(el);
+      // Which of the logo and lettering the mouse is over (the frame loop eases its swell).
+      const ray = new THREE.Raycaster();
+      let hovered: THREE.Object3D | null = null;
+      const onHover = (e: PointerEvent) => {
+        if (e.pointerType !== "mouse") return;
+        const r = el.getBoundingClientRect();
+        ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, 1 - ((e.clientY - r.top) / r.height) * 2), camera);
+        hovered = ray.intersectObjects(signs)[0]?.object ?? null;
+      };
+      const onLeave = () => (hovered = null);
+      sec.addEventListener("pointermove", onHover);
+      sec.addEventListener("pointerleave", onLeave);
       // The ride needs the frame loop, so reduced motion leaves ride unset and the links navigate as usual.
       let rideTimer = 0;
       if (!reduce)
@@ -749,6 +787,8 @@ export default function RoadJump() {
         skip.current = null;
         clearTimeout(rideTimer);
         io.disconnect();
+        sec.removeEventListener("pointermove", onHover);
+        sec.removeEventListener("pointerleave", onLeave);
         renderer.setAnimationLoop(null);
         st?.kill(true);
         ro.disconnect();
@@ -761,7 +801,7 @@ export default function RoadJump() {
             [o.material].flat().forEach((m) => m.dispose());
           }
         });
-        signTex.dispose();
+        signs.forEach((m) => m.material.map?.dispose());
         disposeSky();
         disposeEnv();
         shows.dispose();
@@ -815,10 +855,12 @@ export default function RoadJump() {
       // (clones share their materials), so they compile while the street is laid out below rather than after.
       const streetCompiling = Promise.all(streetModels.map((m) => renderer.compileAsync(m.scene, camera, scene)));
       const street = new THREE.Group();
-      // Lay out the environment (in its own units, before it is placed): repeat the house rows, push the vista on.
+      // Lay out the environment (in its own units, before it is placed): repeat the house rows, push the tank and
+      // billboard on (the street runs toward -z in model units).
       const envScene = model("env").scene;
       for (const o of [...envScene.children]) {
-        if (VISTA.test(o.name)) o.position.z -= ENV.vista / ENV.scale; // the street runs toward -z in model units
+        if (o.name === "water_tank") o.position.z -= ENV.vista / ENV.scale;
+        if (BILLBOARD.test(o.name)) o.position.z -= ENV.billboard / ENV.scale;
         if (!HOUSE_ROW.test(o.name)) continue;
         for (const k of [1, 2]) {
           const copy = o.clone();
@@ -1065,7 +1107,7 @@ export default function RoadJump() {
       }
       driverHead = bone(driver, "HeadTop_End");
 
-      await Promise.all([streetCompiling, renderer.compileAsync(street, camera, scene)]); // and the banner's
+      await step(Promise.all([streetCompiling, renderer.compileAsync(street, camera, scene)])); // and the banner's
       if (dead) return;
       scene.add(street);
       // Everything on the road casts and catches shadows, except the sky dome (a 250 m sphere: it would shadow the
@@ -1080,6 +1122,7 @@ export default function RoadJump() {
       earth.castShadow = false; // it is the ground: it only catches them
       stroll(0);
       draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
+      await Promise.allSettled([skyLoad, shellLoad]); // the sky and fireworks too, before the loading screen lifts
       // The scene is complete: in idle moments from here, warm the events and contact pages (see warmup.ts). Their
       // fireworks, sky, moon and runner are this page's own, already cached.
       unwarm = warmUp(["/events", "/contact"], (href) => router.prefetch(href), [
@@ -1087,7 +1130,15 @@ export default function RoadJump() {
         "/models/telephone.glb",
         "/models/stool.glb",
       ]);
-    })().catch((e) => console.error("RoadJump:", e));
+    })()
+      .catch((e) => console.error("RoadJump:", e))
+      .finally(() => {
+        // lifted on failure too, so the links underneath can still be reached
+        if (dead) return;
+        loading = false;
+        getLenis()?.start();
+        sec.dataset.loaded = "";
+      });
 
     // Keyboard: hold W to scroll on down the scene, S to scroll back up (not while typing, nor with modifier keys).
     let keyDir = 0;
@@ -1121,6 +1172,7 @@ export default function RoadJump() {
 
     return () => {
       dead = true;
+      if (loading) getLenis()?.start();
       unwarm();
       stop();
       window.removeEventListener("keydown", onKey);
@@ -1184,7 +1236,7 @@ export default function RoadJump() {
         {/* Scroll hint: up from the first paint (before the scene loads), gone once scrolling starts. */}
         <p
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-16 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 border-4 border-ink bg-ink px-4 py-2 font-mono text-sm font-bold tracking-widest text-turmeric shadow-[4px_4px_0_var(--color-marigold)] transition-opacity duration-300 group-data-[moved]:opacity-0"
+          className="pointer-events-none absolute bottom-16 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-mono text-sm font-bold tracking-widest text-turmeric drop-shadow-[2px_2px_0_var(--color-ink)] transition-opacity duration-300 group-data-[moved]:opacity-0"
         >
           SCROLL
           <ArrowDown size={18} weight="bold" className="motion-safe:animate-bounce" />
@@ -1198,6 +1250,7 @@ export default function RoadJump() {
           SKIP SCROLLING
           <FastForward size={18} weight="fill" aria-hidden="true" />
         </button>
+        <LoadingScreen id="home-" className="z-[5] group-data-[loaded]:invisible group-data-[loaded]:opacity-0" />
         {/* CC BY 4.0 requires credit: the full list lives on the About page, linked from here.
         <TLink href="/about#credits" className="absolute bottom-2 right-3 z-[1] font-mono text-[10px] text-cream/70 underline hover:text-cream">
           3D credits

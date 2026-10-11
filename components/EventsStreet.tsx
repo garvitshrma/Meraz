@@ -24,6 +24,7 @@ import { eventCategories, type EventCategory } from "@/data/events";
 import { melaModel } from "@/data/site";
 import EventsPanels, { Carousel, CategoryContent, tones } from "./EventsPanels";
 import { getLenis, jumpScroll } from "./ScrollFx";
+import { useHold } from "./Transition";
 import { key as boneKey, soldier, strideSpeed } from "./rig";
 import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
 
@@ -185,9 +186,12 @@ export default function EventsStreet() {
   const [compact, setCompact] = useState(false);
   const [open, setOpen] = useState<EventCategory | null>(null);
   const [fallback, setFallback] = useState(false);
+  const hold = useHold(); // stable
 
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return setFallback(true);
+    // A page change's loading screen stays up until the first frame: the three models and the shaders are its steps.
+    const loading = hold(4);
     const el = host.current!;
     const under = layer.current!;
     const sec = pin.current!;
@@ -208,7 +212,7 @@ export default function EventsStreet() {
       skyLoad.catch(() => {}); // reported where it is used
       const shellLoad = fetch("/models/fireworks.bin").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)));
       shellLoad.catch(() => {}); // reported where it is used
-      const [mela, man, walker] = await Promise.all([melaModel, "/models/jump.glb", "/models/walk.glb"].map((url) => loader.loadAsync(url)));
+      const [mela, man, walker] = await Promise.all([melaModel, "/models/jump.glb", "/models/walk.glb"].map((url) => loader.loadAsync(url).then((m) => (loading.step(), m))));
       if (dead) return;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -778,10 +782,12 @@ export default function EventsStreet() {
         dome.position.copy(camera.position);
         renderer.render(scene, camera);
         css.render(scene, camera);
+        loading.done();
       };
       // Every material's shaders, compiled before the first frame and off the main thread where the browser can
       // (KHR_parallel_shader_compile): else the first frame compiles them all at once and the page freezes.
       await renderer.compileAsync(scene, camera);
+      loading.step();
       if (dead) {
         renderer.dispose();
         return;
@@ -912,11 +918,13 @@ export default function EventsStreet() {
       };
     })().catch((e) => {
       console.error("EventsStreet:", e);
+      loading.done();
       if (!dead) setFallback(true);
     });
 
     return () => {
       dead = true;
+      loading.done();
       cleanup();
     };
   }, []);
@@ -975,7 +983,7 @@ export default function EventsStreet() {
           getLenis()?.start();
         }}
         aria-label={open?.heading}
-        className={`m-auto max-h-[88dvh] w-[min(94vw,40rem)] overflow-y-auto border-4 border-ink p-5 pt-14 backdrop:bg-ink/70 ${open ? tone(open) : ""}`}
+        className={`m-auto max-h-[88dvh] w-[min(94vw,40rem)] overflow-y-auto overflow-x-hidden border-4 border-ink p-4 pt-14 backdrop:bg-ink/70 sm:p-5 sm:pt-14 ${open ? tone(open) : ""}`}
       >
         <button type="button" onClick={() => dialog.current?.close()} aria-label="Close" className="btn absolute right-3 top-3 size-11 justify-center bg-cream !p-0 text-ink">
           <X weight="bold" aria-hidden="true" />

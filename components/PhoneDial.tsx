@@ -12,6 +12,7 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contacts } from "@/data/content";
 import { jumpScroll } from "./ScrollFx";
+import { useHold } from "./Transition";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -125,6 +126,7 @@ export default function PhoneDial() {
   const pin = useRef<HTMLElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const meter = useRef<HTMLParagraphElement>(null);
+  const hold = useHold(); // stable
 
   useEffect(() => {
     const el = host.current!;
@@ -132,17 +134,20 @@ export default function PhoneDial() {
     const tally = meter.current!;
     let cleanup = () => {};
     let dead = false;
+    // A page change's loading screen stays up until the first frame: the two models and three fonts are its steps.
+    const loading = hold(5);
 
     (async () => {
       const css = getComputedStyle(document.documentElement);
       const fonts = { display: css.getPropertyValue("--font-bungee").trim() || "Impact", mono: css.getPropertyValue("--font-courier").trim() || "monospace" };
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+      const step = <T,>(p: Promise<T>) => p.then((v) => (loading.step(), v));
       const [gltf, stool] = await Promise.all([
-        loader.loadAsync("/models/telephone.glb"),
-        loader.loadAsync("/models/stool.glb"),
-        document.fonts.load(`80px ${fonts.display}`).catch(() => {}), // the cards are drawn in these
-        document.fonts.load(`700 66px ${fonts.mono}`).catch(() => {}),
-        document.fonts.load(`76px ${fonts.mono}`).catch(() => {}),
+        step(loader.loadAsync("/models/telephone.glb")),
+        step(loader.loadAsync("/models/stool.glb")),
+        step(document.fonts.load(`80px ${fonts.display}`)).catch(() => {}), // the cards are drawn in these
+        step(document.fonts.load(`700 66px ${fonts.mono}`)).catch(() => {}),
+        step(document.fonts.load(`76px ${fonts.mono}`)).catch(() => {}),
       ]);
       if (dead) return;
 
@@ -299,7 +304,8 @@ export default function PhoneDial() {
       };
       const ro = new ResizeObserver(resize);
       ro.observe(el);
-      resize();
+      resize(); // draws the first frame
+      requestAnimationFrame(loading.done); // once it is on screen
 
       // Pin and scrub: one screen of scrolling per shot. Reduced motion keeps the isometric still. The tour ends as it
       // starts, on the whole phone, so scrolling past its end jumps back a tour's length (keeping any overshoot) and
@@ -338,10 +344,14 @@ export default function PhoneDial() {
         renderer.dispose();
         renderer.domElement.remove();
       };
-    })().catch((e) => console.error("PhoneDial:", e));
+    })().catch((e) => {
+      console.error("PhoneDial:", e);
+      loading.done();
+    });
 
     return () => {
       dead = true;
+      loading.done();
       cleanup();
     };
   }, []);

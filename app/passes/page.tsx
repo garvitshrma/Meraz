@@ -26,7 +26,8 @@ export default function PassesPage() {
             </a>
           </li>
         </ul>
-        <div className="mt-12">
+        {/* mt-20: room for the train on the first ticket */}
+        <div className="mt-20">
           <PassCards passes={passes} />
         </div>
       </Container>
