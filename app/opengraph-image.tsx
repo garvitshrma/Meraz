@@ -4,6 +4,7 @@ import { site } from "@/data/site";
 export const alt = "MERAZ 7.0, Retro India";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const dynamic = "force-static"; // drawn once at build time: the site is a static export
 
 export default function OgImage() {
   return new ImageResponse(

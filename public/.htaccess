@@ -1,0 +1,37 @@
+# Meraz 7.0 on the institute's Apache server. The site is plain files (a Next.js static export), so no rewriting to
+# index.html: each page is its own folder with an index.html, and a missing URL gets the site's 404 page.
+# Copied into out/ by `npm run build`; paste it into the server's web root with the rest of out/.
+
+RewriteEngine On
+
+# Redirect all traffic to HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Spectre
+RewriteCond %{HTTP_HOST} ^spectre\.meraz\.iitbhilai\.ac\.in$ [NC]
+RewriteRule (.*) http://20.249.211.252/$1 [R=301,L]
+
+# The web root is also the account's home folder: never serve hidden files or folders (.ssh, .bash_history, .nvm …).
+RewriteRule (^|/)\. - [R=404,L]
+
+# No file listings: a folder without its own index.html (e.g. /_next/, /models/) is not found.
+# (Done here rather than with "Options -Indexes", which some hosts forbid in .htaccess and answer with a 500.)
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_FILENAME}/index.html !-f
+RewriteRule ^ - [R=404,L]
+
+# Any other missing URL: the site's own not-found page.
+ErrorDocument 404 /404.html
+
+# 3D models and the scene's images/video: browsers reuse them for a day without asking, then check back in the
+# background for a week. (Their names carry no hash, so a long fixed cache would keep serving old models.)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(glb|bin|jpg|webp|mp4)$">
+    Header set Cache-Control "public, max-age=86400, stale-while-revalidate=604800"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType model/gltf-binary .glb
+</IfModule>

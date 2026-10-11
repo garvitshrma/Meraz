@@ -26,9 +26,11 @@ export default function NavBar() {
     <header className="fixed inset-x-0 top-0 z-50 border-b-4 border-ink bg-cream print:hidden">
       <nav aria-label="Main">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-          <TLink href="/" aria-label="Meraz 7.0 home" className="flex items-baseline gap-1.5 font-display text-xl leading-none sm:text-2xl">
-            MERAZ <span className="bg-rani-deep px-1.5 py-0.5 text-sm text-cream">7.0</span>
-            <span className="ml-1 hidden font-deva text-lg text-rani-deep lg:inline">मेराज़</span>
+          {/* the bird logo and the Meraz lettering (public/logo.webp, typolog.webp trimmed to their ink as nav-*.webp) */}
+          <TLink href="/" aria-label="Meraz 7.0 home" className="flex shrink-0 items-center gap-2 font-display leading-none sm:gap-2.5">
+            <img src="/nav-logo.webp" alt="" width={194} height={144} className="h-10 w-auto sm:h-11" />
+            <img src="/nav-typolog.webp" alt="" width={324} height={112} className="h-7 w-auto sm:h-8" />
+            <span className="bg-rani-deep px-1.5 py-0.5 text-sm text-cream">7.0</span>
           </TLink>
 
           <ul className="hidden items-center gap-1 md:flex">

@@ -1,10 +1,11 @@
 "use client";
 
-// The passes as Meraz Express tickets (public/passes/ticket.webp, cut from passes.png: 961 x 348, its printed pass
-// name painted out). The pass's name is printed where the ticket had it, its button is the Buy Now link, and its
+// The passes as Meraz Express tickets (public/passes/ticket.webp, the Canva ticket at 2x 961 x 348, its printed pass
+// name left out). The pass's name is printed where the ticket had it, its button is the Buy Now link, and its
 // details are printed on the blank body. Large screens: the tickets side by side, as before: click one and it slides
-// open while the other slides shut to its stub, the little train riding over to the open one. Smaller: stacked, the
-// details on a slip under each (on the ticket they'd be too small to read). Positions are in % of the ticket.
+// open while the other slides shut to its stub, the little train riding over to the open one. Smaller: each ticket
+// stood up tall (see TallTicket), its details on it, as on the wide one they'd be too small to read. Positions are in %
+// of the ticket.
 import { useState } from "react";
 import { ArrowUpRight } from "@phosphor-icons/react";
 import type { Pass } from "@/data/content";
@@ -62,6 +63,65 @@ function Ticket({ p, details, className = "", fontSize }: { p: Pass; details?: s
   );
 }
 
+// The ticket's maroon half-moons biting into the paper, ringed like its frame (cream, then a dark line).
+function Bite({ className }: { className: string }) {
+  return <span aria-hidden="true" className={`absolute size-9 rounded-full bg-[#7a061d] shadow-[0_0_0_2px_#f6e3a4,0_0_0_3.5px_#3d1a08] ${className}`} />;
+}
+
+// Smaller screens: the same ticket stood up, made of its own pieces (public/passes/stamp, class, title, barcode and coin
+// .webp, cut from ticket.webp, the paper keyed out of all but the coin): its stub on top with the stamp and the pass's
+// name, torn off along the perforation from the body, which carries the details and the Buy Now coin.
+function TallTicket({ p, train }: { p: Pass; train: boolean }) {
+  return (
+    <article aria-label={p.name} className="relative bg-[#7a061d] p-2.5 drop-shadow-[0_14px_18px_rgb(0_0_0/0.3)]">
+      {train && <img src="/passes/train.webp" alt="" width={88} height={66} className="absolute bottom-full left-[12%] w-16" />}
+      <div className="relative overflow-hidden bg-[#f4f1a0] font-mono text-[#3d2a14] shadow-[inset_0_0_0_2px_#f6e3a4,inset_0_0_0_3.5px_#3d1a08,inset_0_0_32px_rgb(160_140_30/0.35)]">
+        <Bite className="-left-[18px] -top-[18px]" />
+        <Bite className="-right-[18px] -top-[18px]" />
+        <Bite className="-bottom-[18px] -left-[18px]" />
+        <Bite className="-bottom-[18px] -right-[18px]" />
+
+        {/* the stub */}
+        <div className="flex items-center gap-4 px-6 pb-5 pt-7">
+          <img src="/passes/stamp.webp" alt="" width={212} height={212} className="w-[30%] max-w-28 shrink-0 -rotate-6" />
+          <div className="min-w-0 grow">
+            <img src="/passes/class.webp" alt="2nd class" width={130} height={38} className="h-4 w-auto" />
+            <img src="/passes/title.webp" alt="Meraz Express" width={590} height={72} className="mt-2 w-full" />
+            <h2 className="mt-2 whitespace-nowrap text-[clamp(.85rem,4vw,1.2rem)] font-bold uppercase tracking-[0.1em]">{p.name}</h2>
+          </div>
+        </div>
+
+        {/* the perforation, a half-moon at each end */}
+        <div className="relative mx-6 border-t-[3px] border-dashed border-[#7a061d]">
+          <Bite className="-left-[calc(1.5rem+18px)] -top-[19.5px]" />
+          <Bite className="-right-[calc(1.5rem+18px)] -top-[19.5px]" />
+        </div>
+
+        {/* the body */}
+        <div className="px-6 pb-8 pt-6 text-[15px] leading-snug">
+          <Details p={p} />
+          <div className="mt-6 flex items-end justify-between gap-4">
+            <a
+              href={p.formLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Buy ${p.name} (opens a form)`}
+              className="group flex items-center gap-2 font-bold uppercase tracking-widest focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-ink"
+            >
+              <img src="/passes/coin.webp" alt="" width={166} height={166} className="size-20 transition-transform group-hover:scale-110 group-active:scale-95" />
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                Buy now <ArrowUpRight weight="bold" aria-hidden="true" />
+              </span>
+            </a>
+            <img src="/passes/barcode.webp" alt="" width={188} height={148} className="hidden h-14 w-auto shrink-0 min-[360px]:block" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+
 export default function PassCards({ passes }: { passes: Pass[] }) {
   const [active, setActive] = useState(0);
   return (
@@ -97,7 +157,7 @@ export default function PassCards({ passes }: { passes: Pass[] }) {
               {!on && (
                 <button type="button" onClick={() => setActive(i)} aria-expanded={false} aria-label={`Open the ${p.name}`} className="absolute inset-0 cursor-pointer">
                   <span
-                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#903e3c]/90 py-1 text-center font-mono font-bold uppercase tracking-widest text-cream"
+                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#7a061d]/90 py-1 text-center font-mono font-bold uppercase tracking-widest text-cream"
                     style={{ fontSize: `calc(${OPEN} * 0.014)` }}
                   >
                     {p.name}
@@ -109,20 +169,11 @@ export default function PassCards({ passes }: { passes: Pass[] }) {
         })}
       </div>
 
-      {/* smaller: stacked, the details on a slip under each */}
-      <ul className="grid gap-16 lg:hidden">
+      {/* smaller: tall tickets, everything printed on them; two side by side on a tablet */}
+      <ul className="mx-auto grid max-w-md items-start gap-16 md:max-w-none md:grid-cols-2 md:gap-8 lg:hidden">
         {passes.map((p, i) => (
-          <li key={p.name} className="@container">
-            <article aria-label={p.name} className="relative drop-shadow-[0_14px_18px_rgb(0_0_0/0.3)]">
-              {i === 0 && <img src="/passes/train.webp" alt="" width={88} height={66} className="absolute bottom-full left-[18.4%] w-[9.2%]" />}
-              <Ticket p={p} fontSize="1.55cqw" />
-            </article>
-            <div className="mt-4 border-4 border-[#903e3c] bg-[#dacb89] p-4 font-mono text-base leading-snug text-[#3d2a14]">
-              <Details p={p} />
-              <a href={p.formLink} target="_blank" rel="noopener noreferrer" className="btn mt-5 w-fit bg-[#903e3c] text-cream">
-                Buy Now <ArrowUpRight weight="bold" aria-hidden="true" />
-              </a>
-            </div>
+          <li key={p.name}>
+            <TallTicket p={p} train />
           </li>
         ))}
       </ul>

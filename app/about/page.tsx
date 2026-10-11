@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ScrollCue from "@/components/ScrollCue";
 import { Container } from "@/components/ui";
 import { about, modelCredits } from "@/data/content";
 import { site } from "@/data/site";
@@ -36,6 +37,7 @@ export default function AboutPage() {
           </div>
           <img src="/about/wall.webp" alt="" width={1920} height={1080} className="absolute inset-0 size-full" />
         </div>
+        <ScrollCue after=".animate-elephant" />
       </section>
 
       {/* About: the lady with the lotus and the 7.0 to the left of the text, the lettering and the lady with the bird to
@@ -82,12 +84,14 @@ export default function AboutPage() {
       <section aria-label={`${site.name} in numbers`} className="relative overflow-hidden pt-14 lg:pt-20">
         <img src="/about/peacock-left.webp" alt="" width={330} height={1012} loading="lazy" className="absolute bottom-0 left-0 h-[60%] w-auto sm:h-full" />
         <img src="/about/peacock-right.webp" alt="" width={330} height={1013} loading="lazy" className="absolute bottom-0 right-0 h-[60%] w-auto sm:h-full" />
-        <ul className="relative mx-auto flex max-w-4xl justify-center gap-[4vw] px-[12%] sm:px-[18%]">
+        {/* as the design lays them out: three frames ~212 px wide at 1920, the text sized by the frame (cqw), not the
+            screen, so it stays inside the arch at any width */}
+        <ul className="relative mx-auto grid w-[calc(100%-1rem)] max-w-[58rem] grid-cols-3 gap-[5%] sm:w-[72%] sm:gap-[12%] lg:w-[56%]">
           {about.stats.map((s) => (
-            <li key={s.label} className="relative aspect-[212/268] w-full max-w-52 bg-[url(/about/stat-frame.webp)] bg-[length:100%_100%]">
-              <p className="absolute inset-x-[10%] bottom-[18%] top-[42%] grid content-center text-center font-slab leading-none">
-                <span className="text-[clamp(1.1rem,3vw,2.6rem)]">{s.value}</span>
-                <span className="mt-1 text-[clamp(.6rem,1.3vw,1.1rem)] leading-tight">{s.label}</span>
+            <li key={s.label} className="@container relative aspect-[212/268] w-full bg-[url(/about/stat-frame.webp)] bg-[length:100%_100%]">
+              <p className="absolute inset-x-[12%] bottom-[14%] top-[38%] grid content-center text-center font-slab leading-none">
+                <span className="text-[19cqw]">{s.value}</span>
+                <span className="mt-[4cqw] text-[max(9.5cqw,.65rem)] leading-tight">{s.label}</span>
               </p>
             </li>
           ))}
