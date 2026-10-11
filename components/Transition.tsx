@@ -2,21 +2,22 @@
 
 // Page transitions: the loading screen (the boombox, see LoadingScreen) fades in, the route changes, and it stays up
 // until the new page has fully rendered (its fonts, its images, and anything it holds the screen for: see useHold),
-// its meter running to 100%, then fades off the new page. Leaving the home page goes another way, its auto ride ending
-// in "white": the screen fades to white, the route changes, the white fades off the new page. A page loaded afresh
-// (opened, refreshed) shows the loading screen from its first paint the same way, until it has fully rendered; home
-// has its own (see RoadJump), which also waits for its scene.
+// its meter running to 100%, then fades off the new page. Leaving the home page, its auto ride runs while the next
+// page's files load (see RoadJump), then hands over a copy of its last frame, which glitches (see Glitch) for
+// GLITCH_MS while the loading screen comes up under it. A page
+// loaded afresh (opened, refreshed) shows the loading screen from its first paint the same way, until it has fully
+// rendered; home has its own (see RoadJump), which also waits for its scene.
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import LoadingScreen from "./LoadingScreen";
 
-type Look = "loading" | "white";
-const WHITE_MS = 1000; // fade to white, and back off the new page
 const SHOW_MS = 500; // the loading screen fades in, then the route changes
+const GLITCH_MS = 1200; // the glitch, over the loading screen fading in under it
 const CAP_MS = 15000; // the most a page change waits on the new page before lifting the screen anyway
 const ROUTE = 0.3; // the meter's share for fetching the route; the new page's loading takes the rest
-const GoCtx = createContext<(href: string, look?: Look) => void>(() => {});
+// go(href, shot): shot, a picture of the screen as it is, to glitch out of
+const GoCtx = createContext<(href: string, shot?: HTMLCanvasElement) => void>(() => {});
 export const useGo = () => useContext(GoCtx);
 
 // A page that needs more than its route to show (a 3D scene) holds a page change's loading screen up until it has
@@ -30,11 +31,12 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const fresh = pathname !== "/"; // as first rendered (on the server too): a page loaded afresh, up from the first paint
-  const [closed, setClosed] = useState<Look | false>(fresh && "loading");
-  const pending = useRef<Look | null>(fresh ? "loading" : null); // the look of a change on its way, until it lifts
+  const [closed, setClosed] = useState(fresh);
+  const [glitch, setGlitch] = useState<HTMLCanvasElement | null>(null);
+  const pending = useRef(fresh); // a change on its way, until the screen lifts
   const screen = useRef<HTMLDivElement>(null);
   const creep = useRef(0);
-  // where a "loading" change is: fetching, or the page loading (set from the start, so a fresh page's holds count)
+  // where a change is: fetching, or the page loading (set from the start, so a fresh page's holds count)
   const phase = useRef<"route" | "page" | null>(fresh ? "page" : null);
   const holds = useRef<{ n: number; k: number; done: boolean }[]>([]);
   const settled = useRef(false); // the new page's fonts and images are in
@@ -51,39 +53,34 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   };
 
   const go = useCallback(
-    (href: string, look: Look = pathname === "/" ? "white" : "loading") => {
+    (href: string, shot?: HTMLCanvasElement) => {
       if (href === pathname) return;
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return router.push(href);
-      pending.current = look;
-      setClosed(look);
-      if (look === "loading") {
-        let f = 0;
-        meter(f);
-        phase.current = "route";
-        holds.current = [];
-        clearInterval(creep.current);
-        creep.current = window.setInterval(() => meter((f += (ROUTE - f) * 0.12)), 100);
+      pending.current = true;
+      setClosed(true);
+      phase.current = "route";
+      holds.current = [];
+      let f = 0;
+      meter(f);
+      clearInterval(creep.current);
+      creep.current = window.setInterval(() => meter((f += (ROUTE - f) * 0.12)), 100);
+      if (shot) {
+        setGlitch(shot);
+        setTimeout(() => setGlitch(null), GLITCH_MS);
       }
-      setTimeout(() => router.push(href), look === "white" ? WHITE_MS : SHOW_MS);
+      setTimeout(() => router.push(href), shot ? GLITCH_MS : SHOW_MS);
     },
     [pathname, router],
   );
 
   useEffect(() => {
     // pending is cleared when the screen lifts, not here, so a rerun (React's dev double mount) sets it up again
-    const look = pending.current;
-    if (!look) return;
+    if (!pending.current) return;
     clearInterval(creep.current);
-    if (look === "white") {
-      const t = setTimeout(() => {
-        pending.current = null;
-        setClosed(false);
-      }, 250);
-      return () => clearTimeout(t);
-    }
     // Home puts up the same screen while its scene loads, with its own meter: hand straight over to it.
     if (pathname === "/") {
-      pending.current = phase.current = null;
+      pending.current = false;
+      phase.current = null;
       return setClosed(false);
     }
     phase.current = "page";
@@ -91,7 +88,8 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     let lift = 0;
     finish.current = () => {
       if (phase.current !== "page" || !settled.current || holds.current.some((h) => !h.done)) return;
-      pending.current = phase.current = null;
+      pending.current = false;
+      phase.current = null;
       meter(1);
       lift = window.setTimeout(() => setClosed(false), 400); // long enough to see it reach 100
     };
@@ -147,17 +145,104 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       <noscript>
         <style>{"[data-page-screen] { display: none }"}</style>
       </noscript>
-      {/* data-up while the loading screen shows: the page's entrances wait for it (see .animate-elephant) */}
-      <div ref={screen} data-page-screen data-up={closed === "loading" || undefined} className={`fixed inset-0 z-[260] ${closed ? "" : "pointer-events-none"}`}>
-        <LoadingScreen id="go-" className={closed === "loading" ? "" : "invisible opacity-0"} />
-        <div
-          aria-hidden="true"
-          className={`absolute inset-0 bg-white transition-opacity ease-in-out ${closed === "white" ? "opacity-100" : "opacity-0"}`}
-          style={{ transitionDuration: `${WHITE_MS}ms` }}
-        />
+      {/* data-up while the screen shows: the page's entrances wait for it (see .animate-elephant) */}
+      <div ref={screen} data-page-screen data-up={closed || undefined} className={`fixed inset-0 z-[260] ${closed ? "" : "pointer-events-none"}`}>
+        <LoadingScreen id="go-" className={closed ? "" : "invisible opacity-0"} />
+        {glitch && <Glitch shot={glitch} />}
       </div>
     </GoCtx.Provider>
   );
+}
+
+// The glitch: the shot redrawn every STEP ms on a canvas, each frame at random and rougher than the last. Its red,
+// green and blue, each picked out alone, are added back together a little apart (red one way, blue the other);
+// slices of it tear sideways, each with its own red and blue fringe; blocks of red and blue flash across; a light
+// grain over all. In the last fifth it breaks up in bands onto the loading screen under it.
+const STEP = 45;
+function Glitch({ shot }: { shot: HTMLCanvasElement }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const cv = ref.current!;
+    const [W, H] = [(cv.width = shot.width), (cv.height = shot.height)];
+    const ctx = cv.getContext("2d")!;
+    const src = shot.getContext("2d")!.getImageData(0, 0, W, H).data;
+    const layer = (fill: (d: Uint8ClampedArray) => void, w = W, h = H) => {
+      const c = document.createElement("canvas");
+      [c.width, c.height] = [w, h];
+      const img = new ImageData(w, h);
+      fill(img.data);
+      c.getContext("2d")!.putImageData(img, 0, 0);
+      return c;
+    };
+    const [R, G, B] = [0, 1, 2].map((ch) =>
+      layer((d) => {
+        for (let i = 0; i < d.length; i += 4) [d[i + ch], d[i + 3]] = [src[i + ch], 255];
+      }),
+    );
+    const grain = ctx.createPattern(
+      layer((d) => {
+        for (let i = 0; i < d.length; i += 4) {
+          d[i] = d[i + 1] = d[i + 2] = Math.random() * 255;
+          d[i + 3] = 255;
+        }
+      }, 160, 160),
+      "repeat",
+    )!;
+    const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+
+    const draw = (t: number) => {
+      const k = Math.min(1, 0.25 + t * 1.2); // how rough
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      const split = W * 0.012 * k;
+      ctx.drawImage(R, -split * rnd(0.6, 1.6), rnd(-1, 1) * split * 0.2);
+      ctx.drawImage(G, 0, 0);
+      ctx.drawImage(B, split * rnd(0.6, 1.6), rnd(-1, 1) * split * 0.2);
+      for (let i = Math.round(2 + 10 * k); i > 0; i--) {
+        const h = H * rnd(0.004, 0.012 + 0.07 * k);
+        const y = rnd(0, H - h);
+        const dx = rnd(-1, 1) * W * 0.18 * k;
+        const fringe = W * rnd(0.005, 0.03);
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillRect(0, y, W, h);
+        ctx.globalCompositeOperation = "lighter";
+        ctx.drawImage(R, 0, y, W, h, dx - fringe, y, W, h);
+        ctx.drawImage(G, 0, y, W, h, dx, y, W, h);
+        ctx.drawImage(B, 0, y, W, h, dx + fringe, y, W, h);
+      }
+      ctx.globalCompositeOperation = "screen";
+      for (let i = Math.round(6 * k); i > 0; i--) {
+        ctx.fillStyle = Math.random() < 0.5 ? "rgb(255 0 60 / 0.6)" : "rgb(0 90 255 / 0.6)";
+        ctx.fillRect(rnd(-0.1, 0.9) * W, rnd(0, 1) * H, W * rnd(0.05, 0.4), H * rnd(0.004, 0.03));
+      }
+      ctx.globalCompositeOperation = "overlay";
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = grain;
+      ctx.save();
+      ctx.translate(rnd(-160, 0), rnd(-160, 0));
+      ctx.fillRect(0, 0, W + 160, H + 160);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      if (t > 0.8) {
+        ctx.globalCompositeOperation = "destination-out";
+        for (let i = 8; i > 0; i--) ctx.fillRect(0, rnd(0, 1) * H, W, H * rnd(0.03, 0.15) * (t - 0.8) * 5);
+      }
+    };
+
+    const start = performance.now();
+    let shown = -1;
+    let raf = 0;
+    const frame = (now: number) => {
+      const step = Math.floor((now - start) / STEP);
+      if (step !== shown) draw(Math.min(1, ((shown = step) * STEP) / GLITCH_MS));
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [shot]);
+  return <canvas ref={ref} aria-hidden="true" className="glitch" />;
 }
 
 // Link that plays the page transition. Modifier-clicks (new tab etc.) behave like a normal link.

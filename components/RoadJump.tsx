@@ -16,10 +16,10 @@ import type { Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
-import { melaModel, navLinks } from "@/data/site";
+import { navLinks } from "@/data/site";
 import { TLink, useGo } from "./Transition";
 import { getLenis } from "./ScrollFx";
-import { warmUp } from "./warmup";
+import { pageFiles, preload, warmUp } from "./warmup";
 import LoadingScreen from "./LoadingScreen";
 import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
 import { bone, key, soldier, strideSpeed } from "./rig";
@@ -116,9 +116,11 @@ const SIT = 0.93;
 // destinations at GO. The home page has no nav bar; these are its navigation.
 const ASK = 0.95;
 const GO = 0.97;
-// Picking a destination: the auto pulls away (accel m/s^2, carrying him and his eye camera, the lens widening by up to
-// fov degrees with speed) and after fade seconds the screen starts fading to white into the new page.
-const RIDE = { accel: 6, fov: 10, fade: 0.9 };
+// Picking a destination: the auto pulls away (carrying him and his eye camera) at accel m/s^2 up to top m/s, the lens
+// widening by up to fov degrees with speed. The ride is the page's loading: it lasts at least min seconds and while the
+// page's files load (see preload), up to max; then its last frame glitches into the loading screen, which waits on for
+// the rest (see Transition).
+const RIDE = { accel: 6, top: 12, fov: 10, min: 2.2, max: 3.5 };
 const WALK_CYCLES = 3; // walk cycles (two steps each) during the swing
 const WALK_ON_CYCLES = 1; // and after landing
 const STRIDE = 0.7; // leg swing kept from the soldier walk: a long stride stretches the dhoti (and the saree)
@@ -742,7 +744,9 @@ export default function RoadJump() {
                 last = now;
                 if (rideFrom >= 0) {
                   const t = (now - rideFrom) / 1000;
-                  [rideZ, rideV] = [0.5 * RIDE.accel * t * t, RIDE.accel * t];
+                  const cruise = RIDE.top / RIDE.accel; // seconds to top speed
+                  const tt = Math.min(t, cruise);
+                  [rideZ, rideV] = [0.5 * RIDE.accel * tt * tt + RIDE.top * Math.max(0, t - cruise), RIDE.accel * tt];
                 }
                 draw(progress);
               }
@@ -763,12 +767,22 @@ export default function RoadJump() {
       sec.addEventListener("pointermove", onHover);
       sec.addEventListener("pointerleave", onLeave);
       // The ride needs the frame loop, so reduced motion leaves ride unset and the links navigate as usual.
-      let rideTimer = 0;
       if (!reduce)
         ride.current = (href) => {
           if (rideFrom >= 0) return;
           rideFrom = performance.now();
-          rideTimer = window.setTimeout(() => goTo(href, "white"), RIDE.fade * 1000);
+          const after = (s: number) => new Promise((go) => setTimeout(go, s * 1000));
+          Promise.race([Promise.all([preload(href, (h) => router.prefetch(h)), after(RIDE.min)]), after(RIDE.max)]).then(() => {
+            if (dead) return;
+            // A copy of the ride's last frame, for the glitch: drawn now and copied at once (the canvas keeps no
+            // frame to read later), at most 1280 wide.
+            renderer.render(scene, camera);
+            const shot = document.createElement("canvas");
+            const w = Math.min(1280, renderer.domElement.width);
+            [shot.width, shot.height] = [w, Math.round((w * renderer.domElement.height) / renderer.domElement.width)];
+            shot.getContext("2d")!.drawImage(renderer.domElement, 0, 0, shot.width, shot.height);
+            goTo(href, shot);
+          });
         };
 
       // Skip: scrolls the page by itself to just past GO, easing in and out; any scrolling of the visitor's takes over.
@@ -785,7 +799,6 @@ export default function RoadJump() {
       cleanup = () => {
         ride.current = null;
         skip.current = null;
-        clearTimeout(rideTimer);
         io.disconnect();
         sec.removeEventListener("pointermove", onHover);
         sec.removeEventListener("pointerleave", onLeave);
@@ -1125,11 +1138,7 @@ export default function RoadJump() {
       await Promise.allSettled([skyLoad, shellLoad]); // the sky and fireworks too, before the loading screen lifts
       // The scene is complete: in idle moments from here, warm the events and contact pages (see warmup.ts). Their
       // fireworks, sky, moon and runner are this page's own, already cached.
-      unwarm = warmUp(["/events", "/contact"], (href) => router.prefetch(href), [
-        melaModel,
-        "/models/telephone.glb",
-        "/models/stool.glb",
-      ]);
+      unwarm = warmUp(["/events", "/contact"], (href) => router.prefetch(href), [...pageFiles["/events"], ...pageFiles["/contact"]]);
     })()
       .catch((e) => console.error("RoadJump:", e))
       .finally(() => {

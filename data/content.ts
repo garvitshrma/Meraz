@@ -6,9 +6,9 @@ export const about = {
   theme:
     "This year, Meraz 7.0 rewinds the tape to Retro India: the age of hand-painted cinema posters, truck art that said Horn OK Please, transistor radios on every windowsill and one television that brought the whole mohalla together. The theme celebrates the warmth and wild colour of India between the seventies and the nineties, when every festival felt like a blockbuster release. As the reels start to roll, watch creativity, technology and nostalgia come together in a show that is pure paisa vasool.",
   stats: [
-    { value: "100+", label: "Events", icon: "calendar" },
-    { value: "1000+", label: "Participants", icon: "users" },
-    { value: "1000+", label: "Online audience", icon: "globe" },
+    { value: "100+", label: "Events" },
+    { value: "1000+", label: "Participants" },
+    { value: "1000+", label: "Online audience" },
   ] as const,
 };
 

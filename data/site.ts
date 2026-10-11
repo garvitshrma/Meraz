@@ -5,9 +5,7 @@ export const site = {
   college: "IIT Bhilai",
   theme: "Retro India",
   tagline: "Rewind. Replay. Rejoice.", // PLACEHOLDER
-  hindiTagline: "फिर से वही दौर", // "that era, once again"
   url: "https://meraz7.vercel.app", // used for SEO / Open Graph link previews; change if the domain moves
-  aftermovie: "/aftermovie.mp4", // Meraz'24 aftermovie, same file as the current site
   passQueryPhone: "+91 94079 00542",
 };
 

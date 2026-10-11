@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#F3E6C8" };
 
-// Runs before paint: marks JS as available. The home loader plays on every full page load.
+// Runs before paint: marks JS as available (scroll reveals start hidden only then).
 const boot = `try{document.documentElement.classList.add('js')}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
