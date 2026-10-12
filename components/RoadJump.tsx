@@ -105,6 +105,8 @@ const SKIP_PACE = 2;
 // one's swell.
 const TITLE = { z: -10, eye: 1.63, tilt: 0.22, hair: 0.13, margin: 0.03, logo: 0.3, gap: -0.06 };
 const TITLE_HOVER = 1.1; // the logo or lettering under the mouse swells to this
+// A warm glow behind the logo, size logo widths across, at opacity (added to what's behind: the night, the fireworks).
+const TITLE_GLOW = { color: 0xffb627, size: 1.6, opacity: 0.55 };
 // Scroll beats: [0, ORBIT] walk while the camera swings round, [ORBIT, LAND] the jump, [LAND, STOP] two steps on,
 // [STOP, SIT] without stopping he curves round to the auto (which set off when he jumped and has pulled up just
 // ahead), ducks in and slides onto the bench, turning to face forward as he settles, [SIT, 1] he sits still.
@@ -348,6 +350,12 @@ export default function RoadJump() {
         title.add(new THREE.Group().add(m));
         return m;
       });
+      const glow = new THREE.Mesh(
+        new THREE.PlaneGeometry(TITLE_GLOW.size, TITLE_GLOW.size),
+        new THREE.MeshBasicMaterial({ map: sparkTex, color: TITLE_GLOW.color, transparent: true, opacity: TITLE_GLOW.opacity, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+      );
+      glow.position.z = -0.02; // just behind: the logo's opaque parts hide it, so it shows round the logo
+      signs[0].parent!.add(glow); // in the logo's holder, so it is sized and placed with it (but doesn't swell with it)
       title.position.z = TITLE.z;
       scene.add(title);
 
