@@ -4,7 +4,8 @@
 // from its chosen moment, the next one when it ends. Browsers allow sound only after the visitor interacts, so every
 // click, tap or key press tries to start it until it plays, unless the visitor paused it (remembered). Lives in the
 // layout, so the song carries on from page to page. The "now playing" card is painted like the site's buttons; it
-// appears once the player is ready and stays away if YouTube is blocked or a video is unavailable.
+// appears once the player is ready and stays away if YouTube is blocked or a video is unavailable. On a phone it is
+// a compact pill (equaliser, next, play) so it covers as little as it can.
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Pause, Play, SkipBack, SkipForward, SpotifyLogo, YoutubeLogo } from "@phosphor-icons/react";
@@ -137,8 +138,8 @@ export default function MusicPlayer() {
 
   const song = SONGS[idx];
   const q = encodeURIComponent(`${song.title} ${song.artist}`);
-  // under the nav bar on inner pages (home has none); on a phone at the foot instead, clear of the page titles
-  const top = `max-sm:bottom-[calc(var(--bar)+4.75rem)] ${pathname === "/" ? "sm:top-3" : "sm:top-[5.6rem]"}`;
+  // top right: under the nav bar on inner pages (home has none)
+  const top = pathname === "/" ? "top-3" : "top-[5.6rem]";
   const icon = "grid size-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-cream/15";
 
   return (
@@ -149,10 +150,10 @@ export default function MusicPlayer() {
       {ready && !failed && (
         <div
           data-music
-          className={`fixed right-3 z-40 flex items-center gap-0.5 rounded-full border-[3px] border-ink bg-ink py-0.5 pl-3 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_var(--color-turmeric),inset_0_0_0_3.5px_var(--color-ink),4px_4px_0_var(--color-rani-deep)] print:hidden ${top}`}
+          className={`fixed right-3 z-40 flex items-center gap-0.5 rounded-full border-[3px] border-ink/60 bg-ink/45 py-0.5 backdrop-blur-md pl-3 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_rgb(242_193_78/0.7),4px_4px_0_rgb(184_22_111/0.55)] print:hidden ${top}`}
         >
           {/* a little equaliser, moving while the song plays */}
-          <span aria-hidden="true" className="mr-2 flex h-3 items-end gap-0.5">
+          <span aria-hidden="true" className="mr-2 flex h-3 items-end gap-0.5 max-sm:mr-1">
             {[0, -0.3, -0.6].map((d) => (
               <i
                 key={d}
@@ -161,10 +162,10 @@ export default function MusicPlayer() {
               />
             ))}
           </span>
-          <span className="mr-1 max-w-[min(34vw,14rem)] truncate font-display text-xs">
+          <span className="mr-1 max-w-[min(34vw,14rem)] truncate font-display text-xs max-sm:hidden">
             {song.title} <span className="font-sans font-normal text-cream/80">· {song.artist}</span>
           </span>
-          <a className={icon} href={`https://www.youtube.com/watch?v=${song.id}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on YouTube`}>
+          <a className={`${icon} max-sm:hidden`} href={`https://www.youtube.com/watch?v=${song.id}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on YouTube`}>
             <YoutubeLogo size={20} weight="fill" aria-hidden="true" />
           </a>
           <a className={`${icon} max-sm:hidden`} href={`https://open.spotify.com/search/${q}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on Spotify`}>

@@ -315,7 +315,8 @@ export default function PhoneDial() {
       // dials on, round and round. The pin runs a screen past the tour so the wrap is always reachable: on a phone the
       // address bar hides as the page scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
       const legs = shots.length - 1;
-      const tour = () => ((st!.end - st!.start) * legs) / (legs + 1); // the tour's length in pixels, without the runway
+      // the tour's length in pixels, without the runway (from the trigger passed in: create() runs onUpdate before st is set)
+      const tour = (t: { start: number; end: number } = st!) => ((t.end - t.start) * legs) / (legs + 1);
       const st = matchMedia("(prefers-reduced-motion: reduce)").matches
         ? null
         : ScrollTrigger.create({
@@ -326,11 +327,12 @@ export default function PhoneDial() {
             scrub: true,
             onUpdate: (self) => {
               const into = self.scroll() - self.start;
-              progress = Math.min(1, Math.max(0, into / tour()));
+              const len = tour(self);
+              progress = Math.min(1, Math.max(0, into / len));
               draw();
-              if (into >= tour()) {
+              if (into >= len) {
                 calls++;
-                jumpScroll(Math.max(self.start, self.scroll() - tour()));
+                jumpScroll(Math.max(self.start, self.scroll() - len));
               }
             },
           });

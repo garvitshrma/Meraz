@@ -839,7 +839,8 @@ export default function EventsStreet() {
       // Pin and scrub: one screen of scrolling per screen in the phases. While a trip plays, scrolling is held off. The
       // pin runs a screen past the loop so its end is always reachable: on a phone the address bar hides as the page
       // scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
-      const loop = () => ((st.end - st.start) * screens) / (screens + 1); // the loop's length in pixels, without the runway
+      // the loop's length in pixels, without the runway (from the trigger passed in: create() runs onUpdate before st is set)
+      const loop = (t: { start: number; end: number } = st) => ((t.end - t.start) * screens) / (screens + 1);
       const st = ScrollTrigger.create({
         trigger: sec,
         start: "top top",
@@ -848,13 +849,14 @@ export default function EventsStreet() {
         scrub: true,
         onUpdate: (self) => {
           const into = self.scroll() - self.start;
-          progress = Math.min(1, Math.max(0, into / loop()));
+          const len = loop(self);
+          progress = Math.min(1, Math.max(0, into / len));
           if (trip) return;
           draw(playAt(phases, progress * screens, "len"));
           // The loop ends as it starts: at its end, jump back a loop's length (keeping any overshoot) and walk on.
-          if (into >= loop()) {
+          if (into >= len) {
             looped = true;
-            jump(self.scroll() - loop());
+            jump(self.scroll() - len);
           }
         },
       });

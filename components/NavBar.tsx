@@ -47,7 +47,7 @@ export default function NavBar() {
 
           {/* the lorry's lane: the open stretch between the logo and the links, its wheels on the stripe */}
           <div aria-hidden="true" className="@container pointer-events-none relative h-full min-w-0 flex-1 self-stretch overflow-hidden">
-            <img src="/truck.webp" alt="" width={300} height={144} className="absolute bottom-0 left-0 h-9 w-auto animate-truck" />
+            <img src="/truck.webp" alt="" width={300} height={144} className="absolute bottom-0 left-0 h-6 w-auto animate-truck sm:h-9" />
           </div>
 
           <ul className="hidden items-center gap-1.5 md:flex lg:gap-2">

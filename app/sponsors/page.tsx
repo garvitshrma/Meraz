@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Sponsors", description: "The partner
 const WINDOW = { left: 70 / 330, top: 100 / 447, width: 191 / 330, height: 290 / 447 };
 const pc = (v: number) => `${v * 100}%`;
 const SPLIT = pc(WINDOW.top + 0.557 * WINDOW.height); // the white's edge, down the whole frame
-const size = { title: "w-[min(72vw,20rem)]", platinum: "w-[min(42vw,13.5rem)]", gold: "w-[min(42vw,12rem)]" };
+const size = { title: "w-[min(48vw,20rem)]", platinum: "w-[min(36vw,13.5rem)]", gold: "w-[min(36vw,12rem)]" };
 
 // The name's size, in cqw of the frame: the largest (up to SBI's in the design) at which its words, wrapped greedily,
 // fit the teal half of the window: lines of about 48cqw, about 28cqw tall in all. Bebas runs about 0.42em a letter.
@@ -66,7 +66,7 @@ function Frame({ name, logo, dark }: { name: string; logo: string; dark?: boolea
 // The tier's label on the design's ribbon: pink, a yellow edge, a notch at each end.
 function Ribbon({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="relative z-0 mx-auto w-fit px-10 pb-1 pt-1.5 text-center font-bebas text-[clamp(1.4rem,3vw,2.4rem)] tracking-wide text-white">
+    <h2 id={id} className="relative z-0 mx-auto w-fit whitespace-nowrap px-7 pb-1 pt-1.5 text-center font-bebas text-[clamp(1.15rem,3vw,2.4rem)] tracking-wide text-white sm:px-10">
       <svg viewBox="0 0 700 58" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 -z-10 size-full">
         <path d="M0 0H700L675 29 700 58H0L25 29Z" fill="#ff2e88" stroke="#ffd23f" strokeWidth="4" vectorEffect="non-scaling-stroke" />
       </svg>
@@ -92,7 +92,7 @@ export default function SponsorsPage() {
     <div className="bg-[#0f8b8d] pt-[4.4rem]">
       <h1 className="sr-only">Sponsors: the visionaries behind the reverie</h1>
       {/* the title, as big as the screen allows: the band scaled until its Ganesh pair and lettering (1090 of its 1920
-          wide) span 96% of the screen (on a phone, just the lettering, 835 wide), its far sides cropped; on wide screens it fills the first screen, the dots run on
+          wide) span 96% of the screen (on a phone a little less, the band's foot dissolving into the dots below), its far sides cropped; on wide screens it fills the first screen, the dots run on
           below it, a fade hiding where its own (larger) dots meet them */}
       <div className="sponsor-dots relative overflow-hidden sm:min-h-[calc(100svh-4.4rem)]">
         <img
@@ -100,9 +100,9 @@ export default function SponsorsPage() {
           alt=""
           width={1920}
           height={530}
-          className="relative left-1/2 block w-[221vw] max-w-none -translate-x-1/2 sm:w-[169vw]"
+          className="relative left-1/2 block w-[175vw] max-w-none -translate-x-1/2 [mask:linear-gradient(#000_62%,transparent)] sm:w-[169vw] sm:[mask:none]"
         />
-        <div aria-hidden="true" className="absolute inset-x-0 top-[calc(221vw*530/1920-3rem)] h-12 sm:top-[calc(169vw*530/1920-3rem)] bg-gradient-to-b from-transparent to-[#0f8b8d]" />
+        <div aria-hidden="true" className="absolute inset-x-0 top-[calc(169vw*530/1920-3rem)] h-12 bg-gradient-to-b from-transparent to-[#0f8b8d] max-sm:hidden" />
       </div>
 
       <div className="sponsor-dots relative overflow-x-clip">
@@ -127,7 +127,7 @@ export default function SponsorsPage() {
               <div key={t.tier} data-reveal aria-labelledby={`tier-t${i}`} className={size.title}>
                 <Ribbon id={`tier-t${i}`}>{t.tier}</Ribbon>
                 <div className="relative isolate mt-4">
-                  <Mandala className="absolute left-1/2 top-[58%] -z-10 w-[150%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-60" />
+                  <Mandala className="absolute left-1/2 top-[58%] -z-10 w-[125%] sm:w-[150%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-60" />
                   <Frame {...t.sponsors[0]} />
                 </div>
               </div>
@@ -136,9 +136,9 @@ export default function SponsorsPage() {
 
           {rest.map((t, ti) => (
             <section key={t.tier} aria-labelledby={`tier-${ti}`} className="mt-16">
-              <div aria-hidden="true" className="shisha mx-auto mb-8 h-6 w-[min(100%,36rem)]" />
+              <div aria-hidden="true" className="shisha mx-auto mb-8 h-5 w-[min(84%,36rem)] [mask:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)] sm:h-6" />
               <Ribbon id={`tier-${ti}`}>{t.tier}</Ribbon>
-              <ul className="mt-8 flex flex-wrap justify-center gap-x-[clamp(.75rem,3vw,2.5rem)] gap-y-6">
+              <ul className="mt-12 flex flex-wrap sm:mt-10 justify-center gap-x-[clamp(.75rem,3vw,2.5rem)] gap-y-6">
                 {t.sponsors.map((s) => (
                   <li key={s.name} data-reveal className={size[t.level]}>
                     <Frame {...s} />
