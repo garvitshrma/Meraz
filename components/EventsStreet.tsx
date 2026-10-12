@@ -23,7 +23,7 @@ import { X } from "@phosphor-icons/react";
 import { eventCategories, type EventCategory } from "@/data/events";
 import { melaModel } from "@/data/site";
 import EventsPanels, { Carousel, CategoryContent, tones } from "./EventsPanels";
-import { getLenis, jumpScroll } from "./ScrollFx";
+import { getLenis, jumpScroll, loopGate } from "./ScrollFx";
 import { useHold } from "./Transition";
 import { key as boneKey, soldier, strideSpeed } from "./rig";
 import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
@@ -840,6 +840,10 @@ export default function EventsStreet() {
       // pin runs a screen past the loop so its end is always reachable: on a phone the address bar hides as the page
       // scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
       // the loop's length in pixels, without the runway (from the trigger passed in: create() runs onUpdate before st is set)
+      const gate = loopGate(() => {
+        looped = true;
+        jump(scrollY - loop());
+      });
       const loop = (t: { start: number; end: number } = st) => ((t.end - t.start) * screens) / (screens + 1);
       const st = ScrollTrigger.create({
         trigger: sec,
@@ -854,10 +858,7 @@ export default function EventsStreet() {
           if (trip) return;
           draw(playAt(phases, progress * screens, "len"));
           // The loop ends as it starts: at its end, jump back a loop's length (keeping any overshoot) and walk on.
-          if (into >= len) {
-            looped = true;
-            jump(self.scroll() - len);
-          }
+          gate.update(into >= len, self.scroll());
         },
       });
 
@@ -896,6 +897,7 @@ export default function EventsStreet() {
         cancelAnimationFrame(raf);
         if (trip) getLenis()?.start();
         goTo.current = null;
+        gate.dispose();
         st.kill(true);
         ro.disconnect();
         mixer.stopAllAction();

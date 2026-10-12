@@ -4,11 +4,11 @@
 // from its chosen moment, the next one when it ends. Browsers allow sound only after the visitor interacts, so every
 // click, tap or key press tries to start it until it plays, unless the visitor paused it (remembered). Lives in the
 // layout, so the song carries on from page to page. The "now playing" card is painted like the site's buttons; it
-// appears once the player is ready and stays away if YouTube is blocked or a video is unavailable. On a phone it is
-// a compact pill (equaliser, next, play) so it covers as little as it can.
+// appears once the player is ready and stays away if YouTube is blocked or a video is unavailable. On a phone the
+// YouTube and Spotify links drop out to keep it small. It can be dragged anywhere; the spot is kept.
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Pause, Play, SkipBack, SkipForward, SpotifyLogo, YoutubeLogo } from "@phosphor-icons/react";
+import { DotsSixVertical, Pause, Play, SkipBack, SkipForward, SpotifyLogo, YoutubeLogo } from "@phosphor-icons/react";
 
 const SONGS = [
   { id: "Q-pA2JKBsE8", start: 93, title: "Pran", artist: "Ritviz" },
@@ -20,6 +20,8 @@ const SONGS = [
 ];
 const VOLUME = 60;
 const MUTED_KEY = "bgm-muted";
+const POS_KEY = "bgm-pos"; // where the visitor dragged the card to, remembered
+const EDGE = 6; // the card is kept this many px inside the screen
 
 type YTPlayer = {
   playVideo(): void;
@@ -47,6 +49,48 @@ export default function MusicPlayer() {
   // read inside the player's callbacks, which are made once
   const state = useRef({ idx: 0, playing: false, muted: false, wanted: false, ready: false });
   const controls = useRef({ next: () => {}, prev: () => {}, toggle: () => {} }); // set up with the player
+  // The card can be picked up and put anywhere: dragged by any part of it but its buttons, by mouse or finger.
+  const card = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const grab = useRef<{ dx: number; dy: number; id: number } | null>(null);
+  const clampPos = (x: number, y: number) => {
+    const r = card.current?.getBoundingClientRect();
+    const [w, h] = [r?.width ?? 0, r?.height ?? 0];
+    return { x: Math.min(Math.max(EDGE, x), innerWidth - w - EDGE), y: Math.min(Math.max(EDGE, y), innerHeight - h - EDGE) };
+  };
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(POS_KEY) ?? "null");
+      if (saved) setPos(clampPos(saved.x, saved.y));
+    } catch {}
+    // keep it on screen when the window changes size (a phone turning, its browser bar sliding)
+    const keep = () => setPos((p) => (p ? clampPos(p.x, p.y) : p));
+    addEventListener("resize", keep);
+    return () => removeEventListener("resize", keep);
+  }, [ready]);
+  const drag = {
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      if ((e.target as Element).closest("a,button") || e.button !== 0) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      grab.current = { dx: e.clientX - r.left, dy: e.clientY - r.top, id: e.pointerId };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      const g = grab.current;
+      if (g && g.id === e.pointerId) setPos(clampPos(e.clientX - g.dx, e.clientY - g.dy));
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (grab.current?.id !== e.pointerId) return;
+      grab.current = null;
+      setPos((p) => {
+        try {
+          if (p) localStorage.setItem(POS_KEY, JSON.stringify(p));
+        } catch {}
+        return p;
+      });
+    },
+  };
 
   useEffect(() => {
     try {
@@ -138,7 +182,7 @@ export default function MusicPlayer() {
 
   const song = SONGS[idx];
   const q = encodeURIComponent(`${song.title} ${song.artist}`);
-  // top right: under the nav bar on inner pages (home has none)
+  // top right until moved: under the nav bar on inner pages (home has none)
   const top = pathname === "/" ? "top-3" : "top-[5.6rem]";
   const icon = "grid size-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-cream/15";
 
@@ -149,9 +193,15 @@ export default function MusicPlayer() {
       </div>
       {ready && !failed && (
         <div
+          ref={card}
           data-music
-          className={`fixed right-3 z-40 flex items-center gap-0.5 rounded-full border-[3px] border-ink/60 bg-ink/45 py-0.5 backdrop-blur-md pl-3 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_rgb(242_193_78/0.7),4px_4px_0_rgb(184_22_111/0.55)] print:hidden ${top}`}
+          {...drag}
+          onPointerCancel={drag.onPointerUp}
+          style={pos ? { left: pos.x, top: pos.y } : undefined}
+          className={`fixed z-40 flex cursor-grab touch-none select-none items-center gap-0.5 rounded-full border-[3px] border-ink/60 bg-ink/45 py-0.5 pl-1 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_rgb(242_193_78/0.7),4px_4px_0_rgb(184_22_111/0.55)] backdrop-blur-md active:cursor-grabbing print:hidden ${pos ? "" : `right-3 ${top}`}`}
         >
+          {/* the grip: shows it can be moved */}
+          <DotsSixVertical size={18} weight="bold" aria-hidden="true" className="shrink-0 opacity-70" />
           {/* a little equaliser, moving while the song plays */}
           <span aria-hidden="true" className="mr-2 flex h-3 items-end gap-0.5 max-sm:mr-1">
             {[0, -0.3, -0.6].map((d) => (
@@ -162,7 +212,7 @@ export default function MusicPlayer() {
               />
             ))}
           </span>
-          <span className="mr-1 max-w-[min(34vw,14rem)] truncate font-display text-xs max-sm:hidden">
+          <span className="mr-1 max-w-[min(30vw,14rem)] truncate font-display text-xs">
             {song.title} <span className="font-sans font-normal text-cream/80">· {song.artist}</span>
           </span>
           <a className={`${icon} max-sm:hidden`} href={`https://www.youtube.com/watch?v=${song.id}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on YouTube`}>
@@ -171,7 +221,7 @@ export default function MusicPlayer() {
           <a className={`${icon} max-sm:hidden`} href={`https://open.spotify.com/search/${q}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on Spotify`}>
             <SpotifyLogo size={20} weight="fill" aria-hidden="true" />
           </a>
-          <button type="button" className={`${icon} max-sm:hidden`} onClick={() => controls.current.prev()} aria-label="Previous song">
+          <button type="button" className={icon} onClick={() => controls.current.prev()} aria-label="Previous song">
             <SkipBack size={18} weight="fill" aria-hidden="true" />
           </button>
           <button type="button" className={icon} onClick={() => controls.current.next()} aria-label="Next song">

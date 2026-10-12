@@ -11,7 +11,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contacts } from "@/data/content";
-import { glideScroll, jumpScroll } from "./ScrollFx";
+import { glideScroll, jumpScroll, loopGate } from "./ScrollFx";
 import { useHold } from "./Transition";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -315,6 +315,10 @@ export default function PhoneDial() {
       // dials on, round and round. The pin runs a screen past the tour so the wrap is always reachable: on a phone the
       // address bar hides as the page scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
       const legs = shots.length - 1;
+      const gate = loopGate(() => {
+        calls++;
+        jumpScroll(Math.max(st!.start, scrollY - tour()));
+      });
       // the tour's length in pixels, without the runway (from the trigger passed in: create() runs onUpdate before st is set)
       const tour = (t: { start: number; end: number } = st!) => ((t.end - t.start) * legs) / (legs + 1);
       const st = matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -330,10 +334,7 @@ export default function PhoneDial() {
               const len = tour(self);
               progress = Math.min(1, Math.max(0, into / len));
               draw();
-              if (into >= len) {
-                calls++;
-                jumpScroll(Math.max(self.start, self.scroll() - len));
-              }
+              gate.update(into >= len, self.scroll());
             },
           });
 
@@ -354,6 +355,7 @@ export default function PhoneDial() {
 
       cleanup = () => {
         document.removeEventListener("click", dial);
+        gate.dispose();
         st?.kill(true);
         ro.disconnect();
         scene.traverse((o) => {
