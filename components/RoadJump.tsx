@@ -1268,7 +1268,7 @@ export default function RoadJump() {
   return (
     // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
     <div>
-      <section ref={pin} aria-label="Flip over the barricade" className="group relative h-[100dvh] overflow-hidden bg-cream">
+      <section ref={pin} aria-label="Flip over the barricade" className="group relative h-lvh overflow-hidden bg-cream">
         <div
           ref={host}
           role="img"
@@ -1289,7 +1289,7 @@ export default function RoadJump() {
         </div>
         {/* Destinations: the nav links as painted signboards (the shared btn, each in its own colour as in the nav bar),
             coming up one after another. */}
-        <nav aria-label="Main" className="absolute inset-x-3 bottom-14 z-[2] sm:bottom-16">
+        <nav aria-label="Main" className="absolute inset-x-3 bottom-[calc(var(--bar)+3.5rem)] z-[2] sm:bottom-[calc(var(--bar)+4rem)]">
           <ul className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {navLinks.map((l, i) => (
               <li
@@ -1320,7 +1320,7 @@ export default function RoadJump() {
         {/* Scroll hint: up from the first paint (before the scene loads), gone once scrolling starts. */}
         <p
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-16 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-mono text-sm font-bold tracking-widest text-turmeric drop-shadow-[2px_2px_0_var(--color-ink)] transition-opacity duration-300 group-data-[moved]:opacity-0"
+          className="pointer-events-none absolute bottom-[calc(var(--bar)+4rem)] left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-mono text-sm font-bold tracking-widest text-turmeric drop-shadow-[2px_2px_0_var(--color-ink)] transition-opacity duration-300 group-data-[moved]:opacity-0"
         >
           SCROLL
           <ArrowDown size={18} weight="bold" className="motion-safe:animate-bounce" />
@@ -1329,7 +1329,7 @@ export default function RoadJump() {
         <button
           type="button"
           onClick={() => skip.current?.()}
-          className="btn absolute bottom-3 left-1/2 z-[2] -translate-x-1/2 bg-marigold !px-4 !py-1.5 !text-sm tracking-widest text-ink motion-reduce:hidden group-data-[asked]:hidden"
+          className="btn absolute bottom-[calc(var(--bar)+0.75rem)] left-1/2 z-[2] -translate-x-1/2 bg-marigold !px-4 !py-1.5 !text-sm tracking-widest text-ink motion-reduce:hidden group-data-[asked]:hidden"
         >
           SKIP SCROLLING
           <FastForward size={18} weight="fill" aria-hidden="true" />

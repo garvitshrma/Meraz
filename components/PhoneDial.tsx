@@ -312,21 +312,25 @@ export default function PhoneDial() {
 
       // Pin and scrub: one screen of scrolling per shot. Reduced motion keeps the isometric still. The tour ends as it
       // starts, on the whole phone, so scrolling past its end jumps back a tour's length (keeping any overshoot) and
-      // dials on, round and round.
+      // dials on, round and round. The pin runs a screen past the tour so the wrap is always reachable: on a phone the
+      // address bar hides as the page scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
+      const legs = shots.length - 1;
+      const tour = () => ((st!.end - st!.start) * legs) / (legs + 1); // the tour's length in pixels, without the runway
       const st = matchMedia("(prefers-reduced-motion: reduce)").matches
         ? null
         : ScrollTrigger.create({
             trigger: sec,
             start: "top top",
-            end: `+=${(shots.length - 1) * 100}%`,
+            end: `+=${(legs + 1) * 100}%`,
             pin: true,
             scrub: true,
             onUpdate: (self) => {
-              progress = self.progress;
+              const into = self.scroll() - self.start;
+              progress = Math.min(1, Math.max(0, into / tour()));
               draw();
-              if (self.scroll() >= self.end - 1) {
+              if (into >= tour()) {
                 calls++;
-                jumpScroll(Math.max(self.start, self.scroll() - (self.end - self.start)));
+                jumpScroll(Math.max(self.start, self.scroll() - tour()));
               }
             },
           });
@@ -339,7 +343,7 @@ export default function PhoneDial() {
         if (!a || !st) return;
         e.preventDefault();
         const j = Number(a.dataset.dial);
-        const y = st.start + ((j + 1) / (shots.length - 1)) * (st.end - st.start);
+        const y = st.start + ((j + 1) / legs) * tour();
         // unhurried: two seconds, and most of another for every screen of the way, easing in and out, so the camera
         // is seen dialling round to the card rather than jumping
         glideScroll(y, Math.min(9, 2 + (Math.abs(y - scrollY) / innerHeight) * 0.75));
@@ -382,9 +386,9 @@ export default function PhoneDial() {
           on the phone: the hand-painted sign, the call meter in its wooden case, the call rates written on an inland
           letter. They sit in front of the phone on the whole-phone view, and fade out while the camera is in among the
           cards. */}
-      <section ref={pin} id="booth" aria-label="Rotary telephone" className="warli group relative h-[100dvh] overflow-hidden bg-[#6a2a14]">
+      <section ref={pin} id="booth" aria-label="Rotary telephone" className="warli group relative h-lvh overflow-hidden bg-[#6a2a14]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_58%,rgb(246_239_225/.24),transparent_62%)]" aria-hidden="true" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 bottom-6 top-24 flex flex-col booth:inset-x-8 booth:flex-row booth:items-center booth:justify-between">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 bottom-[calc(var(--bar)+1.5rem)] top-24 flex flex-col booth:inset-x-8 booth:flex-row booth:items-center booth:justify-between">
           {/* the sign: a board painted cream, block capitals in ochre and vermilion, a Warli border top and bottom */}
           <div data-sign className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 self-center overflow-hidden rounded-sm border-[3px] border-[#3b2414] bg-cream text-center shadow-[8px_8px_0_rgb(0_0_0/0.35)] booth:-rotate-2 booth:self-auto">
             <div className="warli-border h-5" />

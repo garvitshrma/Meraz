@@ -59,8 +59,8 @@
   --animate-fly-left: fly-left 16s linear infinite;
   --animate-bob: bob 1.8s ease-in-out infinite alternate;
   --animate-flap: flap 0.32s ease-in-out infinite alternate;
-  /* the truck driving across the nav bar, right to left */
-  --animate-truck: truck-drive 26s linear infinite;
+  /* the truck driving to and fro across its stretch of the nav bar */
+  --animate-truck: truck-drive 22s linear infinite;
   /* Sponsors: petals falling the height of the page (each column sets its own duration), rocking as they go */
   --animate-fall: fall 30s linear infinite;
   --animate-flutter: flutter 2.4s ease-in-out infinite alternate;
@@ -70,6 +70,9 @@
 }
 
 :root {
+  /* the height a phone's browser bar takes while it shows (0 when it hides, and on desktop): full-screen pinned scenes
+     are 100lvh tall, so a bar sliding in and out never opens a gap under them, and lift what sits at their foot by this */
+  --bar: calc(100lvh - 100dvh);
   --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -380,12 +383,27 @@ body:has([data-page-screen][data-up]) .animate-prowl {
   }
 }
 @keyframes truck-drive {
-  /* across its lane (a size container): in at the right edge, out at the left */
-  from {
-    translate: 100cqw 0;
+  /* to and fro along its lane (a size container): left from the right end, flip round at the left end, back to the
+     right, flip again. The picture faces left. */
+  0% {
+    translate: calc(100cqw - 100%) 0;
+    scale: 1 1;
   }
-  to {
-    translate: -100% 0;
+  49.99% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+  50% {
+    translate: 0 0;
+    scale: -1 1;
+  }
+  99.99% {
+    translate: calc(100cqw - 100%) 0;
+    scale: -1 1;
+  }
+  100% {
+    translate: calc(100cqw - 100%) 0;
+    scale: 1 1;
   }
 }
 @keyframes fly-right {
@@ -418,6 +436,15 @@ body:has([data-page-screen][data-up]) .animate-prowl {
   }
   to {
     scale: 1 -0.55;
+  }
+}
+/* the music card's equaliser */
+@keyframes eq {
+  from {
+    height: 25%;
+  }
+  to {
+    height: 100%;
   }
 }
 @keyframes puff {

@@ -7,6 +7,7 @@ import { TransitionProvider } from "@/components/Transition";
 import NavBar from "@/components/NavBar";
 import ScrollFx from "@/components/ScrollFx";
 import ScrollHint from "@/components/ScrollHint";
+import MusicPlayer from "@/components/MusicPlayer";
 
 const bungee = Bungee({ weight: "400", subsets: ["latin"], variable: "--font-bungee", display: "swap" });
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="main">{children}</main>
           <ScrollFx />
           <ScrollHint />
+          <MusicPlayer />
         </TransitionProvider>
       </body>
     </html>

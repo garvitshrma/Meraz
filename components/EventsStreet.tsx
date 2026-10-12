@@ -833,24 +833,28 @@ export default function EventsStreet() {
       // Moves the scroll at once (progress is set to where it lands first).
       const jump = (y: number) => {
         y = Math.max(st.start, y);
-        progress = (y - st.start) / (st.end - st.start);
+        progress = Math.min(1, (y - st.start) / loop());
         jumpScroll(y);
       };
-      // Pin and scrub: one screen of scrolling per screen in the phases. While a trip plays, scrolling is held off.
+      // Pin and scrub: one screen of scrolling per screen in the phases. While a trip plays, scrolling is held off. The
+      // pin runs a screen past the loop so its end is always reachable: on a phone the address bar hides as the page
+      // scrolls, the screen grows, and the page's last few dozen pixels go out of reach.
+      const loop = () => ((st.end - st.start) * screens) / (screens + 1); // the loop's length in pixels, without the runway
       const st = ScrollTrigger.create({
         trigger: sec,
         start: "top top",
-        end: `+=${screens * 100}%`,
+        end: `+=${(screens + 1) * 100}%`,
         pin: true,
         scrub: true,
         onUpdate: (self) => {
-          progress = self.progress;
+          const into = self.scroll() - self.start;
+          progress = Math.min(1, Math.max(0, into / loop()));
           if (trip) return;
           draw(playAt(phases, progress * screens, "len"));
           // The loop ends as it starts: at its end, jump back a loop's length (keeping any overshoot) and walk on.
-          if (self.scroll() >= self.end - 1) {
+          if (into >= loop()) {
             looped = true;
-            jump(self.scroll() - (self.end - self.start));
+            jump(self.scroll() - loop());
           }
         },
       });
@@ -872,7 +876,7 @@ export default function EventsStreet() {
         const hold = holds.find((h) => h.k === k && h.chase === chase) ?? holds.find((h) => h.k === k)!;
         trip = null;
         getLenis()?.start();
-        jump(st.start + (hold.u / screens) * (st.end - st.start));
+        jump(st.start + (hold.u / screens) * loop());
       };
       goTo.current = (k) => {
         if (shown.stall === k && shown.push === 1) return; // already there
@@ -941,7 +945,7 @@ export default function EventsStreet() {
   return (
     // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
     <div>
-      <section ref={pin} aria-label="The mela: one stall per event category" className="group relative h-[100dvh] overflow-hidden" style={{ background: "#141a2e" }}>
+      <section ref={pin} aria-label="The mela: one stall per event category" className="group relative h-lvh overflow-hidden" style={{ background: "#141a2e" }}>
         <div ref={layer} className="absolute inset-0" />
         <div ref={host} className="absolute inset-0" style={{ pointerEvents: "none" }} />
         <div className="pointer-events-none absolute left-4 top-24 transition-opacity duration-500 group-data-[moved]:opacity-0 md:left-8">
@@ -956,7 +960,7 @@ export default function EventsStreet() {
         </div>
         {/* A button per stall: he walks straight there and the camera turns to its page, no scrolling. Laid out (not
             shown) before the scene is ready, so the scene can measure the space it takes. */}
-        <nav ref={bar} aria-label="Go to a stall" className="invisible absolute inset-x-0 bottom-0 flex flex-wrap justify-center gap-2 px-4 py-3 group-data-[ready]:visible">
+        <nav ref={bar} aria-label="Go to a stall" className="invisible absolute inset-x-0 bottom-[var(--bar)] flex flex-wrap justify-center gap-2 px-4 py-3 group-data-[ready]:visible">
           {eventCategories.map((c, i) => (
             <button
               key={c.id}

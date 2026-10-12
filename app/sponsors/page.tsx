@@ -91,7 +91,19 @@ export default function SponsorsPage() {
   return (
     <div className="bg-[#0f8b8d] pt-[4.4rem]">
       <h1 className="sr-only">Sponsors: the visionaries behind the reverie</h1>
-      <img src="/sponsors/stage/top.webp" alt="" width={1920} height={530} className="block w-full" />
+      {/* the title, as big as the screen allows: the band scaled until its Ganesh pair and lettering (1090 of its 1920
+          wide) span 96% of the screen (on a phone, just the lettering, 835 wide), its far sides cropped; on wide screens it fills the first screen, the dots run on
+          below it, a fade hiding where its own (larger) dots meet them */}
+      <div className="sponsor-dots relative overflow-hidden sm:min-h-[calc(100svh-4.4rem)]">
+        <img
+          src="/sponsors/stage/top.webp"
+          alt=""
+          width={1920}
+          height={530}
+          className="relative left-1/2 block w-[221vw] max-w-none -translate-x-1/2 sm:w-[169vw]"
+        />
+        <div aria-hidden="true" className="absolute inset-x-0 top-[calc(221vw*530/1920-3rem)] h-12 sm:top-[calc(169vw*530/1920-3rem)] bg-gradient-to-b from-transparent to-[#0f8b8d]" />
+      </div>
 
       <div className="sponsor-dots relative overflow-x-clip">
         {/* the pillars' carved edge, down each side */}
