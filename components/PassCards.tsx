@@ -55,7 +55,7 @@ function Ticket({ p, details, className = "", fontSize }: { p: Pass; details?: s
         className="absolute left-[29.1%] top-[81.3%] aspect-square w-[7.9%] -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform hover:scale-110 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-95"
       />
       {details !== undefined && (
-        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-hidden leading-snug ${details}`}>
+        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-hidden text-[0.92em] leading-tight ${details}`}>
           <Details p={p} />
         </div>
       )}
