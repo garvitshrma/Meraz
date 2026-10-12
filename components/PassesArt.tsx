@@ -183,7 +183,7 @@ export function Stamp({ id, className }: { id: string; className: string }) {
         <circle r="56" strokeWidth="3.5" />
         <circle r="31" strokeWidth="1.6" />
       </g>
-      <text fill="currentColor" fontSize="9" letterSpacing="1" fontWeight="700" style={{ fontFamily: "var(--font-courier)" }}>
+      <text fill="currentColor" fontSize="9" letterSpacing="1" fontWeight="700" style={{ fontFamily: "var(--font-mono)" }}>
         <textPath href={`#${id}`}>MERAZ 7.0 · BOOKING OFFICE · IIT BHILAI ·</textPath>
       </text>
       <text fill="currentColor" fontSize="11" textAnchor="middle" y="4" style={{ fontFamily: "var(--font-yatra)" }}>
@@ -365,7 +365,7 @@ export function Station({ id, className }: { id: string; className: string }) {
         <text x="720" y="191" fontSize="19" style={{ fontFamily: "var(--font-yatra)" }}>
           मेराज़
         </text>
-        <text x="720" y="215" fontSize="16" style={{ fontFamily: "var(--font-bungee)" }}>
+        <text x="720" y="215" fontSize="16" style={{ fontFamily: "var(--font-display)" }}>
           MERAZ JN.
         </text>
       </g>
@@ -377,7 +377,7 @@ export function Station({ id, className }: { id: string; className: string }) {
         <text x="295" y="172" fontSize="11" style={{ fontFamily: "var(--font-yatra)" }}>
           टिकट घर
         </text>
-        <text x="425" y="172" fontSize="8.5" fontWeight="700" style={{ fontFamily: "var(--font-courier)" }}>
+        <text x="425" y="172" fontSize="8.5" fontWeight="700" style={{ fontFamily: "var(--font-mono)" }}>
           WAITING ROOM
         </text>
       </g>
@@ -440,10 +440,10 @@ export function Station({ id, className }: { id: string; className: string }) {
         <path d="M930 320H1040" stroke="#c9c9c9" strokeWidth="4" />
 
         <g fill={INK} stroke="none" textAnchor="middle">
-          <text x="1043" y="263" fontSize="10" style={{ fontFamily: "var(--font-bungee)" }}>
+          <text x="1043" y="263" fontSize="10" style={{ fontFamily: "var(--font-display)" }}>
             7.0
           </text>
-          <text x="1340" y="285" fontSize="11" fontWeight="700" letterSpacing="1.5" fill={CREAM} style={{ fontFamily: "var(--font-courier)" }}>
+          <text x="1340" y="285" fontSize="11" fontWeight="700" letterSpacing="1.5" fill={CREAM} style={{ fontFamily: "var(--font-mono)" }}>
             MERAZ EXPRESS
           </text>
         </g>

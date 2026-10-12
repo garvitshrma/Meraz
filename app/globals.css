@@ -36,13 +36,13 @@
   /* the Contact page's Warli wall: red ochre (geru) */
   --color-geru: #8f3a1e;
 
-  --font-display: var(--font-bungee), Impact, sans-serif;
-  --font-poster: var(--font-rozha), Georgia, serif;
+  --font-display: "Luminari", var(--font-almendra), Georgia, serif;
+  --font-poster: var(--font-display);
   --font-deva: var(--font-yatra), var(--font-rozha), serif;
-  --font-sans: var(--font-grotesk), system-ui, sans-serif;
-  --font-mono: var(--font-courier), ui-monospace, monospace;
+  --font-sans: var(--font-arbutus), Georgia, serif;
+  --font-mono: var(--font-sans);
   --font-slab: var(--font-arbutus), Georgia, serif;
-  --font-bebas: var(--font-bebas-neue), Impact, sans-serif;
+  --font-bebas: var(--font-display);
 
   --animate-spin-slow: spin 120s linear infinite;
   --animate-record: spin 1.8s linear infinite; /* a record on the loading screen's radio, at 33 rpm */
@@ -82,6 +82,10 @@ html {
   background: var(--color-cream);
   color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
+  scrollbar-width: none; /* the page scrolls, without a bar */
+}
+html::-webkit-scrollbar {
+  display: none; /* older Safari */
 }
 body {
   background: var(--color-cream);

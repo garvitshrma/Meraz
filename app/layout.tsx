@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Arbutus_Slab, Bebas_Neue, Bungee, Courier_Prime, Rozha_One, Space_Grotesk, Yatra_One } from "next/font/google";
+import { Almendra, Arbutus_Slab, Rozha_One, Yatra_One } from "next/font/google";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import { site } from "@/data/site";
@@ -9,13 +9,11 @@ import ScrollFx from "@/components/ScrollFx";
 import ScrollHint from "@/components/ScrollHint";
 import MusicPlayer from "@/components/MusicPlayer";
 
-const bungee = Bungee({ weight: "400", subsets: ["latin"], variable: "--font-bungee", display: "swap" });
-const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
+// Headings: Luminari where the visitor has it (macOS ships it; it can't be served), else Almendra, its nearest free cut.
+const almendra = Almendra({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-almendra", display: "swap" });
 const rozha = Rozha_One({ weight: "400", subsets: ["latin", "devanagari"], variable: "--font-rozha", display: "swap", preload: false });
 const yatra = Yatra_One({ weight: "400", subsets: ["latin", "devanagari"], variable: "--font-yatra", display: "swap", preload: false });
-const arbutus = Arbutus_Slab({ weight: "400", subsets: ["latin"], variable: "--font-arbutus", display: "swap", preload: false }); // About
-const bebas = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas-neue", display: "swap", preload: false }); // Sponsors, as its Canva design
-const courier = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-courier", display: "swap", preload: false });
+const arbutus = Arbutus_Slab({ weight: "400", subsets: ["latin"], variable: "--font-arbutus", display: "swap" }); // body text
 
 const description = `${site.name}, the annual techno-cultural fest of ${site.college}. ${site.theme} edition. ${site.tagline}`;
 
@@ -35,7 +33,7 @@ const boot = `try{document.documentElement.classList.add('js')}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${bungee.variable} ${grotesk.variable} ${rozha.variable} ${yatra.variable} ${courier.variable} ${arbutus.variable} ${bebas.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${almendra.variable} ${rozha.variable} ${yatra.variable} ${arbutus.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: boot }} />
       </head>

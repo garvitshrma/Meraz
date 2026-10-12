@@ -140,7 +140,7 @@ export default function PhoneDial() {
 
     (async () => {
       const css = getComputedStyle(document.documentElement);
-      const fonts = { display: css.getPropertyValue("--font-bungee").trim() || "Impact", mono: css.getPropertyValue("--font-courier").trim() || "monospace" };
+      const fonts = { display: css.getPropertyValue("--font-display").trim() || "Impact", mono: css.getPropertyValue("--font-mono").trim() || "monospace" };
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       const step = <T,>(p: Promise<T>) => p.then((v) => (loading.step(), v));
       const [gltf, stool] = await Promise.all([

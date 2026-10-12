@@ -88,7 +88,7 @@ export function Postbox({ id, className }: { id: string; className: string }) {
         <path d="M52 176H88M52 184H84M52 192H80" strokeWidth="1.2" />
       </g>
       <g fill={CREAM} textAnchor="middle">
-        <text x="70" y="126" fontSize="11" style={{ fontFamily: "var(--font-bungee)" }}>
+        <text x="70" y="126" fontSize="11" style={{ fontFamily: "var(--font-display)" }}>
           LETTER BOX
         </text>
         <text x="70" y="150" fontSize="15" style={{ fontFamily: "var(--font-yatra)" }}>

@@ -102,8 +102,9 @@ const SKIP_PACE = 2;
 // logo: its width on wide screens, gap: space between logo and lettering, both in lettering widths. On narrow screens
 // (phones) the logo grows into the height left over, up to the lettering's width. The gap is negative: the lettering's
 // picture has a clear margin over its letters (0.067 of its width), which the logo overlaps, leaving room for either
-// one's swell.
-const TITLE = { z: -10, eye: 1.63, tilt: 0.22, hair: 0.13, margin: 0.03, logo: 0.3, gap: -0.06 };
+// one's swell. drop: on landscape screens (laptops), the sign sits this share of its room lower, its foot behind his head;
+// logoDrop: and the logo this much more, nearer the lettering.
+const TITLE = { z: -10, eye: 1.63, tilt: 0.22, hair: 0.13, margin: 0.03, logo: 0.3, gap: -0.06, drop: 0.06, logoDrop: 0.02 };
 const TITLE_HOVER = 1.1; // the logo or lettering under the mouse swells to this
 // A warm glow behind the logo, size logo widths across, at opacity (added to what's behind: the night, the fireworks).
 const TITLE_GLOW = { color: 0xffb627, size: 1.6, opacity: 0.55 };
@@ -220,7 +221,7 @@ export default function RoadJump() {
       const step = <T,>(p: Promise<T>) => (p.then(tick, tick), p);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       const load = (n: string) => step(loader.loadAsync(`/models/${n}.glb`));
-      const font = getComputedStyle(document.documentElement).getPropertyValue("--font-bungee").trim() || "Impact";
+      const font = getComputedStyle(document.documentElement).getPropertyValue("--font-display").trim() || "Impact";
       // The opening shot needs only these (preloaded by app/page.tsx): it looks back down the road, away from the street.
       const image = (src: string) => {
         const i = new Image();
@@ -699,11 +700,12 @@ export default function RoadJump() {
         const gap = TITLE.gap * L;
         const G = Math.min(wide, L, Math.max(TITLE.logo * L, (room - gap - L * aspects[1]) / aspects[0])); // logo width
         const [logoBox, letterBox] = signs.map((m) => m.parent!);
-        const base = TITLE.eye + d * TITLE.hair; // the line past his hair
+        const laptop = camera.aspect > 1.2;
+        const base = TITLE.eye + d * TITLE.hair - (laptop ? TITLE.drop * room : 0); // the line past his hair
         letterBox.scale.setScalar(L);
         letterBox.position.y = base + (L * aspects[1]) / 2;
         logoBox.scale.setScalar(G);
-        logoBox.position.y = base + L * aspects[1] + gap + (G * aspects[0]) / 2;
+        logoBox.position.y = base + L * aspects[1] + gap + (G * aspects[0]) / 2 - (laptop ? TITLE.logoDrop * room : 0);
         draw(progress);
       };
       // Upload the textures while the shaders compile, rather than in the first frame.

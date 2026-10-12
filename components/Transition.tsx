@@ -14,7 +14,8 @@ import LoadingScreen from "./LoadingScreen";
 
 const SHOW_MS = 500; // the loading screen fades in, then the route changes
 const GLITCH_MS = 1200; // the glitch, over the loading screen fading in under it
-const CAP_MS = 15000; // the most a page change waits on the new page before lifting the screen anyway
+const CAP_MS = 15000; // the most a page change waits on the new page before lifting the screen anyway, and on the
+// route before loading the page afresh instead (a client navigation that failed or stalled never changes the path)
 const ROUTE = 0.3; // the meter's share for fetching the route; the new page's loading takes the rest
 // go(href, shot): shot, a picture of the screen as it is, to glitch out of
 const GoCtx = createContext<(href: string, shot?: HTMLCanvasElement) => void>(() => {});
@@ -36,6 +37,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const pending = useRef(fresh); // a change on its way, until the screen lifts
   const screen = useRef<HTMLDivElement>(null);
   const creep = useRef(0);
+  const routeCap = useRef(0);
   // where a change is: fetching, or the page loading (set from the start, so a fresh page's holds count)
   const phase = useRef<"route" | "page" | null>(fresh ? "page" : null);
   const holds = useRef<{ n: number; k: number; done: boolean }[]>([]);
@@ -55,6 +57,8 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const go = useCallback(
     (href: string, shot?: HTMLCanvasElement) => {
       if (href === pathname) return;
+      // the same page at another hash or query: no page change for the screen to wait on
+      if (new URL(href, location.href).pathname === pathname) return router.push(href);
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return router.push(href);
       pending.current = true;
       setClosed(true);
@@ -69,6 +73,8 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
         setTimeout(() => setGlitch(null), GLITCH_MS);
       }
       setTimeout(() => router.push(href), shot ? GLITCH_MS : SHOW_MS);
+      clearTimeout(routeCap.current);
+      routeCap.current = window.setTimeout(() => phase.current === "route" && location.assign(href), CAP_MS);
     },
     [pathname, router],
   );
@@ -77,6 +83,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     // pending is cleared when the screen lifts, not here, so a rerun (React's dev double mount) sets it up again
     if (!pending.current) return;
     clearInterval(creep.current);
+    clearTimeout(routeCap.current);
     // Home puts up the same screen while its scene loads, with its own meter: hand straight over to it.
     if (pathname === "/") {
       pending.current = false;

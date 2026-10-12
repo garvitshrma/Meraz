@@ -27,27 +27,31 @@ function Cut({ from: [sx, sy, sw, sh], x, y, s = 1, w = sw * s, h = sh * s, tilt
 }
 
 // The two records on the radio, in the picture's pixels: centre x, y and radius (to just inside the disc's rim). Each
-// is cut out as a circle and turns on its spindle (animate-record, 33 rpm).
+// turns on its spindle (animate-record, 33 rpm) as an HTML disc laid over its SVG, sized as the SVG lays out its
+// w x h page (style.width; dx, dy shift the picture on it). HTML, not SVG: the browser turns an HTML element on its
+// compositor, so the records keep spinning while loading (models, shader compiles) holds the main thread, where an
+// SVG element's animation freezes.
 const RECORDS = [[456, 586.5, 130], [875.5, 581, 125]] as const;
-function Records({ id, dx = 0, dy = 0 }: { id: string; dx?: number; dy?: number }) {
+function Records({ className, width, w, h, dx = 0, dy = 0 }: {
+  className: string; width: string; w: number; h: number; dx?: number; dy?: number;
+}) {
   return (
-    <>
-      <defs>
-        {RECORDS.map(([cx, cy, r], i) => (
-          <clipPath key={i} id={`${id}-${i}`}>
-            <circle cx={cx + dx} cy={cy + dy} r={r} />
-          </clipPath>
-        ))}
-      </defs>
-      {RECORDS.map(([cx, cy, r], i) => (
-        <g key={i} clipPath={`url(#${id}-${i})`}>
-          {/* turned about the spindle, given in the page's own units (the box of a cut is the whole picture's) */}
-          <g className="motion-safe:animate-record" style={{ transformBox: "view-box", transformOrigin: `${cx + dx}px ${cy + dy}px` }}>
-            <Cut from={[cx - r, cy - r, 2 * r, 2 * r]} x={cx - r + dx} y={cy - r + dy} />
-          </g>
-        </g>
+    <div aria-hidden="true" className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${className}`} style={{ width, aspectRatio: `${w} / ${h}` }}>
+      {RECORDS.map(([cx, cy, r]) => (
+        <div
+          key={cx}
+          className="absolute aspect-square rounded-full motion-safe:animate-record"
+          style={{
+            left: `${((cx + dx - r) / w) * 100}%`,
+            top: `${((cy + dy - r) / h) * 100}%`,
+            width: `${((2 * r) / w) * 100}%`,
+            backgroundImage: `url(${SRC})`,
+            backgroundSize: `${(1920 / (2 * r)) * 100}%`,
+            backgroundPosition: `${((cx - r) / (1920 - 2 * r)) * 100}% ${((cy - r) / (1080 - 2 * r)) * 100}%`,
+          }}
+        />
       ))}
-    </>
+    </div>
   );
 }
 
@@ -107,7 +111,6 @@ function Landscape({ p }: { p: string }) {
         <Cut from={[0, 0, 1920, 1080]} x={0} y={0} mask={`url(#${p}ll-fx)`} />
       </g>
       <Cut from={[790, 0, 465, 60]} x={790} y={0} />
-      <Records id={`${p}ll-disc`} />
       <g transform="matrix(1 0 0 -1 0 2160)">
         <Cut from={[0, 960, 1920, 120]} x={0} y={960} />
       </g>
@@ -182,7 +185,6 @@ function Portrait({ p }: { p: string }) {
       <Cut from={COLUMN} x={0} y={TOP} mask={`url(#${p}ls-column)`} />
       {/* over the tips of the picture's own butterfly at the column's left edge: the wall just above them */}
       <Cut from={[COLUMN[0], 390, 26, 200]} x={0} y={TOP + 595} h={200} />
-      <Records id={`${p}ls-disc`} dx={-COLUMN[0]} dy={TOP} />
       <Cut from={FLORAL} x={350} y={apron + 10} s={1.8} tilt={2} filter={`url(#${p}ls-pasted)`} />
       <rect y={apron} width={W} height={FLOOR - apron} fill={`url(#${p}ls-under)`} />
       <rect y={FLOOR - SKIRT} width={W} height={SKIRT} fill="#3a2817" />
@@ -203,9 +205,12 @@ function Portrait({ p }: { p: string }) {
 // and when it shows; it fades in and out.
 export default function LoadingScreen({ id, className }: { id: string; className: string }) {
   return (
-    <div role="status" className={`absolute inset-0 bg-ink transition-[opacity,visibility] duration-500 ${className}`}>
+    <div role="status" className={`absolute inset-0 overflow-hidden bg-ink transition-[opacity,visibility] duration-500 [container-type:size] ${className}`}>
       <Landscape p={id} />
       <Portrait p={id} />
+      {/* the records over each layout: Landscape's picture fitted whole (meet), Portrait's page covering (slice) */}
+      <Records className="portrait:hidden" width="min(100cqw, 100cqh * 1920 / 1080)" w={1920} h={1080} />
+      <Records className="landscape:hidden" width={`max(100cqw, 100cqh * ${W} / ${H})`} w={W} h={H} dx={-COLUMN[0]} dy={TOP} />
       {/* the meter: its owner sets --load (0 to 1) and the percentage as what it waits for lands */}
       <div className="absolute bottom-10 left-1/2 flex w-56 -translate-x-1/2 flex-col items-center gap-2 sm:w-72">
         <p className="font-mono text-sm font-bold tracking-widest text-turmeric drop-shadow-[2px_2px_0_var(--color-ink)]">
