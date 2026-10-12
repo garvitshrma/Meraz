@@ -35,3 +35,17 @@ ErrorDocument 404 /404.html
 <IfModule mod_mime.c>
   AddType model/gltf-binary .glb
 </IfModule>
+
+# Next's build output is named by content hash: a changed file gets a new name, so it can be cached for good.
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/_next/static/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+</IfModule>
+
+# Gzip on the way out: the scripts shrink to under a third (home's ~1.5 MB to ~0.4 MB), and the models by a quarter to
+# a third (meshopt's output is made to be gzipped on top). Pictures are compressed already, so they are left alone.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json image/svg+xml
+  AddOutputFilter DEFLATE glb bin
+</IfModule>
