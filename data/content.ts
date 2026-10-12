@@ -12,7 +12,7 @@ export const about = {
   ] as const,
 };
 
-export type SponsorTier = { tier: string; hindi: string; level: "title" | "platinum" | "gold"; sponsors: { name: string; logo: string }[] };
+export type SponsorTier = { tier: string; hindi: string; level: "title" | "platinum" | "gold"; sponsors: { name: string; logo: string; dark?: boolean }[] }; // dark: a light logo, shown on a dark ground
 export const sponsorTiers: SponsorTier[] = [
   { tier: "Title Sponsor", hindi: "मुख्य प्रायोजक", level: "title", sponsors: [{ name: "SBI", logo: "/sponsors/sbi.jpg" }] },
   { tier: "Co-Title Sponsor", hindi: "सह-प्रायोजक", level: "title", sponsors: [{ name: "CBI", logo: "/sponsors/cbi.png" }] },
@@ -24,7 +24,7 @@ export const sponsorTiers: SponsorTier[] = [
       { name: "PNB", logo: "/sponsors/pnb.webp" },
       { name: "Steel Intech", logo: "/sponsors/steel-intech.jpg" },
       { name: "Riveria", logo: "/sponsors/riveria.jpg" },
-      { name: "Blued Studio", logo: "/sponsors/blued-studio.png" },
+      { name: "Blued Studio", logo: "/sponsors/blued-studio.webp", dark: true },
       { name: "Carro Rental", logo: "/sponsors/carro-rental.png" },
     ],
   },

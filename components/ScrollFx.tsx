@@ -17,6 +17,13 @@ export function jumpScroll(y: number) {
   else window.scrollTo({ top: y, behavior: "instant" });
 }
 
+// Glides the page's scroll to y over `duration` seconds, easing in and out. lerp: 0 is what makes Lenis keep to the
+// duration: given none it falls back on its own lerp (the wheel's smoothing), which ignores the duration and races.
+export function glideScroll(y: number, duration: number) {
+  if (lenis) lenis.scrollTo(y, { duration, easing: (t) => (1 - Math.cos(Math.PI * t)) / 2, lerp: 0 });
+  else window.scrollTo({ top: y, behavior: "smooth" });
+}
+
 export default function ScrollFx() {
   const pathname = usePathname();
 

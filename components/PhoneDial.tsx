@@ -11,13 +11,14 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contacts } from "@/data/content";
-import { jumpScroll } from "./ScrollFx";
+import { glideScroll, jumpScroll } from "./ScrollFx";
 import { useHold } from "./Transition";
 
 gsap.registerPlugin(ScrollTrigger);
 
 // Phones and portrait tablets: the sign and meter stack above the phone (the booth-stack variant in globals.css).
 const STACKED = "(width < 48rem), (max-aspect-ratio: 1199/1000)";
+const EASE = 0.35; // how much the camera slows at each card: 0 even all the way, 1 to a standstill
 const FOV = 18; // narrow, so the opening shot reads as near-isometric
 // public/models/stool.glb: its seat's top in its own units, and the scale that makes the seat a little wider than the
 // phone's base.
@@ -257,10 +258,12 @@ export default function PhoneDial() {
       let top = 0; // the whole-phone view's top edge: the nav bar, or the bottom of the stacked sign and meter
       let shift = 0; // side by side, the whole phone sits centred this far right of the screen's centre, between the panels
       const draw = () => {
-        // Each leg: hold on the shot for the first and last 20% of its scroll, glide in between.
+        // Each leg: one continuous glide, no hold on the shot. Mostly even, with a little easing (EASE) so the camera
+        // slows a touch as it passes each card without ever stopping there.
         const legs = progress * (shots.length - 1);
         const i = Math.min(Math.floor(legs), shots.length - 2);
-        const t = THREE.MathUtils.smoothstep(legs - i, 0.2, 0.8);
+        const f = legs - i;
+        const t = THREE.MathUtils.lerp(f, THREE.MathUtils.smoothstep(f, 0, 1), EASE);
         const [a, b] = [shots[i], shots[i + 1]];
         const [da, db] = [a === iso ? a.dist : a.dist * zoom, b === iso ? b.dist : b.dist * zoom];
         look.lerpVectors(a.look, b.look, t);
@@ -328,7 +331,23 @@ export default function PhoneDial() {
             },
           });
 
+      // A contact's button on the page above (data-dial = its place in contacts) scrolls the tour to its hole, the
+      // camera dialling round through the holes before it. Without the tour (reduced motion) the button's own #booth
+      // link does.
+      const dial = (e: MouseEvent) => {
+        const a = (e.target as Element).closest<HTMLElement>("[data-dial]");
+        if (!a || !st) return;
+        e.preventDefault();
+        const j = Number(a.dataset.dial);
+        const y = st.start + ((j + 1) / (shots.length - 1)) * (st.end - st.start);
+        // unhurried: two seconds, and most of another for every screen of the way, easing in and out, so the camera
+        // is seen dialling round to the card rather than jumping
+        glideScroll(y, Math.min(9, 2 + (Math.abs(y - scrollY) / innerHeight) * 0.75));
+      };
+      document.addEventListener("click", dial);
+
       cleanup = () => {
+        document.removeEventListener("click", dial);
         st?.kill(true);
         ro.disconnect();
         scene.traverse((o) => {
@@ -359,31 +378,44 @@ export default function PhoneDial() {
   return (
     // GSAP wraps the pinned section in a spacer; this outer div is what React removes on unmount.
     <div>
-      {/* Dressed as a 90s STD-ISD-PCO booth: yellow walls, the block-letter sign, a call-rate card and the call meter. They
-          sit in front of the phone on the whole-phone view, and fade out while the camera is in among the cards. */}
-      <section ref={pin} aria-label="Rotary telephone" className="group relative h-[100dvh] overflow-hidden bg-turmeric">
-        <div className="halftone absolute inset-0 text-ink/10" aria-hidden="true" />
+      {/* Dressed as a 90s STD-ISD-PCO booth painted Warli fashion, like the wall above it but deeper in shadow, a light
+          on the phone: the hand-painted sign, the call meter in its wooden case, the call rates written on an inland
+          letter. They sit in front of the phone on the whole-phone view, and fade out while the camera is in among the
+          cards. */}
+      <section ref={pin} id="booth" aria-label="Rotary telephone" className="warli group relative h-[100dvh] overflow-hidden bg-[#6a2a14]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_58%,rgb(246_239_225/.24),transparent_62%)]" aria-hidden="true" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 bottom-6 top-24 flex flex-col booth:inset-x-8 booth:flex-row booth:items-center booth:justify-between">
-          {/* the sign: black block capitals, stacked, on a yellow board with a black border */}
-          <div data-sign className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 self-center border-[6px] border-ink bg-marigold px-4 py-2 text-center shadow-[8px_8px_0_var(--color-ink)] booth:-rotate-2 booth:self-auto booth:px-6 booth:py-4">
-            <p className="font-display text-[clamp(1.5rem,4.5vw,4.5rem)] leading-none text-ink booth-stack:flex booth-stack:gap-3">
-              <span className="block">STD</span>
-              <span className="block">ISD</span>
-              <span className="block text-vermillion-deep">PCO</span>
-            </p>
-            <p className="mt-2 font-deva text-base text-ink booth:text-xl">यहाँ से देश-विदेश बात करें</p>
+          {/* the sign: a board painted cream, block capitals in ochre and vermilion, a Warli border top and bottom */}
+          <div data-sign className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 self-center overflow-hidden rounded-sm border-[3px] border-[#3b2414] bg-cream text-center shadow-[8px_8px_0_rgb(0_0_0/0.35)] booth:-rotate-2 booth:self-auto">
+            <div className="warli-border h-5" />
+            <div className="px-4 py-2 booth:px-6 booth:py-4">
+              <p className="font-display text-[clamp(1.5rem,4.5vw,4.5rem)] leading-none text-geru booth-stack:flex booth-stack:gap-3">
+                <span className="block">STD</span>
+                <span className="block">ISD</span>
+                <span className="block text-vermillion-deep">PCO</span>
+              </p>
+              <p className="mt-2 font-deva text-base text-ink booth:text-xl">यहाँ से देश-विदेश बात करें</p>
+            </div>
+            <div className="warli-border h-5" />
           </div>
           <div data-side className="flex justify-center booth-stack:mt-4 booth:flex-col booth:items-end booth:gap-8">
             {/* the call meter: duration and charge, ticking as the visitor scrolls (stacked, it sits under the sign) */}
-            <div className="border-4 border-ink bg-ink p-2 shadow-[6px_6px_0_var(--color-vermillion-deep)] relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 booth:rotate-1 booth:p-3">
-              <p className="font-mono text-[10px] font-bold tracking-widest text-cream/70 booth:text-xs">DURATION · AMOUNT</p>
+            <div className="relative z-[1] rounded-md border-4 border-[#2a170b] bg-[#3b2414] p-2.5 shadow-[6px_6px_0_rgb(0_0_0/0.35)] transition-opacity duration-300 group-data-[dialing]:opacity-0 booth:rotate-1 booth:p-4">
+              {["left-1 top-1", "right-1 top-1", "bottom-1 left-1", "bottom-1 right-1"].map((at) => (
+                <span key={at} className={`absolute size-1.5 rounded-full bg-[#d9a521] ${at}`} />
+              ))}
+              <p className="font-mono text-[10px] font-bold tracking-widest text-cream/80 booth:text-xs">DURATION · AMOUNT</p>
               <p ref={meter} className="scanlines mt-1 bg-[#1f0d07] px-2 py-1 font-mono text-lg font-bold tabular-nums text-[#ff6a3d] [text-shadow:0_0_8px_#ff6a3d] booth:text-3xl">
                 00:00 · Rs.0.00
               </p>
             </div>
-            {/* the rate card, hand-lettered on paper and taped up */}
-            <div className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 hidden rotate-2 border-2 border-ink bg-cream px-5 py-4 font-mono text-sm shadow-[5px_5px_0_var(--color-ink)] booth:block">
-              <span className="absolute -top-3 left-1/2 h-5 w-16 -translate-x-1/2 -rotate-3 bg-paper/80" />
+            {/* the rate card, written on a blue inland letter, its stamp in the corner */}
+            <div className="relative z-[1] transition-opacity duration-300 group-data-[dialing]:opacity-0 hidden rotate-2 border border-[#7c97ad] bg-[#cfe0ee] px-5 pb-4 pt-5 font-mono text-sm text-ink shadow-[5px_5px_0_rgb(0_0_0/0.35)] booth:block">
+              <span className="absolute -top-3 right-3 rotate-6 border-2 border-dashed border-cream bg-rani-deep px-1.5 py-1 text-center font-display text-[9px] leading-tight text-cream">
+                भारत
+                <br />
+                INDIA 15
+              </span>
               <p className="font-display text-lg text-rani-deep">CALL RATES</p>
               <p className="mt-2 flex justify-between gap-6"><span className="font-bold">LOCAL</span>Rs.1 / 3 min</p>
               <p className="flex justify-between gap-6"><span className="font-bold">STD</span>Rs.2.40 / min</p>

@@ -33,6 +33,8 @@
   --color-maroon: #450901;
   --color-navy: #08273b;
   --color-brick: #af4710;
+  /* the Contact page's Warli wall: red ochre (geru) */
+  --color-geru: #8f3a1e;
 
   --font-display: var(--font-bungee), Impact, sans-serif;
   --font-poster: var(--font-rozha), Georgia, serif;
@@ -40,11 +42,31 @@
   --font-sans: var(--font-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-courier), ui-monospace, monospace;
   --font-slab: var(--font-arbutus), Georgia, serif;
+  --font-bebas: var(--font-bebas-neue), Impact, sans-serif;
 
   --animate-spin-slow: spin 120s linear infinite;
   --animate-record: spin 1.8s linear infinite; /* a record on the loading screen's radio, at 33 rpm */
   /* the About page's elephant: walks in from behind the wall to the doorway, his head bobbing with each step */
   --animate-elephant: elephant-walk 3.2s 0.8s cubic-bezier(0.25, 0.6, 0.4, 1) both, elephant-step 0.53s 0.8s 6 ease-in-out;
+  /* Passes: the dancer swaying from her feet; the tiger prowling in toward the title */
+  --animate-sway: sway 3.6s ease-in-out infinite alternate;
+  --animate-prowl: prowl 1.6s 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  /* and its mela: bells swinging on the garland, smoke off the engine at the station */
+  --animate-swing: swing 2.6s ease-in-out infinite alternate;
+  --animate-puff: puff 3.2s ease-out infinite;
+  /* Contact: pigeons crossing the hero (each sets its own duration), bobbing, wings beating */
+  --animate-fly-right: fly-right 16s linear infinite;
+  --animate-fly-left: fly-left 16s linear infinite;
+  --animate-bob: bob 1.8s ease-in-out infinite alternate;
+  --animate-flap: flap 0.32s ease-in-out infinite alternate;
+  /* the truck driving across the nav bar, right to left */
+  --animate-truck: truck-drive 26s linear infinite;
+  /* Sponsors: petals falling the height of the page (each column sets its own duration), rocking as they go */
+  --animate-fall: fall 30s linear infinite;
+  --animate-flutter: flutter 2.4s ease-in-out infinite alternate;
+  /* the Express running through the station (keep in step with RUN and RUN_S in components/PassesArt.tsx) */
+  --animate-train-run: train-run 36s linear infinite;
+  --animate-roll: roll 1s linear infinite; /* each wheel sets its own duration */
 }
 
 :root {
@@ -139,11 +161,35 @@ p {
   -webkit-text-stroke: 0.035em var(--color-ink);
   paint-order: stroke fill;
 }
+/* Sponsors: the Canva design's pink dot field on its teal (public/sponsors/dots.svg, the design's own dots), set so
+   its rows run on into the bottom band (public/sponsors/stage/bottom.webp) */
+/* Sponsors: a strip of mirror-work embroidery (shisha): a round mirror in a stitched ring, petals between */
+@utility shisha {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28'%3E%3Cdefs%3E%3CradialGradient id='m' cx='.35' cy='.35'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='.6' stop-color='%23c9d3da'/%3E%3Cstop offset='1' stop-color='%238a9aa6'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='14' cy='14' r='9' fill='%23ff2e88'/%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%23ffd23f' stroke-width='2' stroke-dasharray='1.5 2'/%3E%3Ccircle cx='14' cy='14' r='5.5' fill='url(%23m)'/%3E%3Cpath d='M30 14C34 8 38 8 42 14C38 20 34 20 30 14Z' fill='%23ffd23f'/%3E%3Cpath d='M42 14L46 10M42 14L46 18' stroke='%23ffd23f' stroke-width='1.5'/%3E%3Ccircle cx='50' cy='14' r='2' fill='%23ff2e88'/%3E%3C/svg%3E") repeat-x center / auto 100%;
+}
+@utility sponsor-dots {
+  background: url(/sponsors/dots.svg) repeat-y center bottom 0.9375vw / 100% auto, #0f8b8d;
+}
+/* Contact: Warli figures in rice-paste white on the ochre wall (public/contact/warli.svg) */
+@utility warli {
+  background-image: url(/contact/warli.svg);
+  background-size: 320px;
+}
+/* Contact: the wall's foot, a Warli border: a white zigzag between two lines, a dot in each fold */
+@utility warli-border {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cg fill='none' stroke='%23f6efe1' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M0 3H40M0 25H40M0 21L10 7 20 21 30 7 40 21'/%3E%3C/g%3E%3Cg fill='%23f6efe1'%3E%3Ccircle cx='10' cy='17' r='1.8'/%3E%3Ccircle cx='30' cy='11' r='1.8'/%3E%3C/g%3E%3C/svg%3E") repeat-x center / 40px 28px var(--color-geru);
+}
+/* Passes: a faint Madhubani panel, painted bharni style (public/passes/madhubani.svg) */
+@utility madhubani {
+  background-image: url(/passes/madhubani.svg);
+  background-size: 360px;
+}
 @utility sunburst {
   background: repeating-conic-gradient(from 0deg, var(--ray-a, #f4a300) 0deg 9deg, var(--ray-b, #f2c14e) 9deg 18deg);
 }
 
-/* Chunky print-style button */
+/* Chunky button, painted truck-art fashion: an ink edge, a turmeric frame inside it lined again in ink (like a
+   painted panel), a row of white dots along top and bottom, and the hard print shadow. Colour comes from a bg-*. */
 @utility btn {
   display: inline-flex;
   align-items: center;
@@ -152,16 +198,42 @@ p {
   font-size: 1rem;
   padding: 0.8rem 1.4rem;
   border: 3px solid var(--color-ink);
-  box-shadow: 5px 5px 0 var(--color-ink);
+  border-radius: 0.6rem 0.6rem 0.25rem 0.25rem;
+  background-image:
+    radial-gradient(circle, rgb(255 255 255 / 0.75) 1.3px, transparent 1.7px),
+    radial-gradient(circle, rgb(255 255 255 / 0.75) 1.3px, transparent 1.7px);
+  background-size: 9px 6px;
+  background-position: 0 2px, 0 calc(100% - 2px);
+  background-repeat: repeat-x;
+  box-shadow:
+    inset 0 0 0 3px var(--color-turmeric),
+    inset 0 0 0 4.5px var(--color-ink),
+    5px 5px 0 var(--color-ink);
   transition: transform 0.15s, box-shadow 0.15s;
   &:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0 var(--color-ink);
+    transform: translate(-2px, -2px) rotate(-1deg);
+    box-shadow:
+      inset 0 0 0 3px var(--color-turmeric),
+      inset 0 0 0 4.5px var(--color-ink),
+      7px 7px 0 var(--color-rani-deep);
   }
   &:active {
     transform: translate(3px, 3px);
-    box-shadow: 2px 2px 0 var(--color-ink);
+    box-shadow:
+      inset 0 0 0 3px var(--color-turmeric),
+      inset 0 0 0 4.5px var(--color-ink),
+      2px 2px 0 var(--color-ink);
   }
+}
+/* The nav bar's painted ground: cream, a faint lattice of rani diamonds */
+@utility nav-ground {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 4L20 14 14 24 8 14Z' fill='none' stroke='%23e0218a' stroke-opacity='.16' stroke-width='1.5'/%3E%3Ccircle cx='14' cy='14' r='1.6' fill='%230f7c7c' fill-opacity='.25'/%3E%3C/svg%3E"),
+    var(--color-cream);
+}
+/* The fringe (jhalar) hung under the nav bar: pennants in turn rani, marigold, teal, vermilion, each tipped with a bead */
+@utility jhalar {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='16'%3E%3Cg stroke='%231a1a1a' stroke-width='1.2' stroke-linejoin='round'%3E%3Cpath d='M0 0H16L8 11Z' fill='%23e0218a'/%3E%3Cpath d='M16 0H32L24 11Z' fill='%23f4a300'/%3E%3Cpath d='M32 0H48L40 11Z' fill='%230f7c7c'/%3E%3Cpath d='M48 0H64L56 11Z' fill='%23d7263d'/%3E%3C/g%3E%3Cg fill='%23f2c14e' stroke='%231a1a1a' stroke-width='.8'%3E%3Ccircle cx='8' cy='13' r='2.2'/%3E%3Ccircle cx='24' cy='13' r='2.2'/%3E%3Ccircle cx='40' cy='13' r='2.2'/%3E%3Ccircle cx='56' cy='13' r='2.2'/%3E%3C/g%3E%3C/svg%3E") repeat-x top left / 64px 16px;
 }
 
 
@@ -256,8 +328,118 @@ p {
   }
 }
 /* held while the page-change loading screen is up (see Transition), so he walks in once the page shows */
-body:has([data-page-screen][data-up]) .animate-elephant {
+body:has([data-page-screen][data-up]) .animate-elephant,
+body:has([data-page-screen][data-up]) .animate-prowl {
   animation-play-state: paused;
+}
+@keyframes sway {
+  from {
+    rotate: -2.5deg;
+  }
+  to {
+    rotate: 2.5deg;
+  }
+}
+@keyframes swing {
+  from {
+    rotate: -7deg;
+  }
+  to {
+    rotate: 7deg;
+  }
+}
+@keyframes train-run {
+  from {
+    translate: 660px 0;
+  }
+  to {
+    translate: -1500px 0;
+  }
+}
+@keyframes roll {
+  to {
+    rotate: -360deg;
+  }
+}
+@keyframes fall {
+  from {
+    translate: 0 -100%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes flutter {
+  from {
+    translate: -14px 0;
+    rotate: -35deg;
+  }
+  to {
+    translate: 14px 0;
+    rotate: 40deg;
+  }
+}
+@keyframes truck-drive {
+  /* across its lane (a size container): in at the right edge, out at the left */
+  from {
+    translate: 100cqw 0;
+  }
+  to {
+    translate: -100% 0;
+  }
+}
+@keyframes fly-right {
+  from {
+    translate: -6rem 0;
+  }
+  to {
+    translate: calc(100vw + 2rem) 0;
+  }
+}
+@keyframes fly-left {
+  from {
+    translate: calc(100vw + 2rem) 0;
+  }
+  to {
+    translate: -6rem 0;
+  }
+}
+@keyframes bob {
+  from {
+    translate: 0 -10px;
+  }
+  to {
+    translate: 0 10px;
+  }
+}
+@keyframes flap {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 1 -0.55;
+  }
+}
+@keyframes puff {
+  0% {
+    translate: 0 0;
+    scale: 0.5;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  100% {
+    translate: 90px -120px;
+    scale: 2;
+    opacity: 0;
+  }
+}
+@keyframes prowl {
+  from {
+    translate: 25% 0;
+    opacity: 0;
+  }
 }
 @keyframes elephant-walk {
   from {

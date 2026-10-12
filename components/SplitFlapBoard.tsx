@@ -73,7 +73,7 @@ export default function SplitFlapBoard({ days }: { days: TimelineDay[] }) {
               type="button"
               aria-pressed={day === i}
               onClick={() => setDay(i)}
-              className="min-h-11 border-2 border-turmeric px-3 py-1 font-mono text-sm font-bold aria-pressed:bg-turmeric aria-pressed:text-ink"
+              className="btn min-h-11 bg-cream !px-3 !py-1 !text-sm text-ink aria-pressed:bg-rani-deep aria-pressed:text-cream"
             >
               DAY {i + 1}
             </button>

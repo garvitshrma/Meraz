@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+  <!-- The Contact page's wall: Warli painting, rice-paste white on a red-ochre mud wall. Figures of two triangles
+       (shoulders and hips) meeting at the waist, a dot of a head, stick limbs: a line of dancers holding hands, a tree,
+       a hut, the sun, birds, a man at his work. Kept clear of the tile's edges so it repeats without a seam, and faint
+       (the group's opacity) so the page reads over it. -->
+  <defs>
+    <!-- a figure standing at (0,0) on its feet: head, shoulders, hips, legs -->
+    <g id="body">
+      <circle cy="-27" r="3.6" />
+      <path d="M-6-21H6L0-12Z" />
+      <path d="M0-12L-6-4H6Z" />
+      <path d="M-3-4L-5 0M3-4L5 0" fill="none" />
+    </g>
+    <!-- a dancer: arms out to the hands either side -->
+    <g id="dancer">
+      <use href="#body" />
+      <path d="M-6-21L-12-16M6-21L12-16" fill="none" />
+    </g>
+  </defs>
+  <g fill="#f6efe1" stroke="#f6efe1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".2">
+    <!-- the line of dancers -->
+    <g transform="translate(36 70)">
+      <use href="#dancer" />
+      <use href="#dancer" x="24" />
+      <use href="#dancer" x="48" />
+      <use href="#dancer" x="72" />
+      <use href="#dancer" x="96" />
+      <path d="M-12-16H108" fill="none" stroke-dasharray="1 23" stroke-dashoffset="-12" />
+    </g>
+
+    <!-- the tree: a trunk, branches, leaves in short strokes, a bird in it -->
+    <g transform="translate(242 104)" fill="none">
+      <path d="M0 0V-62M0-20L-18-40M0-30L16-48M0-46L-12-60M0-52L10-64" />
+      <path d="M-18-40l-4-4m4 4l-5 1m5-1l-1-6M16-48l4-4m-4 4l5 1m-5-1l1-6M-12-60l-4-4m4 4l-5 1M10-64l4-4m-4 4l5 1M0-62l-3-6m3 6l3-6" />
+      <path d="M-24 0H24" />
+      <path d="M6-56q4-5 8 0q4-5 8 0" />
+    </g>
+
+    <!-- the sun, a ring of rays -->
+    <g transform="translate(62 176)" fill="none">
+      <circle r="10" />
+      <circle r="4" fill="#f6efe1" />
+      <path d="M0-14V-21M0 14V21M-14 0H-21M14 0H21M-10-10l-5-5M10 10l5 5M-10 10l-5 5M10-10l5-5" />
+    </g>
+
+    <!-- a hut: thatched roof, its walls, a door, a figure at it -->
+    <g transform="translate(168 190)">
+      <path d="M-28 0L0-24 28 0Z" fill="none" />
+      <path d="M-20-6l6-6m4 6l6-6m4 6l6-6m4 6l4-4" fill="none" />
+      <path d="M-22 0V26H22V0" fill="none" />
+      <path d="M-5 26V12H5V26" fill="none" />
+      <use href="#body" x="40" y="26" />
+      <path d="M46 5L52 12M34 5L28 0" fill="none" />
+    </g>
+
+    <!-- birds in flight -->
+    <g fill="none">
+      <path d="M232 168q6-6 12 0q6-6 12 0" />
+      <path d="M256 186q5-5 10 0q5-5 10 0" />
+      <path d="M118 120q4-4 8 0q4-4 8 0" />
+    </g>
+
+    <!-- a farmer with his plough and ox -->
+    <g transform="translate(70 276)">
+      <use href="#body" />
+      <path d="M6-21L16-12M-6-21L-10-14" fill="none" />
+      <path d="M16-12L40-4" fill="none" />
+      <path d="M40-14H70L76-22M44-14L40-2M66-14L70-2" fill="none" />
+      <path d="M44-14C48-22 62-22 66-14Z" />
+      <path d="M70-14l8-2M76-22l4-4" fill="none" />
+    </g>
+
+    <!-- a woman with a pot on her head -->
+    <g transform="translate(240 282)">
+      <use href="#body" />
+      <circle cy="-36" r="5" fill="none" />
+      <path d="M-6-21L-4-36M6-21L4-36" fill="none" />
+    </g>
+
+    <!-- dots between, as dabbed with a finger -->
+    <circle cx="160" cy="40" r="1.6" /><circle cx="300" cy="40" r="1.6" /><circle cx="160" cy="130" r="1.6" />
+    <circle cx="20" cy="230" r="1.6" /><circle cx="300" cy="230" r="1.6" /><circle cx="160" cy="300" r="1.6" />
+  </g>
+</svg>

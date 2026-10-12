@@ -18,7 +18,7 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone as cloneRig } from "three/addons/utils/SkeletonUtils.js";
 import { navLinks } from "@/data/site";
 import { TLink, useGo } from "./Transition";
-import { getLenis } from "./ScrollFx";
+import { getLenis, glideScroll } from "./ScrollFx";
 import { pageFiles, preload, warmUp } from "./warmup";
 import LoadingScreen from "./LoadingScreen";
 import { HAZE, fireworkShows, glowDot, nightSky, skyEnvironment, type Show } from "./night";
@@ -118,6 +118,8 @@ const SIT = 0.93;
 // destinations at GO. The home page has no nav bar; these are its navigation.
 const ASK = 0.95;
 const GO = 0.97;
+// The destination signboards' paint, in turn, as the nav bar's links.
+const SIGN_PAINT = ["bg-rani-deep text-cream", "bg-teal-deep text-cream", "bg-marigold text-ink", "bg-vermillion-deep text-cream", "bg-turmeric text-ink"];
 // Picking a destination: the auto pulls away (carrying him and his eye camera) at accel m/s^2 up to top m/s, the lens
 // widening by up to fov degrees with speed. The ride is the page's loading: it lasts at least min seconds and while the
 // page's files load (see preload), up to max; then its last frame glitches into the loading screen, which waits on for
@@ -799,9 +801,7 @@ export default function RoadJump() {
           const y = st.start + (GO + 0.005) * (st.end - st.start);
           const left = y - window.scrollY;
           if (left <= 0) return;
-          const lenis = getLenis();
-          if (lenis) lenis.scrollTo(y, { duration: (left / window.innerHeight) * SKIP_PACE, easing: (t) => (1 - Math.cos(Math.PI * t)) / 2 });
-          else window.scrollTo({ top: y, behavior: "smooth" });
+          glideScroll(y, (left / window.innerHeight) * SKIP_PACE);
         };
 
       cleanup = () => {
@@ -1008,6 +1008,72 @@ export default function RoadJump() {
       auto = ground(model("auto").scene, AUTO.height); // faces +z as modelled, the way he walks
       auto.position.x = autoX;
       street.add(auto);
+      // A circus poster (public/circus.webp, Jadugar O.P. Sharma) pasted on the outer wall of the auto's rear body, on the
+      // open side he climbs in by (-x), behind the opening. The auto is one mesh, so the wall is found rather than
+      // measured: rays cast in from that side over a grid behind the opening, keeping the hits on faces turned out toward
+      // -x. Those lie in a few flat planes (the bulging lower body, the side of the hood above it); in each, the tallest
+      // run of rows narrowed to the stretch they all share holds a poster, and the plane holding the biggest one wins.
+      street.updateMatrixWorld(true);
+      const caster = new THREE.Raycaster();
+      const autoAt = auto.getWorldPosition(v3());
+      const hits: THREE.Vector3[] = [];
+      for (let y = 0.2; y < 1.65; y += 0.03)
+        for (let z = SEAT.entry - 0.06; z > -2.2; z -= 0.03) {
+          caster.set(v3().set(autoAt.x - 3, autoAt.y + y, autoAt.z + z), v3().set(1, 0, 0));
+          const hit = caster.intersectObject(auto, true)[0];
+          const n = hit?.face?.normal.clone().transformDirection(hit.object.matrixWorld);
+          if (hit && n && n.x < -0.7) hits.push(auto.worldToLocal(hit.point.clone()));
+        }
+      const planes = [...new Set(hits.map((h) => Math.round(h.x * 50) / 50))]; // 2 cm steps
+      // a row's longest unbroken stretch of wall (hits a grid step apart), as [min z, max z]
+      const run = (zs: number[]) => {
+        const s = [...zs].sort((a, b) => a - b);
+        let [b0, b1, a0] = [s[0], s[0], s[0]];
+        for (let k = 1; k < s.length; k++) {
+          if (s[k] - s[k - 1] > 0.045) a0 = s[k];
+          if (s[k] - a0 > b1 - b0) [b0, b1] = [a0, s[k]];
+        }
+        return [b0, b1];
+      };
+      let best = { x: 0, y0: 0, y1: 0, z0: 0, z1: 0, h: 0 };
+      for (const px of planes) {
+        const rows = new Map<number, number[]>();
+        for (const h of hits) if (Math.abs(h.x - px) < 0.015) rows.set(+h.y.toFixed(2), [...(rows.get(+h.y.toFixed(2)) ?? []), h.z]);
+        const ys = [...rows.keys()].filter((y) => rows.get(y)!.length > 4).sort((a, b) => a - b);
+        for (let i = 0; i < ys.length; i++) {
+          let [z0, z1] = [-Infinity, Infinity];
+          for (let j = i; j < ys.length && ys[j] - ys[j - 1 < i ? i : j - 1] < 0.045; j++) {
+            const [r0, r1] = run(rows.get(ys[j])!);
+            [z0, z1] = [Math.max(z0, r0), Math.min(z1, r1)];
+            if (z1 - z0 < 0.2) break;
+            const h = Math.min((ys[j] - ys[i]) * 0.88, (z1 - z0) * 0.88 * 2); // the poster is half as wide as it is tall
+            if (h > best.h) best = { x: Math.min(...hits.filter((q) => Math.abs(q.x - px) < 0.015).map((q) => q.x)), y0: ys[i], y1: ys[j], z0, z1, h };
+          }
+        }
+      }
+      if (best.h > 0.15) {
+        const posterMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0, visible: false });
+        // set high on the wall, up toward the roof and forward toward the driver; then grown by POSTER_SIZE from its top
+        // front corner, down and back, so that corner stays clear of the roof and the opening
+        const POSTER_LIFT = 0.4; // metres above the panel's middle
+        const POSTER_FORWARD = 0.4; // metres toward the front (the driver) from the panel's middle; the opening starts ahead of it
+        const POSTER_SIZE = 1.35; // times the panel's fit
+        const ph = best.h * POSTER_SIZE;
+        const poster = new THREE.Mesh(new THREE.PlaneGeometry(ph / 2, ph).rotateY(-Math.PI / 2), posterMat); // facing -x, reading toward the front
+        poster.position.set(
+          best.x - 0.008,
+          (best.y0 + best.y1) / 2 + POSTER_LIFT - (ph - best.h) / 2,
+          (best.z0 + best.z1) / 2 + POSTER_FORWARD - (ph - best.h) / 4,
+        );
+        new THREE.TextureLoader().load("/circus.webp", (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          posterMat.map = tex;
+          posterMat.visible = true;
+          posterMat.needsUpdate = true;
+        });
+        auto.add(poster);
+      }
       // The bulb autos run under their roof at night, here a warm cream white. It rides
       // with the auto, so it still lights the cabin once he is aboard and it pulls away; its falloff is kept short so
       // it washes the roof, the bench and the driver's back without spilling out onto the road.
@@ -1221,7 +1287,8 @@ export default function RoadJump() {
             <span className="absolute -bottom-[14px] left-4 size-5 rotate-45 border-b-4 border-r-4 border-ink bg-cream" />
           </p>
         </div>
-        {/* Destinations: the nav links as signboards, coming up one after another. */}
+        {/* Destinations: the nav links as painted signboards (the shared btn, each in its own colour as in the nav bar),
+            coming up one after another. */}
         <nav aria-label="Main" className="absolute inset-x-3 bottom-14 z-[2] sm:bottom-16">
           <ul className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {navLinks.map((l, i) => (
@@ -1239,10 +1306,10 @@ export default function RoadJump() {
                     e.preventDefault();
                     ride.current(l.href);
                   }}
-                  className="flex min-h-12 flex-col items-center border-4 border-ink bg-marigold px-4 py-1.5 shadow-[4px_4px_0_var(--color-ink)] transition-[translate,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--color-ink)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-6"
+                  className={`btn min-h-12 flex-col !gap-0 !px-4 !py-2 sm:!px-6 ${SIGN_PAINT[i % SIGN_PAINT.length]}`}
                 >
                   <span className="font-display text-base sm:text-xl">{l.label}</span>
-                  <span className="font-deva text-sm text-rani-deep" aria-hidden="true">
+                  <span className="font-deva text-sm opacity-90" aria-hidden="true">
                     {l.hindi}
                   </span>
                 </TLink>
@@ -1262,7 +1329,7 @@ export default function RoadJump() {
         <button
           type="button"
           onClick={() => skip.current?.()}
-          className="absolute bottom-3 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-2 border-4 border-ink bg-marigold px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-ink shadow-[4px_4px_0_var(--color-ink)] transition-[translate,box-shadow] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--color-ink)] active:translate-y-1 active:shadow-none motion-reduce:hidden group-data-[asked]:hidden"
+          className="btn absolute bottom-3 left-1/2 z-[2] -translate-x-1/2 bg-marigold !px-4 !py-1.5 !text-sm tracking-widest text-ink motion-reduce:hidden group-data-[asked]:hidden"
         >
           SKIP SCROLLING
           <FastForward size={18} weight="fill" aria-hidden="true" />

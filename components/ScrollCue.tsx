@@ -4,10 +4,9 @@
 // arrived (its walk ends: it waits out the page-change gate with it), and if no one has scrolled yet, the page moves a
 // little way down, once, to show there's more below. Dropped at any touch, wheel or key first, and for reduced motion.
 import { useEffect } from "react";
-import { getLenis } from "./ScrollFx";
+import { glideScroll } from "./ScrollFx";
 
 const NUDGE = 0.16; // of the screen's height
-const ease = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 
 export default function ScrollCue({ after }: { after: string }) {
   useEffect(() => {
@@ -23,10 +22,7 @@ export default function ScrollCue({ after }: { after: string }) {
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       timer = window.setTimeout(() => {
         if (touched || scrollY > 40) return;
-        const y = innerHeight * NUDGE;
-        const lenis = getLenis();
-        if (lenis) lenis.scrollTo(y, { duration: 0.9, easing: ease });
-        else scrollTo({ top: y, behavior: "smooth" });
+        glideScroll(innerHeight * NUDGE, 0.9);
       }, 600);
     };
     walker?.addEventListener("animationend", arrived);

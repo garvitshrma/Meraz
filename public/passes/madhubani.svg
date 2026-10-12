@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <!-- The Passes page's ground: a Madhubani panel as painted, bharni (filled) style. Every shape is laid in a flat
+       pigment (vermilion, turmeric, indigo, leaf green, pink), outlined twice in ink, and filled in with the line work
+       the form is known for: hatching, scales, dots. A wobble filter keeps every line off true, as from a nib or
+       bamboo pen. A pair of kissing fish, a peacock, a lotus with its leaves, the sun; flowers at the corners and
+       centre so the tile repeats without a seam. Laid faint (the group's opacity) so the page reads over it. -->
+  <defs>
+    <filter id="hand" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="11" />
+      <feDisplacementMap in="SourceGraphic" scale="2.4" />
+    </filter>
+    <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0V4" stroke="#1d1b1b" stroke-width=".7" />
+    </pattern>
+    <pattern id="lines" width="3.4" height="3.4" patternUnits="userSpaceOnUse">
+      <path d="M0 0V3.4" stroke="#1d1b1b" stroke-width=".6" />
+    </pattern>
+    <pattern id="cross" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0V5M0 0H5" stroke="#1d1b1b" stroke-width=".6" />
+    </pattern>
+    <pattern id="scales" width="8" height="6" patternUnits="userSpaceOnUse">
+      <path d="M0 6a4 4 0 0 1 8 0M-4 3a4 4 0 0 1 8 0M4 3a4 4 0 0 1 8 0" fill="none" stroke="#1d1b1b" stroke-width=".7" />
+    </pattern>
+    <pattern id="dots" width="5" height="5" patternUnits="userSpaceOnUse">
+      <circle cx="2.5" cy="2.5" r=".9" fill="#f6e7c1" />
+    </pattern>
+
+    <!-- a fish facing +x: vermilion body, a turmeric band of scales, green head and tail hatched, a big eye -->
+    <g id="fish">
+      <path d="M-34 0L-52-18Q-46 0-52 18Z" fill="#2f8f46" />
+      <path d="M-34 0L-52-18Q-46 0-52 18Z" fill="url(#lines)" />
+      <path d="M-6-17Q0-31 12-19ZM-6 17Q0 31 12 19Z" fill="#c8102e" />
+      <path d="M-6-17Q0-31 12-19ZM-6 17Q0 31 12 19Z" fill="url(#hatch)" />
+      <path d="M-34 0C-18-22 18-24 34 0 18 24-18 22-34 0Z" fill="#c8102e" />
+      <path d="M-27 0C-14-15 12-16 18 0 12 16-14 15-27 0Z" fill="#f2b705" />
+      <path d="M-27 0C-14-15 12-16 18 0 12 16-14 15-27 0Z" fill="url(#scales)" />
+      <path d="M17-16C25-11 30-5 34 0 30 5 25 11 17 16Q11 0 17-16Z" fill="#2f8f46" />
+      <path d="M17-16C25-11 30-5 34 0 30 5 25 11 17 16Q11 0 17-16Z" fill="url(#hatch)" />
+      <circle cx="25" cy="-3" r="5.2" fill="#f6e7c1" />
+      <circle cx="26" cy="-3" r="2.3" fill="#1d1b1b" />
+      <path d="M-34 0C-18-22 18-24 34 0 18 24-18 22-34 0ZM-27 0C-14-15 12-16 18 0 12 16-14 15-27 0Z" fill="none" />
+    </g>
+
+    <!-- a peacock feather from its quill at (0,0): hatched green vane, an eye of teal, indigo and turmeric -->
+    <g id="feather">
+      <path d="M0 0C-9-20-9-42 0-58C9-42 9-20 0 0Z" fill="#2f8f46" />
+      <path d="M0 0C-9-20-9-42 0-58C9-42 9-20 0 0Z" fill="url(#hatch)" />
+      <path d="M0 0V-40" />
+      <circle cy="-48" r="8" fill="#0f6e6e" />
+      <circle cy="-48" r="5" fill="#283593" />
+      <circle cy="-48" r="2.2" fill="#f2b705" />
+    </g>
+
+    <!-- a lotus petal from its base at (0,0): pink, hatched down its middle -->
+    <g id="petal">
+      <path d="M0 0C14-14 14-38 0-52C-14-38-14-14 0 0Z" fill="#e0218a" />
+      <path d="M0-6C7-16 7-34 0-44C-7-34-7-16 0-6Z" fill="#f6e7c1" />
+      <path d="M0-6C7-16 7-34 0-44C-7-34-7-16 0-6Z" fill="url(#lines)" />
+    </g>
+
+    <g id="flower">
+      <path d="M0 0C-6-6-6-14 0-18 6-14 6-6 0 0Z" fill="#c8102e" />
+      <path d="M0 0C-6 6-6 14 0 18 6 14 6 6 0 0Z" fill="#c8102e" />
+      <path d="M0 0C-6-6-14-6-18 0-14 6-6 6 0 0Z" fill="#f2b705" />
+      <path d="M0 0C6-6 14-6 18 0 14 6 6 6 0 0Z" fill="#f2b705" />
+      <circle r="3.4" fill="#283593" />
+    </g>
+  </defs>
+
+  <g opacity=".17" filter="url(#hand)" stroke="#1d1b1b" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- the pair of fish, kissing -->
+    <use href="#fish" transform="translate(58 92)" />
+    <use href="#fish" transform="translate(130 92) scale(-1 1)" />
+    <path d="M94 60c0-8 6-12 0-20M94 124c0 8-6 12 0 20" fill="none" stroke="#2f8f46" stroke-width="2" />
+
+    <!-- the peacock: tail fanned down behind him, indigo body set with dots, a teal wing, crested head -->
+    <g transform="translate(262 120)">
+      <use href="#feather" transform="rotate(-100)" />
+      <use href="#feather" transform="rotate(-128)" />
+      <use href="#feather" transform="rotate(-156)" />
+      <use href="#feather" transform="rotate(176)" />
+      <use href="#feather" transform="rotate(150)" />
+    </g>
+    <path d="M262 132C244 110 252 80 274 78C294 80 300 110 284 132Z" fill="#283593" />
+    <path d="M262 132C244 110 252 80 274 78C294 80 300 110 284 132Z" fill="url(#dots)" />
+    <path d="M267 124C259 108 263 92 276 90C285 95 287 113 280 124Z" fill="#0f6e6e" />
+    <path d="M267 124C259 108 263 92 276 90C285 95 287 113 280 124Z" fill="url(#cross)" />
+    <path d="M268 84C262 64 278 46 293 46L298 54C286 56 280 68 282 84Z" fill="#283593" />
+    <circle cx="296" cy="50" r="7" fill="#283593" />
+    <circle cx="298" cy="48.5" r="2" fill="#f6e7c1" stroke="none" />
+    <path d="M302 47l11 4-11 4Z" fill="#f2b705" />
+    <path d="M293 43l-4-12M297 43l0-13M301 44l4-11" fill="none" />
+    <circle cx="289" cy="30" r="2.2" fill="#c8102e" /><circle cx="297" cy="29" r="2.2" fill="#c8102e" /><circle cx="305" cy="32" r="2.2" fill="#c8102e" />
+    <path d="M268 132v18M280 132v18M262 150h12M274 150h12" fill="none" stroke-width="1.6" />
+
+    <!-- the lotus: seven petals on a hatched cup, its stem and two round leaves -->
+    <g transform="translate(95 268)">
+      <use href="#petal" transform="rotate(-62)" />
+      <use href="#petal" transform="rotate(62)" />
+      <use href="#petal" transform="rotate(-41)" />
+      <use href="#petal" transform="rotate(41)" />
+      <use href="#petal" transform="rotate(-20)" />
+      <use href="#petal" transform="rotate(20)" />
+      <use href="#petal" />
+      <path d="M-36 2Q0 26 36 2Z" fill="#2f8f46" />
+      <path d="M-36 2Q0 26 36 2Z" fill="url(#hatch)" />
+      <path d="M0 14V60" fill="none" stroke="#2f8f46" stroke-width="3" />
+      <path d="M0 42C-10 30-34 32-40 46-28 58-8 54 0 42Z" fill="#2f8f46" />
+      <path d="M0 42C-10 30-34 32-40 46M0 42L-30 46M-12 36l-6 9M-22 34l-4 11" fill="none" stroke="#f6e7c1" stroke-width="1" />
+      <path d="M0 48C10 38 32 40 38 54 26 64 8 60 0 48Z" fill="#2f8f46" />
+      <path d="M0 48L28 53M12 42l4 10M22 42l2 11" fill="none" stroke="#f6e7c1" stroke-width="1" />
+    </g>
+
+    <!-- the sun: rays alternately vermilion and turmeric, a dotted ring, a face with long eyes and a bindi -->
+    <g transform="translate(270 268)">
+      <g>
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(22.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(45)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(67.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(90)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(112.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(135)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(157.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(180)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(202.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(225)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(247.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(270)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(292.5)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#c8102e" transform="rotate(315)" />
+        <path d="M-6-30L0-48 6-30Z" fill="#f2b705" transform="rotate(337.5)" />
+      </g>
+      <circle r="31" fill="#283593" />
+      <circle r="31" fill="url(#dots)" />
+      <circle r="24" fill="#f2b705" />
+      <path d="M-15-5q7-7 13 0q-7 5-13 0ZM2-5q7-7 13 0q-7 5-13 0Z" fill="#f6e7c1" />
+      <circle cx="-8.5" cy="-5" r="2" fill="#1d1b1b" /><circle cx="8.5" cy="-5" r="2" fill="#1d1b1b" />
+      <path d="M-17-11q8-5 15 0M2-11q8-5 15 0M0-3v10M-3 7h6" fill="none" />
+      <path d="M-8 13q8 6 16 0q-8 2-16 0Z" fill="#c8102e" />
+      <circle cy="-16" r="2.4" fill="#c8102e" />
+      <path d="M-20 4a6 6 0 0 0 8 6M20 4a6 6 0 0 1-8 6" fill="none" stroke-width="1" />
+    </g>
+
+    <!-- flowers at the corners (a quarter each) and centre, small ones and dots between -->
+    <use href="#flower" transform="translate(0 0)" />
+    <use href="#flower" transform="translate(360 0)" />
+    <use href="#flower" transform="translate(0 360)" />
+    <use href="#flower" transform="translate(360 360)" />
+    <use href="#flower" transform="translate(180 180) scale(1.2)" />
+    <use href="#flower" transform="translate(180 20) scale(.6)" />
+    <use href="#flower" transform="translate(180 340) scale(.6)" />
+    <use href="#flower" transform="translate(20 180) scale(.6)" />
+    <use href="#flower" transform="translate(340 180) scale(.6)" />
+    <g fill="#c8102e" stroke="none">
+      <circle cx="180" cy="150" r="2" /><circle cx="180" cy="210" r="2" /><circle cx="150" cy="180" r="2" /><circle cx="210" cy="180" r="2" />
+      <circle cx="60" cy="180" r="1.8" /><circle cx="300" cy="180" r="1.8" /><circle cx="180" cy="60" r="1.8" /><circle cx="180" cy="300" r="1.8" />
+    </g>
+  </g>
+</svg>
