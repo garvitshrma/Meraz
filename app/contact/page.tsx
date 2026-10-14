@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { preload } from "react-dom";
 import { Pigeons, Postbox, Wires } from "@/components/ContactArt";
 import PhoneDial from "@/components/PhoneDial";
+import BackToTop from "@/components/BackToTop";
 import { contacts } from "@/data/content";
 
 // The page's text is almost all names and numbers (the cards are drawn in 3D), which Chrome misreads as Indonesian
@@ -60,7 +61,7 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="mt-5 max-w-md text-lg text-cream/90">Write to us, or pick a number and ring the team.</p>
-
+  
             <div className="mt-10 flex items-end gap-6">
               <Postbox id="postbox" className="w-24 shrink-0 sm:w-28" />
               <address className="pb-3 not-italic leading-relaxed">
@@ -78,7 +79,7 @@ export default function ContactPage() {
               </address>
             </div>
           </div>
-
+  
           <img
             src="/contact/pco.webp"
             alt="A woman and a man talk on the two receivers of a pink phone at an STD-ISD-PCO booth"
@@ -92,8 +93,9 @@ export default function ContactPage() {
         </nav>
         <div aria-hidden="true" className="warli-border h-7" />
       </section>
-
+  
       <PhoneDial />
+      <BackToTop />
       <ul className="sr-only" translate="no">
         {contacts.map((c) => (
           <li key={c.title}>

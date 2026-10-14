@@ -2,19 +2,15 @@
 
 // The passes as Meraz Express tickets (public/passes/ticket.webp, the Canva ticket at 2x 961 x 348, its printed pass
 // name left out). The pass's name is printed where the ticket had it, its button is the Buy Now link, and its
-// details are printed on the blank body. Large screens: the tickets side by side, as before: click one and it slides
-// open while the other slides shut to its stub, the little train riding over to the open one. Smaller: each ticket
-// stood up tall (see TallTicket), its details on it, as on the wide one they'd be too small to read. Positions are in %
-// of the ticket.
+// details are printed on the blank body. Large screens: two rows of 2 sliding tickets each.
 import { useState } from "react";
 import { ArrowUpRight } from "@phosphor-icons/react";
 import type { Pass } from "@/data/content";
 
-// Side by side, in the row's width (100cqw) less the 1rem gap: the open ticket, whole (2.7615 times as wide as high),
-// and the shut one's stub (the 205 px left of its perforation, 0.589 of its height) fill it.
-const ROW = "calc((100cqw - 1rem) * 0.29846)"; // its height
-const OPEN = "((100cqw - 1rem) * 0.8242)"; // the open ticket's width
-const STUB = "((100cqw - 1rem) * 0.17578)"; // the shut one's
+// Original reference values (2 passes per row)
+const ROW = "calc((100cqw - 1rem) * 0.29846)"; // height
+const OPEN = "((100cqw - 1rem) * 0.8242)"; // open ticket width
+const STUB = "((100cqw - 1rem) * 0.17578)"; // stub width
 
 function Details({ p }: { p: Pass }) {
   return (
@@ -55,7 +51,7 @@ function Ticket({ p, details, className = "", fontSize }: { p: Pass; details?: s
         className="absolute left-[29.1%] top-[81.3%] aspect-square w-[7.9%] -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform hover:scale-110 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-95"
       />
       {details !== undefined && (
-        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-hidden text-[0.92em] leading-tight ${details}`}>
+        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-y-auto text-[0.92em] leading-tight ${details}`}>
           <Details p={p} />
         </div>
       )}
@@ -98,9 +94,9 @@ function TallTicket({ p, train }: { p: Pass; train: boolean }) {
         </div>
 
         {/* the body */}
-        <div className="px-6 pb-8 pt-6 text-[15px] leading-snug">
+        <div className="px-6 pb-8 pt-6 text-[15px] leading-snug overflow-y-auto max-h-[60vh]">
           <Details p={p} />
-          <div className="mt-6 flex items-end justify-between gap-4">
+          <div className="mt-6 flex items-end justify-between gap-4 flex-shrink-0">
             <a
               href={p.formLink}
               target="_blank"
@@ -123,60 +119,73 @@ function TallTicket({ p, train }: { p: Pass; train: boolean }) {
 
 
 export default function PassCards({ passes }: { passes: Pass[] }) {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState([0, 0]); // [row1, row2]
+  const rows = [passes.slice(0, 2), passes.slice(2, 4)];
+
   return (
-    <div className="@container mx-auto max-w-6xl">
-      {/* large screens: side by side, sliding */}
-      <div className="relative hidden gap-4 lg:flex" style={{ height: ROW }}>
-        <img
-          src="/passes/train.webp"
-          alt=""
-          width={88}
-          height={66}
-          className="absolute bottom-full transition-[left] duration-500"
-          style={{ left: `calc(${active ? `${STUB} + 1rem + ` : ""}${OPEN} * 0.184)`, width: `calc(${OPEN} * 0.092)` }}
-        />
-        {passes.map((p, i) => {
-          const on = i === active;
-          return (
-            <article
-              key={p.name}
-              aria-label={p.name}
-              className={`relative overflow-hidden drop-shadow-[0_14px_18px_rgb(0_0_0/0.3)] transition-[flex-grow] duration-500 ${on ? "grow" : "grow-0"}`}
-              style={{ flexBasis: `calc${STUB}` }}
-            >
-              {/* the whole ticket, its left edge pinned: the article's width shows as much of it as it is open */}
-              <div inert={!on} className="h-full" style={{ width: `calc${OPEN}` }}>
-                <Ticket
-                  p={p}
-                  details={`transition-opacity duration-300 ${on ? "delay-300" : "opacity-0"}`} // in once it has slid open
-                  className="size-full"
-                  fontSize={`calc(${OPEN} * 0.0155)`}
-                />
-              </div>
-              {!on && (
-                <button type="button" onClick={() => setActive(i)} aria-expanded={false} aria-label={`Open the ${p.name}`} className="absolute inset-0 cursor-pointer">
-                  <span
-                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#7a061d]/90 py-1 text-center font-mono font-bold uppercase tracking-widest text-cream"
-                    style={{ fontSize: `calc(${OPEN} * 0.014)` }}
-                  >
-                    {p.name}
-                  </span>
-                </button>
-              )}
-            </article>
-          );
-        })}
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-16">
+      <div className="@container mx-auto max-w-6xl">
+        {/* Two rows of sliding tickets */}
+        <div className="flex flex-col gap-12">
+          {rows.map((rowPasses, rowIdx) => (
+            <div key={rowIdx} className="relative hidden gap-4 lg:flex" style={{ height: ROW }}>
+            <img
+              src="/passes/train.webp"
+              alt=""
+              width={88}
+              height={66}
+              className="absolute bottom-full transition-[left] duration-500"
+              style={{
+                left: `calc(${active[rowIdx]} * ${STUB} + ${active[rowIdx]} * 1rem + ${OPEN} * 0.184)`,
+                width: `calc(${OPEN} * 0.092)`
+              }}
+            />
+            {rowPasses.map((p, i) => {
+              const on = i === active[rowIdx];
+              return (
+                <article
+                  key={p.name}
+                  aria-label={p.name}
+                  className={`relative overflow-hidden drop-shadow-[0_14px_18px_rgb(0_0_0/0.3)] transition-[flex-grow] duration-500 ${on ? "grow" : "grow-0"}`}
+                  style={{ flexBasis: `calc(${STUB})` }}
+                >
+                  <div inert={!on} className="h-full" style={{ width: `calc(${OPEN})` }}>
+                    <Ticket
+                      p={p}
+                      details={`transition-opacity duration-300 ${on ? "delay-300" : "opacity-0"}`}
+                      className="size-full"
+                      fontSize={`calc(${OPEN} * 0.0155)`}
+                    />
+                  </div>
+                  {!on && (
+                    <button type="button" onClick={() => setActive(a => { const n = [...a]; n[rowIdx] = i; return n; })} aria-expanded={false} aria-label={`Open the ${p.name}`} className="absolute inset-0 cursor-pointer">
+                      <span
+                        className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#7a061d]/90 py-1 text-center font-mono font-bold uppercase tracking-widest text-cream flex items-center justify-center gap-1"
+                        style={{ fontSize: `calc(${OPEN} * 0.013)` }}
+                      >
+                        {p.name}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+                          <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                      </span>
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* smaller: tall tickets, everything printed on them; two side by side on a tablet */}
       <ul className="mx-auto grid max-w-md items-start gap-16 md:max-w-none md:grid-cols-2 md:gap-8 lg:hidden">
-        {passes.map((p, i) => (
+        {passes.map((p) => (
           <li key={p.name}>
-            <TallTicket p={p} train />
+            <TallTicket p={p} train={false} />
           </li>
         ))}
       </ul>
+    </div>
     </div>
   );
 }

@@ -35,9 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${almendra.variable} ${rozha.variable} ${yatra.variable} ${arbutus.variable}`}>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: boot }} />
       </head>
-      <body>
+      <body className="js-enabled">
         <a href="#main" className="skip-link">
           Skip to content
         </a>

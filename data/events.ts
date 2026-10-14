@@ -111,70 +111,80 @@ export const eventCategories: EventCategory[] = [
     "description": "Step into a crucible of innovation, where science and technology are unveiled in dazzling brilliance through our trailblazing events.",
     "subEvents": [
       {
-        "title": "Robo Soccer",
-        "desc": "Showcase your engineering skills as robots compete in an electrifying soccer game to score points and win.",
-        "registerUrlIIT": "https://forms.gle/dSwXcMDq3ZXw4wF28",
-        "registerUrlNonIIT": "https://forms.gle/12ndvTuvLcsvv2KV7"
+        "title": "Messier Marathon",
+        "desc": "Analyze real NASA data to track Messier objects and break a chain of locked puzzles."
       },
       {
-        "title": "Line Following Bot",
-        "desc": "Program your bot to follow a challenging route using algorithms and score points for precision.",
-        "registerUrlIIT": "https://forms.gle/RYaGhGbYMEXZDRox9",
-        "registerUrlNonIIT": "https://forms.gle/4ponefwJeRRYzGeL8"
+        "title": "VR Experience",
+        "desc": ""
       },
       {
-        "title": "Mystery Box",
-        "desc": "Get creative with a box of components and build circuit boards to solve surprise tasks on the spot.",
-        "registerUrlIIT": "https://forms.gle/iJksX8ckLHmXxogr6",
-        "registerUrlNonIIT": "https://forms.gle/25RHbBbj4Ux3RxCM7"
+        "title": "RC Plane Comp",
+        "desc": "Design, build, and fly an RC aircraft from scratch—put your engineering, flight performance, and precision to the test."
       },
       {
-        "title": "FPGA Design Contest",
-        "desc": "Design innovative circuits using Altium software, then build your prototype in a timed, hands-on round.",
-        "registerUrlIIT": "https://forms.gle/kV6v4XYnvnap1CE26",
-        "registerUrlNonIIT": "https://forms.gle/PqwcKcx81nhFX4ri7"
+        "title": "Battleship",
+        "desc": "Think you played Battleship? Experience the classic game reinvented as 4 teams clash live with custom consoles, shields, sonar scans, and hidden mines to be the last fleet standing."
       },
       {
-        "title": "VR Session",
-        "desc": "Experience the future with immersive VR-themed activities and interactive demonstrations.",
-        "registerUrlIIT": "https://forms.gle/h4s3s213xfRx6eDi7",
-        "registerUrlNonIIT": "https://forms.gle/h4s3s213xfRx6eDi7"
+        "title": "Circuit Syndicate",
+        "desc": "Step into the arena with your syndicate—scavenge, build, and program your way to victory!"
       },
       {
-        "title": "Treasure Hunt: Openquest",
-        "desc": "Go on a digital quest to solve clues and uncover hidden treasures in a hybrid adventure.",
-        "registerUrlIIT": "https://forms.gle/SF1Mzk9RGX69Z7Xu7",
-        "registerUrlNonIIT": "https://forms.gle/sg6yfP9z15YGHCu98"
+        "title": "The Lattice",
+        "desc": "One campus. Contradicting trails. Trust no isolated story—trade intel, connect the missing pieces, and uncover the organization's hidden truth."
       },
       {
-        "title": "The Forge: Code, Adapt, Conquer",
-        "desc": "Collaborate to build real-world solutions in a fast-paced hackathon.",
-        "registerUrlIIT": "https://forms.gle/G5qN1uA7R8jqkE1U7",
-        "registerUrlNonIIT": "https://forms.gle/Sdxit37J9x7LDcxh6"
+        "title": "Nightjar",
+        "desc": "When NEXUS falls and the festival goes dark, you are the last line of defense. Trace the worm, expose the false insider, and isolate Patient Zero before the show begins."
       },
       {
-        "title": "Capture the Flag",
-        "desc": "Test your cybersecurity skills in a beginner-friendly CTF filled with challenging puzzles, both online and offline.",
-        "registerUrlIIT": "https://forms.gle/W4jCiucDPZqd7nxx9",
-        "registerUrlNonIIT": "https://forms.gle/PnFd4sGtBjzp1vxLA"
+        "title": "Gandhi Hackathon",
+        "desc": ""
       },
       {
-        "title": "Hackathon(Vibe Coding)",
-        "desc": "Apply your AI and ML skills to tackle real problems in a dynamic student hackathon environment.",
-        "registerUrlIIT": "https://forms.gle/duA9JuTyGeRGqBmX6",
-        "registerUrlNonIIT": "https://forms.gle/ofntKUjJk7FHNghR7"
+        "title": "Agent Wars",
+        "desc": ""
       },
       {
-        "title": "Save Satoshi",
-        "desc": "Join a mystery-themed treasure hunt powered by blockchain, where cracking codes leads to digital rewards.",
-        "registerUrlIIT": "https://forms.gle/KDpa4ckyUssoyVRq7",
-        "registerUrlNonIIT": "https://forms.gle/bBaNgyCpQzsACKY97"
+        "title": "Runtime Roulette",
+        "desc": "A 5-round coding contest featuring Easy, Medium, and Hard problems in each round. Participants wager virtual coins, earn multipliers for solving problems, and compete to maximize their balance and top the leaderboard."
+      },
+      {
+        "title": "Jailbreaking LLM",
+        "desc": "A 3-round LLM Jailbreaking event in which participants challenge AI safety guardrails through progressively harder tasks, from guessing hidden numbers to extracting secret keys and fictional private information."
+      },
+      {
+        "title": "Evo AI: Evolve, Adapt, Conquer",
+        "desc": "One agent. Five rounds. Infinite possibilities. Push the limits, evolve your AI, and outsmart the leaderboard!!"
+      },
+      {
+        "title": "Pit Stop Challenge",
+        "desc": ""
+      },
+      {
+        "title": "Buggy Showcase / Expo",
+        "desc": ""
       },
       {
         "title": "DriveX",
-        "desc": "Push your limits in motorsports challenges that test your reflexes and racing instincts.",
-        "registerUrlIIT": "https://forms.gle/gBYNJ2K9KPytWvWw5",
-        "registerUrlNonIIT": "https://forms.gle/gBYNJ2K9KPytWvWw5"
+        "desc": ""
+      },
+      {
+        "title": "CADathon",
+        "desc": ""
+      },
+      {
+        "title": "Line Follower",
+        "desc": "Watch high-speed robots race against the clock! Custom-built bots take on sharp turns and tough tracks completely on their own."
+      },
+      {
+        "title": "Robo Soccer",
+        "desc": "Showcase your engineering skills as robots compete in an electrifying soccer game to score points and win!"
+      },
+      {
+        "title": "VibeChain",
+        "desc": "Build a full-stack blockchain dApp with AI, write smart contracts, and hunt for vulnerabilities in this fast-paced 3-hour hackathon."
       }
     ]
   },
@@ -184,104 +194,152 @@ export const eventCategories: EventCategory[] = [
     "hindi": "मौज-मस्ती",
     "heading": "INFORMALS & VARCHASVA",
     "description": "Where fun meets competition ,  enjoy casual games and sports events that bring everyone together in the spirit of Meraz.",
-    "subEvents": [
-      {
-        "title": "Radio Meraz",
-        "desc": "Step into the studio and play the role of a radio host, spin tracks, give shoutouts, and keep the energy high."
-      },
-      {
-        "title": "Housie",
-        "desc": "Mark your numbers as luck unfolds in this classic game of Tambola; line up patterns to win exciting prizes."
-      },
-      {
-        "title": "Musical Headphones",
-        "desc": "Guess the phrase your teammate says while wearing headphones in this fun test of listening and communication."
-      },
-      {
-        "title": "7 Up",
-        "desc": "A fast-paced dice betting game where players predict whether the sum of two dice will be below, on, or above seven."
-      },
-      {
-        "title": "Roulette",
-        "desc": "Try your luck on the spinning wheel, bet on numbers or colors and see if fortune favors your picks."
-      },
-      {
-        "title": "Lottery",
-        "desc": "Draw random tickets or numbers and hope to win prizes by the luck of the draw."
-      },
-      {
-        "title": "Twister",
-        "desc": "Follow the spinner’s calls and put hands and feet on colored circles, last flexible player standing wins."
-      },
-      {
-        "title": "Beyblade Fight",
-        "desc": "Launch your Beyblades into the arena; only the last spinning top takes the victory."
-      },
-      {
-        "title": "Stack It",
-        "desc": "Stack objects as high as possible without tipping them over, then race with lemons for a double challenge."
-      },
-      {
-        "title": "Archery",
-        "desc": "Aim and release arrows at a target, highest accuracy claims the top scores."
-      },
-      {
-        "title": "Balloon on Feet",
-        "desc": "Tie balloons to your feet and try to pop others’ while defending your own in this playful romp."
-      },
-      {
-        "title": "Balls Luck",
-        "desc": "Pick or toss colored or numbered balls; hope your pick brings a lucky win."
-      },
-      {
-        "title": "7 Bounce",
-        "desc": "Pass or catch the ball after seven bounces, requires perfect timing and quick coordination."
-      },
-      {
-        "title": "Sling Shot",
-        "desc": "Compete by shooting objects with a slingshot, hit your targets with precision and control."
-      },
-      {
-        "title": "Futsal Championship",
-        "desc": "Compete in an action-packed Futsal tournament.",
-        "registerUrlIIT": "https://docs.google.com/forms/d/e/1FAIpQLSfM1IM39N3eJBvgmrDtWkrShGpbhQWrwcyUOc9iMOEX9oSXiQ/viewform?usp=publish-editor"
-      },
-      {
-        "title": "Basketball League",
-        "desc": "Shoot, dunk, and dominate the court!",
-        "registerUrlIIT": "https://docs.google.com/forms/d/1fCXyTR8sC2CjeC6f0gtjFfhVcXmxe_7K9QGGwkTxldo/edit"
-      },
-      {
-        "title": "Box Cricket",
-        "desc": "Swing, smash, and own the box!.",
-        "registerUrlIIT": "https://forms.gle/Gx5qfwHbzEWna2tV7"
-      },
-      {
-        "title": "Volleyball",
-        "desc": "Set, spike, and rule the court!",
-        "registerUrlIIT": "https://docs.google.com/forms/d/e/1FAIpQLSdGNSfeSqI535j5WLIsrDJJuItmRkk5pfPzv0t_nTONYHrFNg/viewform?usp=header"
-      },
-      {
-        "title": "Valorant",
-        "desc": "Team up and showcase your tactical prowess in intense 5v5 battles.",
-        "registerUrlIIT": "https://forms.gle/bPp9tvLfPH9mTRBj6"
-      },
-      {
-        "title": "BGMI",
-        "desc": "Drop in, gear up, and survive the battlefield.",
-        "registerUrlIIT": "https://forms.gle/5FKrpNCQo298papj7"
-      },
-      {
-        "title": "Stumble Guys",
-        "desc": "Dash, jump, and tumble your way through hilarious obstacle courses.",
-        "registerUrlIIT": "https://forms.gle/pXsTLWqFRBq7xN5x9"
-      },
-      {
-        "title": "Free Fire",
-        "desc": "Dive into fast-paced survival battles where every move counts.",
-        "registerUrlIIT": "https://forms.gle/DLYkSmbu9SfoTjbR9"
-      }
-    ]
+     "subEvents": [
+       {
+         "title": "Radio Meraz",
+         "desc": "A fun radio-style stall with hosts, music, shout-outs, mini-games, and audience interaction."
+       },
+       {
+         "title": "Housie",
+         "desc": "Players mark called numbers on their tickets and win for completing a required pattern."
+       },
+       {
+         "title": "Lottery",
+         "desc": "Players draw a ticket or number; matching numbers can win a small prize."
+       },
+       {
+         "title": "Musical Headphones",
+         "desc": "Players wear headphones and try to identify a song or follow a musical challenge."
+       },
+       {
+         "title": "Memory Flip",
+         "desc": "Players flip cards to find matching pairs using memory and concentration."
+       },
+       {
+         "title": "Poker Area",
+         "desc": "A casual card-table setup for poker-style play using clear rules and non-cash tokens."
+       },
+       {
+         "title": "7 Up",
+         "desc": "Players predict or choose an outcome in a simple dice-based luck game."
+       },
+       {
+         "title": "Roulette",
+         "desc": "Players place tokens on a chosen number or colour and see where the wheel lands."
+       },
+       {
+         "title": "Mini Football",
+         "desc": "Players try to score goals using a tabletop or mini football setup."
+       },
+       {
+         "title": "Cluster",
+         "desc": "Players take turns placing magnetic stones without letting them attract or clump together."
+       },
+       {
+         "title": "Jenga",
+         "desc": "Players remove one wooden block at a time and stack it on top without toppling the tower."
+       },
+       {
+         "title": "Balloon Blast",
+         "desc": "Players throw darts or use a safe popping method to burst balloons and win a prize."
+       },
+       {
+         "title": "Ring Toss",
+         "desc": "Players toss rings toward pegs or targets to win a prize."
+       },
+       {
+         "title": "Tekken",
+         "desc": "Players compete in a short one-on-one fighting-game match using controllers."
+       },
+       {
+         "title": "Air Hockey",
+         "desc": "Players use mallets to hit a puck into the opponent's goal on an air-hockey table."
+       },
+       {
+         "title": "Beyblade Fight",
+         "desc": "Players launch spinning tops into an arena; the last top spinning or remaining in the arena wins."
+       },
+       {
+         "title": "Balls of Luck",
+         "desc": "Players try to pick same coloured balls from the bucket."
+       },
+       {
+         "title": "Archery",
+         "desc": "Players take turns aiming at a target for points using a supervised, safe setup."
+       },
+       {
+         "title": "Arm Wrestling",
+         "desc": "Two players compete in a short arm-wrestling match on a stable table with supervision."
+       },
+       {
+         "title": "Spinning Wheel",
+         "desc": "Players spin a wheel and receive the prize or challenge indicated by where it stops."
+       },
+       {
+         "title": "Twister",
+         "desc": "Players place hands and feet on called-out coloured circles while trying not to fall."
+       },
+       {
+         "title": "Stack It",
+         "desc": "Players stack boxes or objects as high as possible without the tower collapsing."
+       },
+       {
+         "title": "Balloon on Feet",
+         "desc": "Players try to pop or protect balloons tied to their ankles."
+       },
+       {
+         "title": "Hit the Shuttle",
+         "desc": "Players hit a shuttlecock toward a target or through a marked frame to score points."
+       },
+       {
+         "title": "Musical Chairs",
+         "desc": "Players walk around chairs while music plays; when it stops, everyone tries to sit."
+       },
+       {
+         "title": "Mystery Bag",
+         "desc": "Players buy mystery bags which contain random prizes."
+       },
+       {
+         "title": "Futsal Championship",
+         "desc": "Compete in an action-packed Futsal tournament.",
+         "registerUrlIIT": "https://docs.google.com/forms/d/e/1FAIpQLSfM1IM39N3eJBvgmrDtWkrShGpbhQWrwcyUOc9iMOEX9oSXiQ/viewform?usp=publish-editor"
+       },
+       {
+         "title": "Basketball League",
+         "desc": "Shoot, dunk, and dominate the court!",
+         "registerUrlIIT": "https://docs.google.com/forms/d/1fCXyTR8sC2CjeC6f0gtjFfhVcXmxe_7K9QGGwkTxldo/edit"
+       },
+       {
+         "title": "Box Cricket",
+         "desc": "Swing, smash, and own the box!.",
+         "registerUrlIIT": "https://forms.gle/Gx5qfwHbzEWna2tV7"
+       },
+       {
+         "title": "Volleyball",
+         "desc": "Set, spike, and rule the court!",
+         "registerUrlIIT": "https://docs.google.com/forms/d/e/1FAIpQLSdGNSfeSqI535j5WLIsrDJJuItmRkk5pfPzv0t_nTONYHrFNg/viewform?usp=header"
+       },
+       {
+         "title": "Valorant",
+         "desc": "Team up and showcase your tactical prowess in intense 5v5 battles.",
+         "registerUrlIIT": "https://forms.gle/bPp9tvLfPH9mTRBj6"
+       },
+       {
+         "title": "BGMI",
+         "desc": "Drop in, gear up, and survive the battlefield.",
+         "registerUrlIIT": "https://forms.gle/5FKrpNCQo298papj7"
+       },
+       {
+         "title": "Stumble Guys",
+         "desc": "Dash, jump, and tumble your way through hilarious obstacle courses.",
+         "registerUrlIIT": "https://forms.gle/pXsTLWqFRBq7xN5x9"
+       },
+       {
+         "title": "Free Fire",
+         "desc": "Dive into fast-paced survival battles where every move counts.",
+         "registerUrlIIT": "https://forms.gle/DLYkSmbu9SfoTjbR9"
+       }
+     ]
   },
   {
     "id": 4,
@@ -289,13 +347,12 @@ export const eventCategories: EventCategory[] = [
     "hindi": "उद्यम",
     "heading": "E-CONCLAVE",
     "description": "Where ideas meet industry, develop innovations, pitch solutions, and turn concepts into real-world impact.",
-    "subEvents": [
-      {
-        "title": "Steel InTech Industrial Innovation Challenge",
-        "desc": "Apply engineering insight to solve real industrial and materials-based problems from Steel InTech.",
-        "registerUrlIIT": "https://forms.gle/6e98oqofD1qVSMXu7"
-      }
-    ]
+     "subEvents": [
+       {
+         "title": "Steel InTech Industrial Innovation Challenge",
+         "desc": "Apply engineering insight to solve real industrial and materials-based problems from Steel InTech.",
+       }
+     ]
   },
   {
     "id": 5,
@@ -304,16 +361,14 @@ export const eventCategories: EventCategory[] = [
     "heading": "FinTech Events",
     "description": "Where innovation meets implementation, build solutions, pitch disruptions, and transform finance into impact.",
     "subEvents": [
-      {
-        "title": "TradeX",
-        "desc": "Ready to test your instincts? TradeX brings you an all-India live trading simulation where you can buy and sell stocks in real-time as per live Indian market data! Build, manage, and grow your virtual ₹10L portfolio in the live market arena.",
-        "registerUrlIIT": "https://tradexiitbhilai.netlify.app/"
-      },
-      {
-        "title": "Nivesh Paheli",
-        "desc": "An interactive treasure hunt with a financial twist, aimed at making finance learning exciting and accessible. Participants solve a sequence of finance-based clues and puzzles to reach the final treasure.",
-        "registerUrlIIT": "https://docs.google.com/forms/d/e/1FAIpQLSfBRl7zjqPVubOiSZA5W0f5wat9nePIoLRf4tdSrCiC_Sd9XA/viewform?usp=dialog"
-      }
+       {
+         "title": "TradeX",
+         "desc": "Ready to test your instincts? TradeX brings you an all-India live trading simulation where you can buy and sell stocks in real-time as per live Indian market data! Build, manage, and grow your virtual ₹10L portfolio in the live market arena.",
+       },
+       {
+         "title": "Nivesh Paheli",
+         "desc": "An interactive treasure hunt with a financial twist, aimed at making finance learning exciting and accessible. Participants solve a sequence of finance-based clues and puzzles to reach the final treasure.",
+       }
     ]
   }
 ];

@@ -48,30 +48,48 @@ export const sponsorTiers: SponsorTier[] = [
 export type Pass = { name: string; title: string; discountCategories: { type: string; discounts: string[] }[]; formLink: string };
 export const passes: Pass[] = [
   {
-    name: "Student Pass",
-    title: "Entry into the institute and Pronites access",
+    name: "Access Pass",
+    title: "Single-Day Entry Pass: A single-day access pass for students to attend MERAZ events on any one day of the fest, excluding Pronites. A valid student ID card is mandatory for entry.",
     discountCategories: [
       {
-        type: "Student pass discounts",
-        discounts: ["Group of 3 to 6: ₹460 per person", "Group of 7 to 9: ₹430 per person", "Group of 10 or more: ₹400 per person"],
+        type: "Pricing",
+        discounts: ["Individual price: ₹99", "Group price: ₹99/person", "No group concession"],
       },
     ],
-    formLink: "https://docs.google.com/forms/d/e/1FAIpQLSfdVhh3Q6OzyE30O9fRm_IIwoPyY_9eBbRDjkgtQ7wUNrX7LQ/viewform",
+    formLink: "https://script.google.com/a/macros/iitbhilai.ac.in/s/AKfycbyNIKZ9qv5jyLxOxxDYCFA5z89O3lncR0jhphYQiVQLDNSGYdTCAz7E2xJF2FSkxaHG/exec",
   },
   {
-    name: "Access Pass",
-    title: "Entry to the institute but no Pronite access",
+    name: "Pronites Pass Day 2",
+    title: "Full Day-2 Access + Day 2 Pronite: Enjoy all MERAZ events on Day 2 as an audience member, including the much-awaited Day 2 Pronite with JYOTIRMAYEE & D.J. PRERAK.",
     discountCategories: [
       {
-        type: "Access pass for single day",
-        discounts: ["₹150 per head", "Groups of 3 to 5: ₹140 (1 day) per head", "Groups of 6 to 9: ₹120 (1 day) per head", "Groups of 10 or more: ₹100 (1 day) per head"],
-      },
-      {
-        type: "Access pass for two days",
-        discounts: ["₹200 per head", "Group of 3 to 5: ₹180 (2 days) per head", "Group of 6 to 9: ₹160 (2 days) per head", "Group of 10 or more: ₹150 (2 days) per head"],
+        type: "Pricing",
+        discounts: ["Individual price: ₹299", "Group price (10+ people): ₹249/person", "Save ₹50 per person in a group of 10 or more."],
       },
     ],
-    formLink: "https://docs.google.com/forms/d/e/1FAIpQLScybemGe99maALEORbUyXp0rlujs_4lPr2Kbwpny2Kd0yRhoA/viewform?usp=send_form",
+    formLink: "https://script.google.com/a/macros/iitbhilai.ac.in/s/AKfycbyNIKZ9qv5jyLxOxxDYCFA5z89O3lncR0jhphYQiVQLDNSGYdTCAz7E2xJF2FSkxaHG/exec",
+  },
+  {
+    name: "Pronites Pass Day 3",
+    title: "Full Day-3 Access + Day 3 Pronite: Experience all MERAZ events on Day 3 as an audience member, along with access to the spectacular Day 3 Pronite with NAKASH AZIZ & QAFILA- THE BAND.",
+    discountCategories: [
+      {
+        type: "Pricing",
+        discounts: ["Individual price: ₹499", "Group price (10+ people): ₹449/person", "Save ₹50 per person in a group of 10 or more."],
+      },
+    ],
+    formLink: "https://script.google.com/a/macros/iitbhilai.ac.in/s/AKfycbyNIKZ9qv5jyLxOxxDYCFA5z89O3lncR0jhphYQiVQLDNSGYdTCAz7E2xJF2FSkxaHG/exec",
+  },
+  {
+    name: "Accommodation Pass",
+    title: "3-Day Complete Experience: Make the most of MERAZ with three-day accommodation, food, access to all events, and entry to all Pronites throughout the fest.",
+    discountCategories: [
+      {
+        type: "Pricing",
+        discounts: ["Individual price: ₹3,499", "Group price (10+ people): ₹2,999/person", "Save ₹500 per person in a group of 10 or more."],
+      },
+    ],
+    formLink: "https://script.google.com/a/macros/iitbhilai.ac.in/s/AKfycbyNIKZ9qv5jyLxOxxDYCFA5z89O3lncR0jhphYQiVQLDNSGYdTCAz7E2xJF2FSkxaHG/exec",
   },
 ];
 

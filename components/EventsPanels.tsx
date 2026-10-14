@@ -137,16 +137,16 @@ export function Carousel({ items, category }: { items: SubEvent[]; category: str
 
 export function Ticket({ ev, category, serial }: { ev: SubEvent; category: string; serial: number }) {
   return (
-    <div className="flex h-full overflow-hidden rounded-md border-[3px] border-ink bg-cream text-ink shadow-[6px_6px_0_var(--color-ink)]">
+    <div className="flex h-full max-h-[52vh] overflow-hidden rounded-md border-[3px] border-ink bg-cream text-ink shadow-[6px_6px_0_var(--color-ink)]">
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between gap-3 bg-ink px-3 py-2 font-mono text-xs font-bold text-turmeric sm:px-4">
+        <div className="flex items-center justify-between gap-3 bg-ink px-3 py-2 font-mono text-xs font-bold text-turmeric sm:px-4 shrink-0">
           <span className="min-w-0 truncate">{category}</span>
           <span className="shrink-0">ADMIT ONE</span>
         </div>
-        <div className="flex flex-1 flex-col p-3 sm:p-5">
-          <h3 className="font-poster text-xl leading-tight [overflow-wrap:anywhere] sm:text-3xl">{ev.title}</h3>
-          <p className="mt-2 text-sm leading-relaxed sm:text-base">{ev.desc}</p>
-          <div className="mt-auto pt-4">
+        <div className="flex flex-1 flex-col p-3 sm:p-4 min-h-0 overflow-hidden">
+          <h3 className="font-poster text-lg leading-tight [overflow-wrap:anywhere] sm:text-2xl shrink-0">{ev.title}</h3>
+          <p className="mt-1 text-xs leading-relaxed sm:text-sm flex-1 min-h-0 overflow-hidden text-ellipsis">{ev.desc}</p>
+          <div className="mt-2 pt-2 shrink-0">
             <RegisterArea ev={ev} category={category} />
           </div>
         </div>
@@ -168,7 +168,9 @@ function RegisterArea({ ev, category }: { ev: SubEvent; category: string }) {
       {label}
     </a>
   );
-  if (category === "SCI-TECH")
+  if (category === "SCI-TECH") {
+    if (!ev.registerUrlIIT)
+      return <p className="w-fit -rotate-2 border-4 border-double border-vermillion-deep px-3 py-1 font-display text-sm text-vermillion-deep">Coming Soon</p>;
     return (
       <div className="flex flex-wrap gap-4">
         <div>
@@ -181,8 +183,11 @@ function RegisterArea({ ev, category }: { ev: SubEvent; category: string }) {
         </div>
       </div>
     );
+  }
   if (category === "INFORMALS & VARCHASVA" && !ev.registerUrlIIT)
     return <p className="w-fit -rotate-2 border-4 border-double border-vermillion-deep px-3 py-1 font-display text-sm text-vermillion-deep">All registrations will be done on the spot</p>;
+  if ((category === "FinTech" || category === "E-CELL") && !ev.registerUrlIIT)
+    return <p className="w-fit -rotate-2 border-4 border-double border-vermillion-deep px-3 py-1 font-display text-sm text-vermillion-deep">Coming Soon</p>;
   if (ev.registerUrlIIT) return link(ev.registerUrlIIT, "Register");
   return null;
 }

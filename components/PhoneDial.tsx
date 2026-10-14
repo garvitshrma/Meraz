@@ -349,7 +349,7 @@ export default function PhoneDial() {
         const y = st.start + ((j + 1) / legs) * tour();
         // unhurried: two seconds, and most of another for every screen of the way, easing in and out, so the camera
         // is seen dialling round to the card rather than jumping
-        glideScroll(y, Math.min(9, 2 + (Math.abs(y - scrollY) / innerHeight) * 0.75));
+        glideScroll(y, Math.min(4, 0.85 + (Math.abs(y - scrollY) / innerHeight) * 0.5));
       };
       document.addEventListener("click", dial);
 
