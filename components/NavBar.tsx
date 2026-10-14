@@ -35,7 +35,7 @@ export default function NavBar() {
   if (pathname === "/") return null; // home is the road scene: its auto ride ends at the links as destinations
 
   return (
-    <header className="nav-ground fixed inset-x-0 top-0 z-50 border-b-4 border-ink print:hidden">
+    <header className="nav-ground fixed inset-x-0 top-0 z-[15000] border-b-4 border-ink print:hidden">
       <nav aria-label="Main">
         <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           {/* the bird logo and the Meraz lettering (public/logo.webp, typolog.webp trimmed to their ink as nav-*.webp) */}
