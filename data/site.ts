@@ -5,8 +5,8 @@ export const site = {
   college: "IIT Bhilai",
   theme: "Retro India",
   tagline: "Rewind. Replay. Rejoice.", // PLACEHOLDER
-  url: "https://meraz7.vercel.app", // used for SEO / Open Graph link previews; change if the domain moves
-  passQueryPhone: "+91 94079 00542",
+  url: "https://meraz.iitbhilai.ac.in", // used for SEO / Open Graph link previews; change if the domain moves
+  passQueryPhone: "+91 62815 21833",
 };
 
 // The events page's mela: the whole carnival in one model. Models are cached for a day without asking

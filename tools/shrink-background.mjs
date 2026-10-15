@@ -11,7 +11,7 @@ import sharp from "sharp";
 import { statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const MODELS = ["tree-2", "tree-3", "man", "oldman", "stall-keeper"]; // tree-1 and woman come out larger re-encoded
+const MODELS = ["tree-2", "tree-3", "man", "oldman"]; // tree-1 and woman come out larger re-encoded
 const CAP = 256;
 const DIR = process.argv[2] ?? fileURLToPath(new URL("../public/models/", import.meta.url));
 

@@ -180,11 +180,11 @@ const LANES = [
 ] as const;
 const WALKWAY = { from: -60, len: 130 }; // pedestrians loop over this z range; the ends are lost in the haze
 // Stall on the right-hand footpath (right as seen from the chase camera, i.e. -x) level with the barricade, its back at
-// back (in front of the environment's wall), clear of the walking line. The keeper is a bust, behind the counter.
+// back (in front of the environment's wall), clear of the walking line. No keeper behind the counter.
 // lamp: the stall's bulb, hung out over the counter (out metres in front of it, up metres above the kerb) so it lights
-// the keeper, the counter and its banner from the road side; tint, power, reach and decay as for CABIN.
+// the counter and its banner from the road side; tint, power, reach and decay as for CABIN.
 const STALL = {
-  height: 2.6, keeper: 0.95, keeperBase: 0.75, back: -9.9,
+  height: 2.6, back: -9.9,
   lamp: { tint: 0xffd49a, power: 30, reach: 8, decay: 2, out: 0.5, up: 2.1, halo: 0.9 },
 };
 
@@ -209,7 +209,7 @@ export default function RoadJump() {
 
     (async () => {
       // The loading screen's meter (see LoadingScreen): every file, font and shader compile below is one step of it.
-      const streetNames = ["env", ...TREES.map((t) => t.name), ...Object.keys(PEOPLE), "stall", "stall-keeper", "auto"];
+      const streetNames = ["env", ...TREES.map((t) => t.name), ...Object.keys(PEOPLE), "stall", "auto"];
       const steps = 12 + streetNames.length; // 4 models + 2 images, the street's, 2 fonts, sky, shell, 2 compiles
       const pct = sec.querySelector<HTMLElement>("[data-load-pct]");
       let done = 0;
@@ -961,7 +961,7 @@ export default function RoadJump() {
         }
       }
 
-      // Banner on the front of the counter, below the keeper, facing the road: a painted board in the site's retro style.
+      // Banner on the front of the counter, facing the road: a painted board in the site's retro style.
       const board = document.createElement("canvas");
       board.width = 1024;
       board.height = 300;
@@ -992,10 +992,6 @@ export default function RoadJump() {
       banner.rotation.y = Math.PI / 2; // plane faces +z; turn it to the road (+x)
       banner.position.set(stall.position.x + depth / 2 + 0.03, kerbTop + 0.55, stallZ);
       street.add(banner);
-      const keeper = ground(model("stall-keeper").scene, STALL.keeper);
-      keeper.rotation.y = Math.PI / 2; // faces +z as modelled; turn him to the road (+x)
-      keeper.position.set(stall.position.x - depth * 0.2, kerbTop + STALL.keeperBase, stall.position.z);
-      street.add(keeper);
       // The stall's bulb (see STALL.lamp), with a soft halo so it reads from down the street like the street lights.
       const { lamp: sl } = STALL;
       const stallLamp = new THREE.PointLight(sl.tint, sl.power, sl.reach, sl.decay);
