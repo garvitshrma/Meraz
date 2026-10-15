@@ -7,15 +7,28 @@ import { useState } from "react";
 import { ArrowUpRight } from "@phosphor-icons/react";
 import type { Pass } from "@/data/content";
 
+const BUY_NOW_URL = "https://meraz.ksverse.in/";
+
 // Original reference values (2 passes per row)
 const ROW = "calc((100cqw - 1rem) * 0.29846)"; // height
 const OPEN = "((100cqw - 1rem) * 0.8242)"; // open ticket width
 const STUB = "((100cqw - 1rem) * 0.17578)"; // stub width
 
 function Details({ p }: { p: Pass }) {
+  // The pronite pass titles end "... with ARTIST & ARTIST."; the artists get a bold line each so they read from far.
+  const m = p.title.match(/^(.*?\bwith)\s+([A-Z0-9.\- &]+?)\.?$/);
   return (
     <>
-      <p className="font-poster text-[1.25em] leading-tight">{p.title}</p>
+      {m ? (
+        <p className="font-poster text-[1.25em] leading-tight">
+          {m[1]}
+          {m[2].split(/\s&\s/).map((a) => (
+            <span key={a} className="block text-[1.12em] font-black uppercase tracking-wide text-[#7a061d]">{a}</span>
+          ))}
+        </p>
+      ) : (
+        <p className="font-poster text-[1.25em] leading-tight">{p.title}</p>
+      )}
       <div className="mt-[0.6em] grid grid-cols-[repeat(auto-fit,minmax(14em,1fr))] gap-x-[1.5em] gap-y-[0.8em]">
         {p.discountCategories.map((c) => (
           <div key={c.type}>
@@ -44,14 +57,18 @@ function Ticket({ p, details, className = "", fontSize }: { p: Pass; details?: s
         {p.name}
       </h2>
       <a
-        href={p.formLink}
+        href={BUY_NOW_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`Buy ${p.name} (opens a form)`}
+        aria-label={`Buy ${p.name} (opens in new tab)`}
         className="absolute left-[29.1%] top-[81.3%] aspect-square w-[7.9%] -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform hover:scale-110 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-95"
-      />
+      >
+        <span className="absolute left-full top-1/2 ml-[0.4em] flex -translate-y-1/2 items-center gap-[0.3em] whitespace-nowrap text-[0.9em] font-bold uppercase tracking-widest">
+          Buy now <ArrowUpRight weight="bold" aria-hidden="true" />
+        </span>
+      </a>
       {details !== undefined && (
-        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-y-auto text-[0.92em] leading-tight ${details}`}>
+        <div className={`absolute bottom-[30%] left-[24.5%] right-[4%] top-[18%] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-[0.92em] leading-tight ${details}`}>
           <Details p={p} />
         </div>
       )}
@@ -98,10 +115,10 @@ function TallTicket({ p, train }: { p: Pass; train: boolean }) {
           <Details p={p} />
           <div className="mt-6 flex items-end justify-between gap-4 flex-shrink-0">
             <a
-              href={p.formLink}
+              href={BUY_NOW_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Buy ${p.name} (opens a form)`}
+              aria-label={`Buy ${p.name} (opens in new tab)`}
               className="group flex items-center gap-2 font-bold uppercase tracking-widest focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               <img src="/passes/coin.webp" alt="" width={166} height={166} className="size-20 transition-transform group-hover:scale-110 group-active:scale-95" />

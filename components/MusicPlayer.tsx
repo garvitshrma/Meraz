@@ -191,45 +191,60 @@ export default function MusicPlayer() {
       <div aria-hidden="true" className="pointer-events-none fixed left-0 top-0 size-px opacity-0">
         <div ref={host} />
       </div>
-      {ready && !failed && (
-        <div
-          ref={card}
-          data-music
-          {...drag}
-          onPointerCancel={drag.onPointerUp}
-          style={pos ? { left: pos.x, top: pos.y } : undefined}
-          className={`fixed z-40 flex cursor-grab touch-none select-none items-center gap-0.5 rounded-full border-[3px] border-ink/60 bg-ink/45 py-0.5 pl-1 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_rgb(242_193_78/0.7),4px_4px_0_rgb(184_22_111/0.55)] backdrop-blur-md active:cursor-grabbing print:hidden ${pos ? "" : `right-3 ${top}`}`}
-        >
-          {/* the grip: shows it can be moved */}
-          <DotsSixVertical size={18} weight="bold" aria-hidden="true" className="shrink-0 opacity-70" />
-          {/* a little equaliser, moving while the song plays */}
-          <span aria-hidden="true" className="mr-2 flex h-3 items-end gap-0.5 max-sm:mr-1">
-            {[0, -0.3, -0.6].map((d) => (
-              <i
-                key={d}
-                className={`block w-[3px] rounded-[1px] bg-current ${playing ? "h-full animate-[eq_0.9s_ease-in-out_infinite_alternate]" : "h-[30%]"}`}
-                style={{ animationDelay: `${d}s` }}
-              />
-            ))}
-          </span>
-          <span className="mr-1 max-w-[min(30vw,14rem)] truncate font-display text-xs">
-            {song.title} <span className="font-sans font-normal text-cream/80">· {song.artist}</span>
-          </span>
-          <a className={`${icon} max-sm:hidden`} href={`https://www.youtube.com/watch?v=${song.id}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on YouTube`}>
-            <YoutubeLogo size={20} weight="fill" aria-hidden="true" />
-          </a>
-          <a className={`${icon} max-sm:hidden`} href={`https://open.spotify.com/search/${q}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on Spotify`}>
-            <SpotifyLogo size={20} weight="fill" aria-hidden="true" />
-          </a>
-          <button type="button" className={icon} onClick={() => controls.current.prev()} aria-label="Previous song">
-            <SkipBack size={18} weight="fill" aria-hidden="true" />
-          </button>
-          <button type="button" className={icon} onClick={() => controls.current.next()} aria-label="Next song">
-            <SkipForward size={18} weight="fill" aria-hidden="true" />
-          </button>
-          <button type="button" className={`${icon} bg-turmeric text-ink hover:bg-cream`} onClick={() => controls.current.toggle()} aria-label={playing ? "Pause music" : "Play music"}>
-            {playing ? <Pause size={18} weight="fill" aria-hidden="true" /> : <Play size={18} weight="fill" aria-hidden="true" />}
-          </button>
+      {/* DEBUG: shows player state */}
+      <div className="fixed bottom-3 left-3 z-50 text-xs px-2 py-1 rounded bg-ink/80 text-cream font-mono pointer-events-none select-none">
+        MusicPlayer: {ready ? "ready" : failed ? "failed" : "loading..."}
+      </div>
+      {!failed ? (
+        <>
+          <div
+            ref={card}
+            data-music
+            {...drag}
+            onPointerCancel={drag.onPointerUp}
+            style={pos ? { left: pos.x, top: pos.y } : undefined}
+            className={`fixed z-[15001] flex cursor-grab touch-none select-none items-center gap-0.5 rounded-full border-[3px] border-ink/60 bg-ink/45 py-0.5 pl-1 pr-0.5 text-turmeric shadow-[inset_0_0_0_2px_rgb(242_193_78/0.7),4px_4px_0_rgb(184_22_111/0.55)] backdrop-blur-md active:cursor-grabbing print:hidden ${pos ? "" : `right-3 ${top}`}`}
+          >
+            {/* the grip: shows it can be moved */}
+            <DotsSixVertical size={18} weight="bold" aria-hidden="true" className="shrink-0 opacity-70" />
+            {/* a little equaliser, moving while the song plays */}
+            <span aria-hidden="true" className="mr-2 flex h-3 items-end gap-0.5 max-sm:mr-1">
+              {[0, -0.3, -0.6].map((d) => (
+                <i
+                  key={d}
+                  className={`block w-[3px] rounded-[1px] bg-current ${playing ? "h-full animate-[eq_0.9s_ease-in-out_infinite_alternate]" : "h-[30%]"}`}
+                  style={{ animationDelay: `${d}s` }}
+                />
+              ))}
+            </span>
+            <span className="mr-1 max-w-[min(30vw,14rem)] truncate font-display text-xs">
+              {song.title} <span className="font-sans font-normal text-cream/80">· {song.artist}</span>
+            </span>
+            <a className={`${icon} max-sm:hidden`} href={`https://www.youtube.com/watch?v=${song.id}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on YouTube`}>
+              <YoutubeLogo size={20} weight="fill" aria-hidden="true" />
+            </a>
+            <a className={`${icon} max-sm:hidden`} href={`https://open.spotify.com/search/${q}`} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} by ${song.artist} on Spotify`}>
+              <SpotifyLogo size={20} weight="fill" aria-hidden="true" />
+            </a>
+            <button type="button" className={icon} onClick={() => controls.current.prev()} aria-label="Previous song">
+              <SkipBack size={18} weight="fill" aria-hidden="true" />
+            </button>
+            <button type="button" className={icon} onClick={() => controls.current.next()} aria-label="Next song">
+              <SkipForward size={18} weight="fill" aria-hidden="true" />
+            </button>
+            <button type="button" className={`${icon} bg-turmeric text-ink hover:bg-cream`} onClick={() => controls.current.toggle()} aria-label={playing ? "Pause music" : "Play music"}>
+              {playing ? <Pause size={18} weight="fill" aria-hidden="true" /> : <Play size={18} weight="fill" aria-hidden="true" />}
+            </button>
+          </div>
+          {failed && (
+            <div className="fixed bottom-3 right-3 z-50 text-xs px-2 py-1 rounded bg-red-900/80 text-cream font-mono pointer-events-none select-none">
+              YouTube blocked — music unavailable
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="fixed bottom-3 right-3 z-50 text-xs px-2 py-1 rounded bg-red-900/80 text-cream font-mono pointer-events-none select-none">
+          YouTube blocked — music unavailable
         </div>
       )}
     </>
