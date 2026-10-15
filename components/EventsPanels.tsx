@@ -145,6 +145,7 @@ export function Ticket({ ev, category, serial }: { ev: SubEvent; category: strin
         </div>
         <div className="flex flex-1 flex-col p-3 sm:p-4 min-h-0 overflow-hidden">
           <h3 className="font-poster text-lg leading-tight [overflow-wrap:anywhere] sm:text-2xl shrink-0">{ev.title}</h3>
+          {ev.stall && <p className="mt-1 shrink-0 font-mono text-[11px] font-bold uppercase tracking-widest text-vermillion-deep sm:text-xs">{ev.stall}</p>}
           <p className="mt-1 text-xs leading-relaxed sm:text-sm flex-1 min-h-0 overflow-hidden text-ellipsis">{ev.desc}</p>
           <div className="mt-2 pt-2 shrink-0">
             <RegisterArea ev={ev} category={category} />
@@ -186,7 +187,7 @@ function RegisterArea({ ev, category }: { ev: SubEvent; category: string }) {
   }
   if (category === "INFORMALS & VARCHASVA" && !ev.registerUrlIIT)
     return <p className="w-fit -rotate-2 border-4 border-double border-vermillion-deep px-3 py-1 font-display text-sm text-vermillion-deep">All registrations will be done on the spot</p>;
-  if ((category === "FinTech" || category === "E-CELL") && !ev.registerUrlIIT)
+  if ((category === "CULTURALS" || category === "FinTech" || category === "E-CELL") && !ev.registerUrlIIT)
     return <p className="w-fit -rotate-2 border-4 border-double border-vermillion-deep px-3 py-1 font-display text-sm text-vermillion-deep">Coming Soon</p>;
   if (ev.registerUrlIIT) return link(ev.registerUrlIIT, "Register");
   return null;
