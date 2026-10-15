@@ -18,72 +18,80 @@ export const eventCategories: EventCategory[] = [
     "description": "Celebrate creativity, rhythm, and expression where every act is a spark and every display a masterpiece born of passion and artistry.",
     "subEvents": [
       {
-        "title": "Virtual Groove",
-        "desc": "Break boundaries and express your rhythm in this virtual dance competition connecting dancers nationwide."
-      },
-      {
-        "title": "Murder Mystery",
-        "desc": "Unravel secrets, interrogate suspects, and solve a thrilling crime before time runs out."
-      },
-      {
-        "title": "Shot Ur Story",
-        "desc": "Capture the spirit of Meraz through impactful short films that tell powerful stories in minutes."
-      },
-      {
-        "title": "Candid Capture",
-        "desc": "Record spontaneous campus emotions and moments that define the true essence of Meraz."
-      },
-      {
-        "title": "IITBh Model United Nations",
-        "desc": "Debate, negotiate, and lead global change by tackling real-world issues through diplomacy."
-      },
-      {
-        "title": "Meme-O-Rama",
-        "desc": "Meme your way to glory! Create witty and relatable memes that win hearts and screens alike."
-      },
-      {
-        "title": "Abhivyakti",
-        "desc": "Express emotions and creativity through original Hindi poetry that speaks from the soul."
-      },
-      {
         "title": "General Quiz",
-        "desc": "Test your all-round knowledge in a high-energy quiz covering science, pop culture, and more."
+        "desc": "A quiz covering a wide range of topics, from history and science to culture, sports and current affairs."
       },
       {
         "title": "NSFW Quiz",
-        "desc": "Get ready for a wild, laughter-filled ride with the NSFW Quiz at MERAZ!."
+        "desc": "A quiz on umm well, rather interesting things 👀👀"
+      },
+      {
+        "title": "Photo of the Fest: Candid Edition",
+        "desc": "Capture the spirit of Meraz through your lens! Photo of the Fest is an online photography competition where participants capture candid moments, genuine emotions, and the vibrant atmosphere of the fest. Showcase your creativity by turning ordinary moments into extraordinary photographs that tell a story. Submit your best shots and let your perspective stand out! In collaboration with DesignX Kathachitra."
+      },
+      {
+        "title": "Youth Parliament",
+        "desc": "Step into the shoes of national lawmakers in a dynamic simulation where participants debate pressing policies, draft legislation, and navigate complex parliamentary procedures. It is a premier platform for young leaders to test their diplomacy, hone their public speaking, and drive impactful change on a competitive stage."
+      },
+      {
+        "title": "Abhivyakti",
+        "desc": "Immerse yourself in the rhythm of spoken word at our Hindi Slam, a vibrant stage where poets breathe life into raw emotions and compelling stories. Join us for an electrifying event that celebrates the power, passion, and beauty of Hindi performance poetry."
+      },
+      {
+        "title": "Murder Mystery",
+        "desc": "A murder mystery is a themed event where there are fictional characters in a fictional story. The participants will then work together to solve a fictitious murder which occurs during the event. Most of the characters are gray. They are all suspects of the murder and have to be investigated by the participating teams to solve the mystery. Characters can’t lie but mislead the participants in different ways."
+      },
+      {
+        "title": "Pukaar - Nukkad Natak",
+        "desc": "Experience the raw energy of Nukkad Natak! This powerful street play brings social issues to life with passion, humor, and heart. With minimal props and dynamic performances, it’s an exciting, spontaneous way to engage the crowd and make a real impact."
+      },
+      {
+        "title": "Dance Solitaire - Solo Dance",
+        "desc": "An open solo dance battle/performance round, freestyle or choreographed, judged on technique, musicality, and stage presence. Held live on campus."
+      },
+      {
+        "title": "IN10SITY",
+        "desc": "A team-based choreographed dance battle open to multiple genres, judged on synchronisation, choreography, and overall performance."
+      },
+      {
+        "title": "Fragments",
+        "desc": "Every piece tells a story, but together, they create a masterpiece! In Fragments, team up with your crew, unleash your creativity, and turn individual puzzle pieces into one spectacular work of art. Can your fragments come together in harmony?"
+      },
+      {
+        "title": "Switch",
+        "desc": "Two artists, two canvases, and a switch every two minutes! Just when you find your rhythm, it's time to switch. Adapt to your partner's ideas, build on their strokes, and see how creative chaos transforms into art."
       },
       {
         "title": "Beyond Sight",
-        "desc": "Create art through trust and teamwork where one paints blindfolded guided by another."
+        "desc": "What happens when vision meets imagination? In Beyond Sight, one partner paints blindfolded while the other guides every stroke. Put your trust, communication, and creativity to the test, and turn the unseen into a masterpiece!"
       },
       {
-        "title": "Luminous Ink: Ignite the Night",
-        "desc": "Design glowing tattoos with radiant creativity and light up the night."
+        "title": "Nirmiti: Live Digital Art Challenge",
+        "desc": "Every great character starts as something unexpected. Nirmiti is DesignX’s on-the-spot digital art challenge: you get a random, unconventional shape and must turn it into a full character design on our graphic tablets, in any style you choose, within 20 minutes."
       },
       {
-        "title": "Shredded: The Battle of Bands",
-        "desc": "Unleash your musical energy and rock the stage in an electrifying band showdown."
+        "title": "Chitrakatha: Photo-Story Manipulation Challenge",
+        "desc": "Shoot 6 to 7 original photographs that narrate a story, then take them into Photoshop and amplify the mood by painting, grading, and drawing over your frames. Your camera is the pen, so bring a story worth showing."
       },
       {
-        "title": "Euphony",
-        "desc": "Let your vocals shine online and turn your screen into a stage for stardom."
+        "title": "Shredded: Battle of Bands",
+        "desc": "Turn up the volume, unleash the riffs, and let the battle begin! In Shredded – Battle of Bands, bring your band together, ignite the stage with electrifying solos, thunderous beats, and roaring vocals, and prove that your music has what it takes to steal the show. When the amps are cranked up and the stage is yours, will your band shred its way to victory?"
       },
       {
-        "title": "Online Theme Photography",
-        "desc": "Explore the art of illusion and contrast in this creative online photography challenge."
+        "title": "Sur-Real",
+        "desc": "Some voices are heard, but some are felt! In Sur-Real, take the stage, let your melodies speak, and transform every note into an unforgettable experience. Pour your heart into every lyric, captivate the audience with your sur, and let your voice create magic that transcends the ordinary. Are you ready to make the unreal sound sur-real?"
       },
       {
-        "title": "Design Forward",
-        "desc": "Collaborate, innovate, and prototype impactful solutions in this one-day design sprint."
+        "title": "Copy Cut: Movie Scene Recreation",
+        "desc": "Participants are invited to select a movie sequence of their choice, ranging from dramatic dialogues to simple comedic exchanges, and recreate it. Elaborate sets and professional lighting are not required; instead, we encourage the innovative use of accessible locations, props, and standard camera equipment (including smartphones) to capture the core essence of the original sequence."
       },
       {
-        "title": "Meraz Got Talent - सुर-Real",
-        "desc": "Showcase your passion and creativity through music, dance, and art on the grand Meraz stage."
+        "title": "Alter Ego",
+        "desc": "AlterEgo is the perfect opportunity to step into the shoes of a character you've always dreamed of becoming. No strict rules, just express yourself and have fun! There are no boundaries to what you can become. You also win a chance to get exciting prizes in various games."
       },
       {
-        "title": "Meraz Got Talent - Dance Arts",
-        "desc": "Showcase your passion and creativity through music, dance, and art on the grand Meraz stage."
+        "title": "Attire Spectra",
+        "desc": "The platform for participants to showcase their style, confidence, and personality while walking the runway. Bring your best looks, own the stage, and leave the audience mesmerized with your attitude and presence!"
       }
     ]
   },
