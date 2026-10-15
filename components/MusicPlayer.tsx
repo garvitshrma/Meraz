@@ -191,10 +191,6 @@ export default function MusicPlayer() {
       <div aria-hidden="true" className="pointer-events-none fixed left-0 top-0 size-px opacity-0">
         <div ref={host} />
       </div>
-      {/* DEBUG: shows player state */}
-      <div className="fixed bottom-3 left-3 z-50 text-xs px-2 py-1 rounded bg-ink/80 text-cream font-mono pointer-events-none select-none">
-        MusicPlayer: {ready ? "ready" : failed ? "failed" : "loading..."}
-      </div>
       {!failed ? (
         <>
           <div
