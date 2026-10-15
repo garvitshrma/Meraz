@@ -12,6 +12,9 @@ export const about = {
   ] as const,
 };
 
+// false: every sponsor frame shows the "coming soon" image and caption instead of the logo and name (the logos below are
+// kept for when the Meraz 7.0 sponsors are confirmed; set true then).
+export const SPONSORS_REVEALED = false;
 export type SponsorTier = { tier: string; hindi: string; level: "title" | "platinum" | "gold"; sponsors: { name: string; logo: string; dark?: boolean }[] }; // dark: a light logo, shown on a dark ground
 export const sponsorTiers: SponsorTier[] = [
   { tier: "Title Sponsor", hindi: "मुख्य प्रायोजक", level: "title", sponsors: [{ name: "SBI", logo: "/sponsors/sbi.jpg" }] },

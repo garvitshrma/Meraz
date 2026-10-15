@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Kathputli, Mandala, Petals, Tassel } from "@/components/SponsorsArt";
-import { sponsorTiers } from "@/data/content";
+import { sponsorTiers, SPONSORS_REVEALED } from "@/data/content";
 
 export const metadata: Metadata = { title: "Sponsors", description: "The partners powering Meraz." };
 
@@ -37,7 +37,8 @@ function nameSize(name: string) {
   return 6;
 }
 
-function Frame({ name, logo, dark }: { name: string; logo: string; dark?: boolean }) {
+function Frame(sponsor: { name: string; logo: string; dark?: boolean }) {
+  const { name, logo, dark } = SPONSORS_REVEALED ? sponsor : { name: "To be announced", logo: "/sponsors/coming-soon.svg", dark: false };
   return (
     <figure className="@container relative aspect-[330/447] w-full transition-[translate,rotate,filter] duration-300 hover:-translate-y-2 hover:-rotate-1 hover:drop-shadow-[0_0_18px_rgb(255_46_136/0.75)]">
       {/* the window's ground, masked to it over the whole frame: white (dark for a light logo) to 55.7% of the way

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Coming soon">
+  <rect x="14" y="14" width="372" height="272" rx="22" fill="#fff4cf" stroke="#7a061d" stroke-width="6"/>
+  <rect x="30" y="30" width="340" height="240" rx="14" fill="none" stroke="#7a061d" stroke-width="3" stroke-dasharray="10 8"/>
+  <g fill="#e6006e"><path d="M60 62l9 9-9 9-9-9z"/><path d="M340 62l9 9-9 9-9-9z"/><path d="M60 220l9 9-9 9-9-9z"/><path d="M340 220l9 9-9 9-9-9z"/></g>
+  <g font-family="Impact, 'Arial Black', 'Bebas Neue', sans-serif" text-anchor="middle" fill="#7a061d">
+    <text x="200" y="146" font-size="82" letter-spacing="4">COMING</text>
+    <text x="200" y="222" font-size="82" letter-spacing="10" fill="#e6006e">SOON</text>
+  </g>
+  <path d="M120 164h160" stroke="#f2c14e" stroke-width="6" stroke-linecap="round"/>
+</svg>
