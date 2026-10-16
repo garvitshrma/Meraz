@@ -64,9 +64,10 @@ export default function ContactPage() {
             </h1>
             <p className="mt-5 max-w-md text-lg text-cream/90">Write to us, or pick a number and ring the team.</p>
   
-            <div className="mt-10 flex items-end gap-6">
-              <Postbox id="postbox" className="w-24 shrink-0 sm:w-28" />
-              <address className="pb-3 not-italic leading-relaxed">
+            {/* the drawing has empty margin round the box: the row is nudged left so the box itself lines up with the heading */}
+            <div className="-ml-2 mt-10 flex items-center gap-4 sm:-ml-3 sm:gap-6">
+              <Postbox id="postbox" className="w-24 shrink-0 sm:w-32" />
+              <address className="min-w-0 not-italic leading-relaxed">
                 <p className="font-display text-sm tracking-widest text-turmeric">Write to us</p>
                 <a href={`mailto:${email}`} className="text-lg font-bold underline decoration-2 underline-offset-4 hover:text-turmeric">
                   {email}
