@@ -49,9 +49,14 @@ export default function PassesPage() {
             <p className="mt-2 font-bold">Entry to the campus requires a valid Access/Student Pass.</p>
             <p className="mt-1">
               For any queries/issues contact{" "}
-              <a href={`tel:${site.passQueryPhone.replace(/\s/g, "")}`} className="whitespace-nowrap font-bold underline decoration-2 underline-offset-4">
-                {site.passQueryPhone}
-              </a>
+              {site.passQueryPhones.map((phone, i) => (
+                <span key={phone}>
+                  {i > 0 && " or "}
+                  <a href={`tel:${phone.replace(/\s/g, "")}`} className="whitespace-nowrap font-bold underline decoration-2 underline-offset-4">
+                    {phone}
+                  </a>
+                </span>
+              ))}
             </p>
           </div>
         </div>

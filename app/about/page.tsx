@@ -4,7 +4,7 @@ import { Container } from "@/components/ui";
 import { about, modelCredits } from "@/data/content";
 import { site } from "@/data/site";
 
-export const metadata: Metadata = { title: "About", description: "About Meraz 7.0 and this year's Retro India theme." };
+export const metadata: Metadata = { title: "About", description: "About Meraz 7.0 and this year's theme, The Great Indian Reverie." };
 
 // From the About design (Figma "rough"): its four 16:9 panels as sections. The artwork is cut out of the panels into
 // public/about (the panels' flat sand background keyed out, the text they carried painted out); the text is the
@@ -67,7 +67,9 @@ export default function AboutPage() {
           <p className="rounded-[2rem] bg-brick px-6 py-8 text-center font-slab text-[clamp(1rem,1.3vw,1.4rem)] leading-snug text-sand [grid-area:card] sm:px-10 lg:rounded-none lg:bg-transparent lg:bg-[url(/about/cartouche.webp)] lg:bg-[length:100%_100%] lg:px-[13%] lg:py-[5%]">
             {about.theme}
           </p>
-          <img src="/about/retro-india.webp" alt="Retro India" width={941} height={128} loading="lazy" className="mx-auto w-full max-w-3xl [grid-area:retro]" />
+          <p className="mx-auto max-w-3xl text-balance text-center font-display text-[clamp(2rem,5.2vw,4.75rem)] font-bold uppercase leading-[.95] tracking-wide text-[#0d2a40] [grid-area:retro] [text-shadow:3px_3px_0_#b5651d]">
+            The Great Indian Reverie
+          </p>
           {[0, 3].map((from) => (
             <ul key={from} aria-hidden="true" className={`grid grid-cols-3 gap-4 lg:grid-cols-1 lg:gap-12 ${from ? "[grid-area:right]" : "[grid-area:left]"}`}>
               {[1, 2, 3].map((k) => (

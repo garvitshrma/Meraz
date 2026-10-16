@@ -1,14 +1,14 @@
 // About, sponsors, passes, contacts and timeline.
-// Structure and live links match meraz.iitbhilai.ac.in; copy is rewritten for the Retro India theme.
+// Structure and live links match meraz.iitbhilai.ac.in; copy is rewritten for The Great Indian Reverie theme.
 
 export const about = {
   text: "Meraz 7.0, the pulsating heart of IIT Bhilai, is where technology, art and imagination unite to create an unforgettable celebration of innovation and culture. Evolving with each edition, Meraz has grown into a grand stage for talent, collaboration and creative exploration. At its core, Meraz is a tribute to curiosity and expression: a space where minds ignite, ideas take shape, and every participant becomes part of something larger than themselves. From cutting-edge tech showcases and coding battles to captivating performances, fashion artistry and culinary flair, Meraz embraces every shade of human creativity. More than an event, it is an experience that bridges disciplines, builds friendships and inspires new possibilities. Whether you come to compete, perform or simply be inspired, Meraz invites you to discover your potential and paint your own story on its vibrant canvas.",
   theme:
-    "This year, Meraz 7.0 rewinds the tape to Retro India: the age of hand-painted cinema posters, truck art that said Horn OK Please, transistor radios on every windowsill and one television that brought the whole mohalla together. The theme celebrates the warmth and wild colour of India between the seventies and the nineties, when every festival felt like a blockbuster release. As the reels start to roll, watch creativity, technology and nostalgia come together in a show that is pure paisa vasool.",
+    "This year, Meraz 7.0 steps into The Great Indian Reverie: a waking dream of India, stitched together from hand-painted cinema posters, truck art that said Horn OK Please, transistor radios on every windowsill and one television that brought the whole mohalla together. The theme celebrates the warmth, colour and wonder of the Indian imagination, where every festival feels like a blockbuster release. As the reels start to roll, let creativity, technology and nostalgia drift together into a show that is pure paisa vasool.",
   stats: [
     { value: "100+", label: "Events" },
-    { value: "1000+", label: "Participants" },
-    { value: "1000+", label: "Online audience" },
+    { value: "4000+", label: "Participants" },
+    { value: "2500+", label: "Online audience" },
   ] as const,
 };
 

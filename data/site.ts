@@ -6,7 +6,7 @@ export const site = {
   theme: "Retro India",
   tagline: "Rewind. Replay. Rejoice.", // PLACEHOLDER
   url: "https://meraz.iitbhilai.ac.in", // used for SEO / Open Graph link previews; change if the domain moves
-  passQueryPhone: "+91 62815 21833",
+  passQueryPhones: ["+91 62815 21833", "+91 76674 16430"], // each is its own tap-to-call link on the passes page
 };
 
 // The events page's mela: the whole carnival in one model. Models are cached for a day without asking

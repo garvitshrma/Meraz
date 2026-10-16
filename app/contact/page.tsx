@@ -16,6 +16,8 @@ export const metadata: Metadata = { title: "Contact", description: "Contact the 
 // contacts are listed for screen readers, with the phone numbers and email as links.
 const post = contacts.find((c) => c.kind === "mail")!;
 const email = post.details.find((d) => d.value)!.value!;
+// the fest head and the fest convener, whose numbers sit by the email as well as on their own buttons
+const reach = contacts.filter((c) => c.title === "Fest Head" || c.title === "Fest Convener").flatMap((c) => c.details);
 
 // Five of the contacts as buttons, each carrying its number on the dial (contact j sits in hole 0, then 9, 8 … 1) and
 // taking the tour to that hole: PhoneDial handles the click, the #booth link is the fallback.
@@ -69,6 +71,14 @@ export default function ContactPage() {
                 <a href={`mailto:${email}`} className="text-lg font-bold underline decoration-2 underline-offset-4 hover:text-turmeric">
                   {email}
                 </a>
+                {reach.map((d) => (
+                  <p key={d.label} className="text-cream/90">
+                    {d.label}:{" "}
+                    <a href={`tel:${d.value!.replace(/\s/g, "")}`} className="whitespace-nowrap font-bold underline decoration-2 underline-offset-4 hover:text-turmeric">
+                      {d.value}
+                    </a>
+                  </p>
+                ))}
                 {post.details
                   .filter((d) => !d.value)
                   .map((d) => (
