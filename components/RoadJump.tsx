@@ -105,6 +105,9 @@ const SKIP_PACE = 2;
 // one's swell. drop: on landscape screens (laptops), the sign sits this share of its room lower, its foot behind his head;
 // logoDrop: and the logo this much more, nearer the lettering, logoGrow times its size (its foot stays put, then drops).
 const TITLE = { z: -10, eye: 1.63, tilt: 0.22, hair: 0.13, margin: 0.03, logo: 0.3, gap: -0.06, drop: 0.06, logoDrop: 0.1, logoGrow: 1.3 };
+// Sideways shift, in picture widths, centring the logo's and the lettering's ink (logo.webp has 1 px clear on its left
+// and 57 of 640 on its right, typolog.webp 54 and 19 of 1164).
+const INK_SHIFT = [(57 - 1) / 2 / 640, -(54 - 19) / 2 / 1164];
 const TITLE_HOVER = 1.1; // the logo or lettering under the mouse swells to this
 // A warm glow behind the logo, size logo widths across, at opacity (added to what's behind: the night, the fireworks).
 const TITLE_GLOW = { color: 0xffb627, size: 1.6, opacity: 0.55 };
@@ -350,6 +353,7 @@ export default function RoadJump() {
           // alphaTest: the clear parts write no depth, so fireworks bursting behind still show through them
           new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, fog: false }),
         );
+        m.position.x = INK_SHIFT[n]; // the picture's ink isn't centred in it: slide it so the ink is
         title.add(new THREE.Group().add(m));
         return m;
       });
@@ -1206,6 +1210,9 @@ export default function RoadJump() {
       });
       earth.castShadow = false; // it is the ground: it only catches them
       stroll(0);
+      // the opening shot looks straight down the road from his head, which isn't quite on x = 0: centre the title on it
+      draw(0);
+      title.position.x = head.getWorldPosition(v3()).x;
       draw(progress); // place the auto and walkers now; without the frame loop (reduced motion) nothing else would
       await Promise.allSettled([skyLoad, shellLoad]); // the sky and fireworks too, before the loading screen lifts
       // The scene is complete: in idle moments from here, warm the events and contact pages (see warmup.ts). Their
