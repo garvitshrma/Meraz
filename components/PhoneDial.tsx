@@ -37,9 +37,9 @@ const CARD = { lift: 0.018, gap: 0.0015 };
 const ISO = new THREE.Vector3(1, 0.82, 1).normalize(); // the opening view's direction, from the phone to the camera
 const FILL = 1; // the opening view fits the phone to this share of the screen below the nav bar
 const CLOSE = 10; // camera distance from a hole, in card radii: every card fills the same share of the screen
-// The text's pop-up, fully up: lift off the card, the share it grows by, and its shadow's offset, for a hole of radius 0.048
+// The text's pop-up, fully up: lift off the card and the share it grows by, for a hole of radius 0.048
 // (others in proportion).
-const POP = { lift: 0.014, grow: 0.08, shadow: 0.0012 };
+const POP = { lift: 0.014, grow: 0.08 };
 
 // A card in three layers, each a circle of the same size: the base (cream, darkening toward the rim as if shaded by
 // the hole), the text's soft shadow, and the text itself, with a solid poster-style extrusion down and to the right.
@@ -103,24 +103,14 @@ function cardTextures(c: (typeof contacts)[number], fonts: { display: string; mo
     }
   };
 
-  // The shadow is a blur, so half resolution loses nothing; the text is drawn at twice, to stay sharp filling a
-  // high-DPI screen.
-  const shadow = layer(0.5, (g) => {
-    g.filter = "blur(3.5px)"; // in canvas pixels: 7 layout units
-    g.fillStyle = "#000";
-    text(g, (l) => {
-      for (let k = 0; k <= l.depth; k++) g.fillText(l.text, S / 2 + k, l.mid + k); // the extruded outline's shadow
-    });
-  });
+  // Flat text, no shadow or extrusion; drawn at twice, to stay sharp filling a high-DPI screen.
   const face = layer(2, (g) =>
     text(g, (l) => {
-      g.fillStyle = l.side;
-      for (let k = Math.ceil(l.depth); k > 0; k--) g.fillText(l.text, S / 2 + k, l.mid + k);
       g.fillStyle = l.colour;
       g.fillText(l.text, S / 2, l.mid);
     }),
   );
-  return { shadow, face };
+  return { face };
 }
 
 export default function PhoneDial() {
@@ -226,12 +216,11 @@ export default function PhoneDial() {
         const card = new THREE.Group();
         card.position.copy(DIAL.centre).addScaledVector(across, x).addScaledVector(up, y).addScaledVector(DIAL.normal, CARD.lift);
         card.lookAt(card.position.clone().add(DIAL.normal)); // face out of the dial, text upright
-        const shadow = mesh(tex.shadow, true);
         const face = mesh(tex.face, true);
-        [shadow.renderOrder, face.renderOrder] = [1, 2]; // shadow under text
-        card.add(mesh(base, false), shadow, face);
+        face.renderOrder = 2;
+        card.add(mesh(base, false), face);
         scene.add(card);
-        return { shot: { look: card.position.clone(), dir: DIAL.normal, dist: CLOSE * radius }, radius, shadow, face }; // straight on, mid-screen
+        return { shot: { look: card.position.clone(), dir: DIAL.normal, dist: CLOSE * radius }, radius, face }; // straight on, mid-screen
       });
       const holes = cards.map((c) => c.shot);
       // The text pops up off its card as the camera arrives (overshooting a little, like a spring), casting its
@@ -243,8 +232,6 @@ export default function PhoneDial() {
           const s = c.radius / 0.048; // in proportion to the hole
           c.face.position.z = (0.0006 + POP.lift * p) * s;
           c.face.scale.setScalar(1 - POP.grow + POP.grow * p);
-          c.shadow.position.set(POP.shadow * p * s, -POP.shadow * p * s, 0.0003 * s);
-          (c.shadow.material as THREE.MeshBasicMaterial).opacity = 0.35 * Math.min(1, p);
         });
 
       // Shots: the opening view, each hole straight on, then back out to the opening view.
