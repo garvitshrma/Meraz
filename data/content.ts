@@ -146,9 +146,12 @@ export const outreach = {
     applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLScbwVAaplUFtDwifJ1RGvQPMY4_3Qb06jbkJ_3x6pWoR3pwDQ/viewform",
     rulebook: "/outreach/ca-rulebook.pdf",
   },
-  // logo: a file in public/outreach/cafes. applyUrl: the registration form's link (until set, the button says "opening
-  // soon"; the rulebook's QR code couldn't be read)
-  cafes: { list: [] as { name: string; logo: string }[], applyUrl: undefined as string | undefined, rulebook: "/outreach/cafe-rulebook.pdf" },
+  // logo: a file in public/outreach/cafes. applyUrl: the café partner registration form
+  cafes: {
+    list: [] as { name: string; logo: string }[],
+    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdVk5sxy07L6akivpbik3RMD4CBR09rGcNCnVz3EeQAFXdheQ/viewform" as string | undefined,
+    rulebook: "/outreach/cafe-rulebook.pdf",
+  },
   // instagram: the handle without the @. applyUrl: the Google Form's link (the rulebook's QR, qrco.de/bgzNgZ, is
   // disabled)
   influencers: {
