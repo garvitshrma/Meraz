@@ -19,5 +19,6 @@ export const navLinks = [
   { href: "/events", label: "Events", hindi: "कार्यक्रम", freq: "93.5" },
   { href: "/sponsors", label: "Sponsors", hindi: "प्रायोजक", freq: "97.3" },
   { href: "/passes", label: "Passes", hindi: "पास", freq: "101.4" },
+  { href: "/outreach", label: "Outreach", hindi: "जनसंपर्क", freq: "103.6" },
   { href: "/contact", label: "Contact", hindi: "संपर्क", freq: "105.2" },
 ];

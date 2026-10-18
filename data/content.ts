@@ -114,6 +114,50 @@ export const contacts: ContactCard[] = [
   { title: "Media & Design", kind: "phone", details: [{ label: "Convener - Manjot Singh", value: "+91 7003603365" }, { label: "Convener - Amit Patel", value: "+91 8602275578" }] },
 ];
 
+// Outreach page: the campus ambassadors, partnered cafés and influencers, each with its programme's rulebook
+// (public/outreach/*.pdf, the team's Canva rulebooks as page images, ~3 MB each). Add people and cafés to the lists
+// as they are confirmed; an empty list shows "To be announced".
+export const outreach = {
+  ambassadors: {
+    people: [] as { name: string; college: string }[],
+    // the contributor benefits, by referrals (from the CA rulebook)
+    perks: [
+      { referrals: "10+", items: ["1 free CA pass (Day 3 concert only)", "2 stall-wise discount coupons (1 meal + 1 drink)", "Custom Meraz merch", "CA certificate"] },
+      { referrals: "25+", items: ["1 official 2-day pass (both concert nights)", "4 stall-wise coupons (2 meals + 2 drinks)", "Custom Meraz merch", "CA certificate", "Instagram shoutout"] },
+      {
+        referrals: "50+",
+        items: ["2 official 2-day passes (CA + friend)", "8 stall-wise combo coupons (4 meals + 4 drinks)", "Custom Meraz merch", "CA certificate", "Instagram shoutout", "Gift hamper", "Artist autograph", "Bus pool subsidy"],
+      },
+      {
+        referrals: "75+",
+        items: [
+          "2 official 2-day passes (backstage crew pass)",
+          "16 stall-wise combo coupons (8 meals + 8 drinks)",
+          "Custom Meraz merch",
+          "CA certificate and leadership certificate",
+          "Memento on the main stage",
+          "Gift hamper",
+          "Artist autograph",
+          "Bus pool subsidy",
+        ],
+      },
+    ],
+    contact: { name: "Harsh", role: "Outreach Lead", phone: "+91 93275 96343" },
+    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLScbwVAaplUFtDwifJ1RGvQPMY4_3Qb06jbkJ_3x6pWoR3pwDQ/viewform",
+    rulebook: "/outreach/ca-rulebook.pdf",
+  },
+  // logo: a file in public/outreach/cafes. applyUrl: the registration form's link (until set, the button says "opening
+  // soon"; the rulebook's QR code couldn't be read)
+  cafes: { list: [] as { name: string; logo: string }[], applyUrl: undefined as string | undefined, rulebook: "/outreach/cafe-rulebook.pdf" },
+  // instagram: the handle without the @. applyUrl: the Google Form's link (the rulebook's QR, qrco.de/bgzNgZ, is
+  // disabled)
+  influencers: {
+    list: [] as { name: string; instagram: string; followers: string }[],
+    applyUrl: undefined as string | undefined,
+    rulebook: "/outreach/influencer-rulebook.pdf",
+  },
+};
+
 // Same placeholder timeline as the reference site's /timeline route. PLACEHOLDER dates.
 export type TimelineDay = { date: string; time: string; events: { time: string; title: string; location: string }[] };
 export const timeline: TimelineDay[] = [
