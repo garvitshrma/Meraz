@@ -10,7 +10,7 @@ import { contacts } from "@/data/content";
 export const metadata: Metadata = { title: "Contact", description: "Contact the Meraz team at IIT Bhilai.", other: { google: "notranslate" } };
 
 // First a wall painted Warli fashion, red ochre with white figures, telephone wires strung across it with birds on
-// them: the title, the couple on the PCO phone (public/contact/pco.webp, cut from contact.jpeg at the project root),
+// them: the title, the couple on the PCO phone (public/contact/pco.webp, cut from public/contact/pco.jpeg, its paper keyed out),
 // the postbox with the email and address, and the ten contacts as buttons, five above and five below. Then the rotary telephone with a contact card in each dial hole (the
 // Meraz 7.0 conveners). Nothing can follow the phone: its scroll tour loops. The cards are drawn in 3D, so the same
 // contacts are listed for screen readers, with the phone numbers and email as links.
@@ -95,7 +95,7 @@ export default function ContactPage() {
             src="/contact/pco.webp"
             alt="A woman and a man talk on the two receivers of a pink phone at an STD-ISD-PCO booth"
             width={1000}
-            height={941}
+            height={942}
             className="mx-auto w-full max-w-[40rem]"
           />
         </div>
