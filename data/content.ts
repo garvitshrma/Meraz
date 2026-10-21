@@ -116,10 +116,46 @@ export const contacts: ContactCard[] = [
 
 // Outreach page: the campus ambassadors, partnered cafés and influencers, each with its programme's rulebook
 // (public/outreach/*.pdf, the team's Canva rulebooks as page images, ~3 MB each). Add people and cafés to the lists
-// as they are confirmed; an empty list shows "To be announced".
+// as they are confirmed; an empty list shows "To be announced". The lists come from the PR team's form responses (the
+// "PR EA 2026-27" sheet): the ambassadors that have been given a MERAZ code, the cafés that registered, and the
+// influencers who signed the MOU. Only names, colleges, café names and Instagram handles go on the site, never phone numbers or emails.
 export const outreach = {
   ambassadors: {
-    people: [] as { name: string; college: string }[],
+    people: [
+      { name: "Ranjan Kumar", college: "Rungta International Skills University" },
+      { name: "Harsh Kumar", college: "Rungta International Skills University" },
+      { name: "Parth Phalak", college: "IIT Bhilai" },
+      { name: "Mohmmad Noman Haque", college: "Bhilai Institute of Technology, Durg" },
+      { name: "Anshu Kedia", college: "Rungta University" },
+      { name: "Roman Bharti", college: "NIT Raipur" },
+      { name: "Bhavesh Prasad Mahilang", college: "MSME Technology Centre, Durg" },
+      { name: "Arpita Hota", college: "Shri Shankaracharya Technical Campus, Bhilai" },
+      { name: "Aman Saraf", college: "Chhattisgarh Institute of Technology, Raipur" },
+      { name: "Manish Bisai", college: "Bhilai Institute of Technology, Durg" },
+      { name: "Aishwarya Suhane", college: "Bhilai Institute of Technology, Durg" },
+      { name: "Sushant Patel", college: "IIT Bhilai" },
+      { name: "Muskan Verma", college: "Shri Shankaracharya Technical Campus, Bhilai" },
+      { name: "Suryanshi Verma", college: "Manipal University Jaipur" },
+      { name: "Domendra Kumar Sahu", college: "Shri Shankaracharya Technical Campus, Bhilai" },
+      { name: "Anmol Singh", college: "IIT Patna" },
+      { name: "Doneshwar", college: "MSME Technology Centre, Durg" },
+      { name: "Omkar", college: "MSME Technology Centre, Durg" },
+      { name: "Ayush", college: "MSME Technology Centre, Durg" },
+      { name: "Vedprakash", college: "MSME Technology Centre, Durg" },
+      { name: "Pratyush Ranjan Barik", college: "MSME Technology Centre, Durg" },
+      { name: "Harishchandra", college: "MSME Technology Centre, Durg" },
+      { name: "Shishir Shukla", college: "Shri Shankaracharya Technical Campus, Bhilai" },
+      { name: "Rupesh Sahu", college: "MSME Technology Centre, Durg" },
+      { name: "Kushal", college: "MSME Technology Centre, Durg" },
+      { name: "Nitesh Yadav", college: "MSME Technology Centre, Durg" },
+      { name: "Arin Kumar", college: "MSME Technology Centre, Durg" },
+      { name: "Tikendra Dewangan", college: "MSME Technology Centre, Durg" },
+      { name: "Dev Prakash Chandrakar", college: "MSME Technology Centre, Durg" },
+      { name: "Peeyush Ratre", college: "MSME Technology Centre, Durg" },
+      { name: "Mohit", college: "MSME Technology Centre, Durg" },
+      { name: "Rustam Chanap", college: "MSME Technology Centre, Durg" },
+      { name: "Deepanshu", college: "NIT Raipur" },
+    ] as { name: string; college: string }[],
     // the contributor benefits, by referrals (from the CA rulebook)
     perks: [
       { referrals: "10+", items: ["1 free CA pass (Day 3 concert only)", "2 stall-wise discount coupons (1 meal + 1 drink)", "Custom Meraz merch", "CA certificate"] },
@@ -146,16 +182,26 @@ export const outreach = {
     applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLScbwVAaplUFtDwifJ1RGvQPMY4_3Qb06jbkJ_3x6pWoR3pwDQ/viewform",
     rulebook: "/outreach/ca-rulebook.pdf",
   },
-  // logo: a file in public/outreach/cafes. applyUrl: the café partner registration form
+  // applyUrl: the café partner registration form
   cafes: {
-    list: [] as { name: string; logo: string }[],
+    list: [{ name: "Karavas Cafe" }, { name: "Filtr Coffee" }, { name: "Fast N Fresh Cafe" }] as { name: string }[],
     applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdVk5sxy07L6akivpbik3RMD4CBR09rGcNCnVz3EeQAFXdheQ/viewform" as string | undefined,
     rulebook: "/outreach/cafe-rulebook.pdf",
   },
   // instagram: the handle without the @. applyUrl: the Google Form's link (the rulebook's QR, qrco.de/bgzNgZ, is
   // disabled)
   influencers: {
-    list: [] as { name: string; instagram: string; followers: string }[],
+    list: [
+      { name: "Shriya Diwan", instagram: "style_with_shriya" },
+      { name: "Yash Pandey", instagram: "ig.yash_pandey" },
+      { name: "Md Adil Khan", instagram: "aadil.xn" },
+      { name: "Jiya Chandrakar", instagram: "jiya_____.1" },
+      { name: "Soumya Sinha", instagram: "ft.soumzposting" },
+      { name: "Krishna Anand", instagram: "krishnaanand1808" },
+      { name: "Karan Bagga", instagram: "the_shredded_medico_" },
+      { name: "Jitendra Singh Bagri", instagram: "jitendrabagri55" },
+      { name: "Jyoti Parwani", instagram: "jyotiparwani_" },
+    ] as { name: string; instagram: string }[],
     applyUrl: undefined as string | undefined,
     rulebook: "/outreach/influencer-rulebook.pdf",
   },

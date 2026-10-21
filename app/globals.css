@@ -67,6 +67,10 @@
   /* the Express running through the station (keep in step with RUN and RUN_S in components/PassesArt.tsx) */
   --animate-train-run: train-run 36s linear infinite;
   --animate-roll: roll 1s linear infinite; /* each wheel sets its own duration */
+  /* Outreach: the reel on the influencers' phone, four scenes in turn (each takes its own place in the turn by a
+     delay, kept in step in components/OutreachArt.tsx), the progress filling under each */
+  --animate-reel-scene: reel-scene 16s linear infinite;
+  --animate-reel-bar: reel-bar 4s linear infinite;
 }
 
 :root {
@@ -361,6 +365,27 @@ body:has([data-page-screen][data-up]) .animate-prowl {
   }
   to {
     translate: -1500px 0;
+  }
+}
+@keyframes reel-scene {
+  0%,
+  23% {
+    opacity: 1;
+  }
+  25%,
+  98% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes reel-bar {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
   }
 }
 @keyframes roll {

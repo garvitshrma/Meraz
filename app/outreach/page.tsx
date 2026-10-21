@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { ArrowSquareOut, DownloadSimple, InstagramLogo, Phone } from "@phosphor-icons/react/ssr";
-import { Container, PageHeader } from "@/components/ui";
+import { ArrowSquareOut, DownloadSimple, MagnifyingGlass, Phone } from "@phosphor-icons/react/ssr";
+import { CafeFront, KiteHero, Motif, ReelPhone, Talkies } from "@/components/OutreachArt";
+import { Container } from "@/components/ui";
 import { outreach } from "@/data/content";
 
 export const metadata: Metadata = {
@@ -8,14 +9,14 @@ export const metadata: Metadata = {
   description: "Meraz 7.0 campus ambassadors, partnered cafés and partnered influencers, with each programme's rulebook.",
 };
 
-// Three sections, each closing on its programme's rulebook: the campus ambassadors (with the referral perks and the
-// outreach lead to call), the partnered cafés, and the partnered influencers. The lists fill in from data/content.ts.
+// The kites over the rooftops and the picture palace's film posters (components/OutreachArt.tsx), then three
+// sections, each closing on its programme's rulebook: the campus ambassadors (with the referral perks and the outreach
+// lead to call), the partnered cafés, and the partnered influencers. The lists fill in from data/content.ts.
 const { ambassadors, cafes, influencers } = outreach;
-const sections = [
-  { id: "ambassadors", label: "Campus Ambassadors" },
-  { id: "cafes", label: "Partnered Cafes" },
-  { id: "influencers", label: "Influencers" },
-];
+// the ambassadors under their colleges, the colleges with the most first
+const byCollege = [
+  ...ambassadors.people.reduce((m, p) => m.set(p.college, [...(m.get(p.college) ?? []), p.name]), new Map<string, string[]>()),
+].sort((a, b) => b[1].length - a[1].length);
 
 // A section's title on a painted board, its Hindi above it.
 function Heading({ id, hindi, children }: { id: string; hindi: string; children: React.ReactNode }) {
@@ -96,42 +97,61 @@ function Rulebook({ href, cover, title }: { href: string; cover: string; title: 
 
 const TIER_PAINT = ["bg-teal-deep", "bg-rani-deep", "bg-vermillion-deep", "bg-ink"];
 
+// Instagram's own logo, in its colours: the camera drawn in white on the yellow-to-violet glow.
+function InstaLogo({ id }: { id: string }) {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" className="size-11 shrink-0 drop-shadow-[2px_2px_0_var(--color-ink)]">
+      <radialGradient id={id} cx="0.3" cy="1.07" r="1.5">
+        <stop offset="0" stopColor="#fdf497" />
+        <stop offset=".05" stopColor="#fdf497" />
+        <stop offset=".45" stopColor="#fd5949" />
+        <stop offset=".6" stopColor="#d6249f" />
+        <stop offset=".9" stopColor="#285aeb" />
+      </radialGradient>
+      <rect width="48" height="48" rx="12" fill={`url(#${id})`} />
+      <g fill="none" stroke="#fff" strokeWidth="3.6">
+        <rect x="10" y="10" width="28" height="28" rx="8.5" />
+        <circle cx="24" cy="24" r="6.6" />
+      </g>
+      <circle cx="32.4" cy="15.6" r="2.1" fill="#fff" />
+    </svg>
+  );
+}
+
 export default function OutreachPage() {
   const tel = ambassadors.contact.phone.replace(/\s/g, "");
   return (
     <div className="bg-paper text-ink">
-      <PageHeader hindi="जनसंपर्क" title="Outreach" tone="rani">
-        Meraz beyond IIT Bhilai: the campus ambassadors, cafés and creators taking the fest to their colleges, tables and
-        feeds.
-      </PageHeader>
-
-      <nav aria-label="Outreach sections" className="border-b-4 border-ink bg-cream">
-        <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-2 px-4 py-4 sm:gap-3">
-          {sections.map((s, i) => (
-            <li key={s.id}>
-              <a href={`#${s.id}`} className={`btn min-h-11 !px-4 !py-1.5 !text-sm text-cream ${TIER_PAINT[i]}`}>
-                {s.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <KiteHero />
+      <Talkies />
 
       {/* Campus ambassadors */}
-      <section id="ambassadors" aria-labelledby="ambassadors-title" className="scroll-mt-24 py-16">
-        <Container>
+      <section id="ambassadors" aria-labelledby="ambassadors-title" className="relative scroll-mt-24 overflow-hidden py-16">
+        <Motif of="ambassadors" />
+        <Container className="relative">
           <Heading id="ambassadors-title" hindi="हमारे कैंपस एम्बेसडर">
             Our Campus Ambassadors
           </Heading>
           {ambassadors.people.length ? (
-            <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ambassadors.people.map((p) => (
-                <li key={`${p.name}-${p.college}`} className="border-[3px] border-ink bg-cream px-5 py-4 shadow-[4px_4px_0_var(--color-ink)]">
-                  <p className="font-display text-xl leading-tight">{p.name}</p>
-                  <p className="mt-1 text-ink/75">{p.college}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="mt-6 text-center text-ink/75">
+                {ambassadors.people.length} ambassadors from {byCollege.length} colleges
+              </p>
+              <ul className="mt-8 columns-1 gap-5 sm:columns-2 lg:columns-3">
+                {byCollege.map(([college, names]) => (
+                  <li key={college} className="mb-5 break-inside-avoid border-[3px] border-ink bg-cream shadow-[4px_4px_0_var(--color-ink)]">
+                    <h3 className="border-b-[3px] border-ink bg-teal-deep px-4 py-2 font-display text-lg leading-tight text-cream">{college}</h3>
+                    <ul className="flex flex-wrap gap-2 px-4 py-3">
+                      {names.map((n) => (
+                        <li key={n} className="border-2 border-ink/60 bg-paper px-2 py-0.5 leading-snug">
+                          {n}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <ToBeAnnounced what="Ambassadors" />
           )}
@@ -169,17 +189,27 @@ export default function OutreachPage() {
       </section>
 
       {/* Partnered cafés */}
-      <section id="cafes" aria-labelledby="cafes-title" className="scroll-mt-24 border-y-4 border-ink bg-cream py-16">
-        <Container>
+      <section id="cafes" aria-labelledby="cafes-title" className="relative scroll-mt-24 overflow-hidden border-y-4 border-ink bg-cream py-16">
+        <Motif of="cafes" />
+        <Container className="relative">
           <Heading id="cafes-title" hindi="साथी कैफ़े">
             Partnered Cafes
           </Heading>
           {cafes.list.length ? (
-            <ul className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-              {cafes.list.map((c) => (
-                <li key={c.name} className="flex flex-col items-center gap-3 border-[3px] border-ink bg-white p-4 text-center shadow-[4px_4px_0_var(--color-ink)]">
-                  <img src={c.logo} alt={`${c.name} logo`} loading="lazy" className="aspect-square w-full max-w-36 object-contain" />
-                  <p className="font-display text-lg leading-tight">{c.name}</p>
+            <ul className="mt-10 grid gap-4 sm:grid-cols-3">
+              {cafes.list.map((c, i) => (
+                <li key={c.name} className="overflow-hidden border-[3px] border-ink bg-paper text-center shadow-[4px_4px_0_var(--color-ink)]">
+                  <CafeFront name={c.name} n={i} />
+                  {/* its Google results (its listing, map and reviews), all the cafés being in Bhilai */}
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(`${c.name} Bhilai`)}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="my-1 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-rani-deep underline decoration-2 underline-offset-4"
+                  >
+                    <MagnifyingGlass size={16} weight="bold" aria-hidden="true" />
+                    See on Google<span className="sr-only">: {c.name}</span>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -194,37 +224,38 @@ export default function OutreachPage() {
       </section>
 
       {/* Partnered influencers */}
-      <section id="influencers" aria-labelledby="influencers-title" className="scroll-mt-24 py-16">
-        <Container>
+      <section id="influencers" aria-labelledby="influencers-title" className="relative scroll-mt-24 overflow-hidden py-16">
+        <Motif of="influencers" />
+        <Container className="relative">
           <Heading id="influencers-title" hindi="साथी क्रिएटर">
             Partnered Influencers
           </Heading>
-          {influencers.list.length ? (
-            <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {influencers.list.map((p) => (
-                <li key={p.instagram} className="flex items-center justify-between gap-3 border-[3px] border-ink bg-cream px-5 py-4 shadow-[4px_4px_0_var(--color-ink)]">
-                  <div className="min-w-0">
-                    <p className="font-display text-xl leading-tight">{p.name}</p>
-                    <a
-                      href={`https://www.instagram.com/${p.instagram}/`}
-                      target="_blank"
-                      rel="noopener"
-                      className="mt-1 inline-flex max-w-full items-center gap-1.5 font-bold text-rani-deep underline decoration-2 underline-offset-4"
-                    >
-                      <InstagramLogo size={18} weight="bold" aria-hidden="true" className="shrink-0" />
-                      <span className="truncate">@{p.instagram}</span>
-                    </a>
-                  </div>
-                  <p className="shrink-0 text-right">
-                    <span className="block font-display text-2xl leading-none">{p.followers}</span>
-                    <span className="text-xs uppercase tracking-widest text-ink/70">followers</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <ToBeAnnounced what="Influencers" />
-          )}
+          {/* the phone playing a Meraz reel, beside the list on wide screens and over it on phones */}
+          <div className="mt-12 lg:grid lg:grid-cols-[14rem_1fr] lg:items-center lg:gap-12">
+            <ReelPhone className="mx-auto w-52 lg:w-full" />
+            {influencers.list.length ? (
+              <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:mt-0 xl:grid-cols-3">
+                {influencers.list.map((p) => (
+                  <li key={p.instagram} className="flex items-center gap-3 border-[3px] border-ink bg-cream px-4 py-3 shadow-[4px_4px_0_var(--color-ink)]">
+                    <InstaLogo id={`insta-${p.instagram}`} />
+                    <div className="min-w-0">
+                      <p className="font-display text-xl leading-tight">{p.name}</p>
+                      <a
+                        href={`https://www.instagram.com/${p.instagram}/`}
+                        target="_blank"
+                        rel="noopener"
+                        className="mt-1 inline-flex max-w-full font-bold text-rani-deep underline decoration-2 underline-offset-4"
+                      >
+                        <span className="truncate">@{p.instagram}</span>
+                      </a>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ToBeAnnounced what="Influencers" />
+            )}
+          </div>
           <Apply href={influencers.applyUrl} label="Apply as an influencer">
             <Pitch kicker="Create content?">Your audience, your creativity, your Meraz.</Pitch>
           </Apply>
