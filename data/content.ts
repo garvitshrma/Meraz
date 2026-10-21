@@ -117,14 +117,14 @@ export const contacts: ContactCard[] = [
 // Outreach page: the campus ambassadors, partnered cafés and influencers, each with its programme's rulebook
 // (public/outreach/*.pdf, the team's Canva rulebooks as page images, ~3 MB each). Add people and cafés to the lists
 // as they are confirmed; an empty list shows "To be announced". The lists come from the PR team's form responses (the
-// "PR EA 2026-27" sheet): the ambassadors that have been given a MERAZ code, the cafés that registered, and the
-// influencers who signed the MOU. Only names, colleges, café names and Instagram handles go on the site, never phone numbers or emails.
+// "PR EA 2026-27" sheet): the ambassadors that have been given a MERAZ code (from other colleges only, never IIT
+// Bhilai's own students), the cafés that registered, and the influencers who signed the MOU. Only names, colleges,
+// café names and Instagram handles go on the site, never phone numbers or emails.
 export const outreach = {
   ambassadors: {
     people: [
       { name: "Ranjan Kumar", college: "Rungta International Skills University" },
       { name: "Harsh Kumar", college: "Rungta International Skills University" },
-      { name: "Parth Phalak", college: "IIT Bhilai" },
       { name: "Mohmmad Noman Haque", college: "Bhilai Institute of Technology, Durg" },
       { name: "Anshu Kedia", college: "Rungta University" },
       { name: "Roman Bharti", college: "NIT Raipur" },
@@ -133,7 +133,6 @@ export const outreach = {
       { name: "Aman Saraf", college: "Chhattisgarh Institute of Technology, Raipur" },
       { name: "Manish Bisai", college: "Bhilai Institute of Technology, Durg" },
       { name: "Aishwarya Suhane", college: "Bhilai Institute of Technology, Durg" },
-      { name: "Sushant Patel", college: "IIT Bhilai" },
       { name: "Muskan Verma", college: "Shri Shankaracharya Technical Campus, Bhilai" },
       { name: "Suryanshi Verma", college: "Manipal University Jaipur" },
       { name: "Domendra Kumar Sahu", college: "Shri Shankaracharya Technical Campus, Bhilai" },
